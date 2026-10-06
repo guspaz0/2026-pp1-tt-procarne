@@ -1,0 +1,93 @@
+<mxGraphModel>
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="2" value="Clientes" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="40" width="920" height="100" as="geometry"/>
+    </mxCell>
+    <mxCell id="3" value="Web Inspector (móvil)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+      <mxGeometry x="40" y="40" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="4" value="Web Admin (escritorio)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+      <mxGeometry x="360" y="40" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="5" value="Web Pública (consumidor)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+      <mxGeometry x="680" y="40" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="6" value="Capa de Presentación" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;html=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="180" width="920" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="7" value="HTML5, CSS3, JavaScript, PWA (offline)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;" vertex="1" parent="6">
+      <mxGeometry x="260" y="20" width="400" height="40" as="geometry"/>
+    </mxCell>
+    <mxCell id="8" value="Capa de Aplicación" style="swimlane;startSize=30;fillColor=#fff2cc;strokeColor=#d6b656;html=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="300" width="920" height="200" as="geometry"/>
+    </mxCell>
+    <mxCell id="9" value="Servicio de Registro (Mód. I)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+      <mxGeometry x="40" y="40" width="180" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="10" value="Servicio de Trazabilidad (Mód. II)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+      <mxGeometry x="240" y="40" width="180" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="11" value="Servicio de Fiscalización (Mód. III)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+      <mxGeometry x="440" y="40" width="180" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="12" value="Servicio de Información Estratégica (Mód. IV)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+      <mxGeometry x="640" y="40" width="180" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="13" value="Servicio de Portal Público (Mód. V)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+      <mxGeometry x="40" y="120" width="180" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="14" value="Servicio de Incentivos (Mód. VI)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+      <mxGeometry x="240" y="120" width="180" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="15" value="Servicio de Movimientos Comerciales (Mód. VII)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+      <mxGeometry x="440" y="120" width="180" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="16" value="Capa de Datos" style="swimlane;startSize=30;fillColor=#f8cecc;strokeColor=#b85450;html=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="540" width="920" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="17" value="Base de Datos (PostgreSQL)" style="shape=cylinder3;whiteSpace=wrap;html=1;" vertex="1" parent="16">
+      <mxGeometry x="40" y="40" width="160" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="18" value="Almacén Local (IndexedDB/LocalStorage)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="16">
+      <mxGeometry x="240" y="40" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="19" value="Almacén de Evidencias (fotos)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="16">
+      <mxGeometry x="480" y="40" width="160" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="20" value="Integraciones Externas" style="swimlane;startSize=30;fillColor=#e1d5e7;strokeColor=#9673a6;html=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="700" width="920" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="21" value="DUT/DT-e (Senasa)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="20">
+      <mxGeometry x="40" y="40" width="160" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="22" value="REC (ARCA)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="20">
+      <mxGeometry x="240" y="40" width="160" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="23" value="SIGSA (Senasa)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="20">
+      <mxGeometry x="440" y="40" width="160" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="24" value="AGROTRAZA (Senasa)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="20">
+      <mxGeometry x="640" y="40" width="160" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="25" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="3" target="6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="26" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="4" target="6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="27" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="5" target="6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="28" value="API REST / WebSocket" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="6" target="8" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="29" value="ORM / Data Access" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="8" target="16" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="30" value="[PENDIENTE]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" source="8" target="20" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

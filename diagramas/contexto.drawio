@@ -1,0 +1,63 @@
+<mxGraphModel>
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="2" value="ROCCA (Sistema)" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;" vertex="1" parent="1">
+      <mxGeometry x="200" y="100" width="400" height="200" as="geometry"/>
+    </mxCell>
+    <mxCell id="3" value="Módulo I: Registro" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+      <mxGeometry x="20" y="40" width="100" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="4" value="Módulo II: Trazabilidad" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+      <mxGeometry x="140" y="40" width="100" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="5" value="Módulo III: Fiscalización" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+      <mxGeometry x="260" y="40" width="100" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="6" value="Módulos IV-VII" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+      <mxGeometry x="140" y="120" width="100" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="7" value="Inspector" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="150" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="8" value="Operador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+      <mxGeometry x="120" y="150" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="9" value="Administrador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+      <mxGeometry x="620" y="150" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="10" value="Público General" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+      <mxGeometry x="690" y="150" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="11" value="Sistemas Nacionales" style="swimlane;startSize=30;fillColor=#fff2cc;strokeColor=#d6b656;html=1;" vertex="1" parent="1">
+      <mxGeometry x="200" y="400" width="400" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="12" value="DUT/DT-e (Senasa)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+      <mxGeometry x="20" y="40" width="80" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="13" value="REC (ARCA)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+      <mxGeometry x="120" y="40" width="80" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="14" value="SIGSA (Senasa)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+      <mxGeometry x="220" y="40" width="80" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="15" value="AGROTRAZA" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+      <mxGeometry x="320" y="40" width="80" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="16" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="7" target="2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="17" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="8" target="2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="18" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="9" target="2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="19" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="10" target="2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="20" value="[?]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" source="2" target="11" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>
