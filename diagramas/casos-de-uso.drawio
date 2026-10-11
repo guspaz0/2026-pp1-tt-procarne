@@ -1,0 +1,138 @@
+<mxGraphModel>
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="sys" value="ROCCA (Sistema)" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;html=1;" vertex="1" parent="1">
+      <mxGeometry x="420" y="120" width="460" height="1180" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu1" value="CU-01 Iniciar sesión" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="30" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu2" value="CU-02 Registrar inspección" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="130" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu3" value="CU-03 Guardar inspección offline" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="230" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu4" value="CU-04 Sincronizar inspecciones" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="330" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu5" value="CU-05 Generar observación / multa" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="430" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu6" value="CU-06 Consultar historial" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="530" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu7" value="CU-07 Declarar movimiento comercial" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="630" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu8" value="CU-08 Confirmar recepción" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="730" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu9" value="CU-09 Consultar estado" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="830" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu10" value="CU-10 Gestionar padrón" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="930" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu11" value="CU-11 Gestionar habilitaciones" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="1030" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu12" value="CU-12 Gestionar usuarios" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="1130" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu13" value="CU-13 Gestionar bandeja de fiscalización" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="1230" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu14" value="CU-14 Generar reportes" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="1330" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu15" value="CU-15 Consultar mapa de operadores" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="1430" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu16" value="CU-16 Filtrar operadores" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="1530" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu17" value="CU-17 Consultar estado de operador" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="sys">
+      <mxGeometry x="140" y="1630" width="180" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor1" value="Inspector" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="120" y="380" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor2" value="Operador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="120" y="760" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor3" value="Administrador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="120" y="1140" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor4" value="Público general" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="120" y="1520" width="30" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="e1" style="html=1;endArrow=none;" edge="1" parent="1" source="actor1" target="cu1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e2" style="html=1;endArrow=none;" edge="1" parent="1" source="actor1" target="cu2">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e3" style="html=1;endArrow=none;" edge="1" parent="1" source="actor1" target="cu3">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e4" style="html=1;endArrow=none;" edge="1" parent="1" source="actor1" target="cu4">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e5" style="html=1;endArrow=none;" edge="1" parent="1" source="actor1" target="cu5">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e6" style="html=1;endArrow=none;" edge="1" parent="1" source="actor1" target="cu6">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e7" style="html=1;endArrow=none;" edge="1" parent="1" source="actor2" target="cu7">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e8" style="html=1;endArrow=none;" edge="1" parent="1" source="actor2" target="cu8">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e9" style="html=1;endArrow=none;" edge="1" parent="1" source="actor2" target="cu9">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e10" style="html=1;endArrow=none;" edge="1" parent="1" source="actor3" target="cu10">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e11" style="html=1;endArrow=none;" edge="1" parent="1" source="actor3" target="cu11">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e12" style="html=1;endArrow=none;" edge="1" parent="1" source="actor3" target="cu12">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e13" style="html=1;endArrow=none;" edge="1" parent="1" source="actor3" target="cu13">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e14" style="html=1;endArrow=none;" edge="1" parent="1" source="actor3" target="cu14">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e15" style="html=1;endArrow=none;" edge="1" parent="1" source="actor4" target="cu15">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e16" style="html=1;endArrow=none;" edge="1" parent="1" source="actor4" target="cu16">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e17" style="html=1;endArrow=none;" edge="1" parent="1" source="actor4" target="cu17">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i1" value="&lt;&lt;include&gt;&gt;" style="html=1;endArrow=open;dashed=1;strokeColor=#999999;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="cu2" target="cu3">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i2" value="&lt;&lt;include&gt;&gt;" style="html=1;endArrow=open;dashed=1;strokeColor=#999999;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="cu3" target="cu4">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i3" value="&lt;&lt;include&gt;&gt;" style="html=1;endArrow=open;dashed=1;strokeColor=#999999;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="cu5" target="cu3">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i4" value="&lt;&lt;include&gt;&gt;" style="html=1;endArrow=open;dashed=1;strokeColor=#999999;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="cu7" target="cu8">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i5" value="&lt;&lt;include&gt;&gt;" style="html=1;endArrow=open;dashed=1;strokeColor=#999999;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="cu16" target="cu17">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>
