@@ -19,7 +19,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from configs.dao import DATABASE_URL, crear_dao
+from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
 from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
+from modulos.trazabilidad_comercial.trazabilidad_comercial import TrazabilidadComercialModulo
+from modulos.fiscalizacion.fiscalizacion import FiscalizacionModulo
 
 
 class RoccaApp:
@@ -42,8 +45,17 @@ class RoccaApp:
         self.db_dao.crear_tablas()
 
         # 3. Módulos de negocio (cada uno inyecta sus propias dependencias)
+        self.registro_operadores = RegistroOperadoresModulo(self.db_dao)
+        self.registro_operadores.registrar(self.app)
+
         self.remitos_carnicos = RemitosCarnicosModulo(self.db_dao)
         self.remitos_carnicos.registrar(self.app)
+
+        self.trazabilidad_comercial = TrazabilidadComercialModulo(self.db_dao)
+        self.trazabilidad_comercial.registrar(self.app)
+
+        self.fiscalizacion = FiscalizacionModulo(self.db_dao)
+        self.fiscalizacion.registrar(self.app)
 
         # 4. Health check
         self._registrar_health_check()

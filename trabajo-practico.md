@@ -10,15 +10,21 @@
 
 ### 1.1 Identificación de la institución
 
-| Dato | Detalle |
-| --- | --- |
-| **Organismo** | Ministerio de Producción de la Provincia de Santiago del Estero |
-| **Dirección a cargo** | Dirección General de Agricultura y Ganadería |
-| **Programa** | ProCarne Fiscalización (Control de la Cadena Cárnica) |
+El Registro Provincial de Operadores de Carnes (RPOC) tiene como objetivo principal garantizar la trazabilidad, inocuidad y legalidad en la cadena de comercialización de carnes y subproductos en todo el territorio provincial. Este registro alcanza a todos los actores vinculados a la producción, procesamiento y comercialización de carnes: productores, abastecedores, consignatarios, matarifes, frigoríficos, fábricas de chacinados, distribuidores, supermercados y carnicerías,entre otros.
+
+Su función es registrar, clasificar y mantener actualizada la información de todos los operadores que intervienen en la cadena cárnica, promoviendo condiciones sanitarias y comerciales que minimicen los riesgos para la salud humana y fortalezcan la legalidad en el sector.
+
+Además, el organismo cuenta con un área de fiscalización, que actúa de manera permanente para controlar el cumplimiento de las normativas vigentes y combatir la faena clandestina. Para ello, dispone de canales de comunicación a través de los cuales se pueden realizar denuncias anónimas, garantizando confidencialidad y respuesta institucional:
+
+| Dato                      | Detalle                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| **Organismo**             | Ministerio de Producción de la Provincia de Santiago del Estero                      |
+| **Dirección a cargo**     | Dirección General de Agricultura y Ganadería                                         |
+| **Programa**              | ProCarne Fiscalización (Control de la Cadena Cárnica)                                |
 | **Sistema a desarrollar** | ROCCA — Registro de Operadores y Control de la Cadena Cárnica de Santiago del Estero |
-| **Predecesor** | ROC — Registro de Operadores de la Carne (en proceso de implementación) |
-| **Referente** | Ing. (Agrónoma) Julia Luna — Área de Producción / Inspección |
-| **Ámbito** | Provincia de Santiago del Estero (territorio completo) |
+| **Predecesor**            | ROC — Registro de Operadores de la Carne (en proceso de implementación)              |
+| **Referente**             | Ing. (Agrónoma) Julia Luna — Área de Producción / Inspección                         |
+| **Ámbito**                | Provincia de Santiago del Estero (territorio completo)                               |
 
 ### 1.2 Estructura organizativa relevante
 
@@ -26,13 +32,13 @@ El Ministerio de Producción posee múltiples áreas con incumbencias dispares. 
 
 **Actores del sistema:**
 
-| Actor | Rol | Acceso |
-| --- | --- | --- |
-| **Inspector** | Personal de campo de ProCarne Fiscalización | Web responsiva en dispositivo móvil, con y sin conexión |
-| **Operador** | Establecimiento de la cadena cárnica (12 categorías) | [PENDIENTE] — ¿accede a cargar/consultar sus datos? |
-| **Administrador** | Gestiona datos maestros, habilitaciones, usuarios y bandeja de fiscalización | Web de escritorio |
-| **Público general** | Consumidor que consulta operadores verificados | Web pública, sin autenticación |
-| **Organismos nacionales** | ARCA, Senasa (SIGSA/AGROTRAZA) | [PENDIENTE] — integración o intercambio documental |
+| Actor                     | Rol                                                                          | Acceso                                                  |
+| ------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **Inspector**             | Personal de campo de ProCarne Fiscalización                                  | Web responsiva en dispositivo móvil, con y sin conexión |
+| **Operador**              | Establecimiento de la cadena cárnica (12 categorías)                         | [PENDIENTE] — ¿accede a cargar/consultar sus datos?     |
+| **Administrador**         | Gestiona datos maestros, habilitaciones, usuarios y bandeja de fiscalización | Web de escritorio                                       |
+| **Público general**       | Consumidor que consulta operadores verificados                               | Web pública, sin autenticación                          |
+| **Organismos nacionales** | ARCA, Senasa (SIGSA/AGROTRAZA)                                               | [PENDIENTE] — integración o intercambio documental      |
 
 **Operadores alcanzados (inscripción obligatoria):**
 Frigoríficos, Mataderos, Matarifes abastecedores, Abastecedores, Distribuidores, Transportistas de productos cárnicos, Carnicerías, Supermercados, Cámaras frigoríficas, Elaboradores de chacinados, Despostaderos, y todo otro operador que intervenga en la cadena comercial de carnes.
@@ -54,17 +60,17 @@ La misión del Ministerio de Producción, a través de la Dirección General de 
 
 **Objetivos del sistema:**
 
-| # | Objetivo |
-| --- | --- |
-| OE-1 | Registrar la totalidad de los operadores de la cadena cárnica provincial |
-| OE-2 | Identificar el origen y destino comercial de los productos cárnicos |
-| OE-3 | Conocer los volúmenes de ingreso y circulación de carnes dentro de la provincia |
-| OE-4 | Detectar desvíos comerciales e inconsistencias documentales |
-| OE-5 | Facilitar la planificación de operativos de fiscalización |
-| OE-6 | Elaborar indicadores económicos y productivos del sector |
-| OE-7 | Facilitar el trabajo de los inspectores de carne en campo, con operación offline |
+| #    | Objetivo                                                                             |
+| ---- | ------------------------------------------------------------------------------------ |
+| OE-1 | Registrar la totalidad de los operadores de la cadena cárnica provincial             |
+| OE-2 | Identificar el origen y destino comercial de los productos cárnicos                  |
+| OE-3 | Conocer los volúmenes de ingreso y circulación de carnes dentro de la provincia      |
+| OE-4 | Detectar desvíos comerciales e inconsistencias documentales                          |
+| OE-5 | Facilitar la planificación de operativos de fiscalización                            |
+| OE-6 | Elaborar indicadores económicos y productivos del sector                             |
+| OE-7 | Facilitar el trabajo de los inspectores de carne en campo, con operación offline     |
 | OE-8 | Exponer al público el estado de los operadores verificados (transparencia comercial) |
-| OE-9 | Incentivar la formalización y la faena en origen |
+| OE-9 | Incentivar la formalización y la faena en origen                                     |
 
 ---
 
@@ -76,129 +82,129 @@ La misión del Ministerio de Producción, a través de la Dirección General de 
 
 **Módulo I — Registro Provincial de Operadores**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
+| ID        | Requisito                                                                                                                                                | Tipo     |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | RF-REG-01 | Registrar operadores con: datos identificatorios, habilitaciones, inscripciones nacionales y provinciales, actividad desarrollada, domicilios operativos | Conducta |
-| RF-REG-02 | Mantener el estado registral de cada operador (activo / inactivo / en trámite / vencido) | Conducta |
-| RF-REG-03 | Administrar el padrón de operadores de todos los tipos | Conducta |
-| RF-REG-04 | Cargar y actualizar habilitaciones con fechas de emisión y vencimiento (base del semáforo) | Conducta |
-| RF-REG-05 | Importar la base de datos provincial existente como carga inicial del padrón | Conducta |
+| RF-REG-02 | Mantener el estado registral de cada operador (activo / inactivo / en trámite / vencido)                                                                 | Conducta |
+| RF-REG-03 | Administrar el padrón de operadores de todos los tipos                                                                                                   | Conducta |
+| RF-REG-04 | Cargar y actualizar habilitaciones con fechas de emisión y vencimiento (base del semáforo)                                                               | Conducta |
+| RF-REG-05 | Importar la base de datos provincial existente como carga inicial del padrón                                                                             | Conducta |
 
 **Módulo II — Trazabilidad Comercial**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
-| RF-TRA-01 | Registrar el ingreso de carnes a la provincia | Conducta |
-| RF-TRA-02 | Registrar el origen de la mercadería y el establecimiento de faena | Conducta |
-| RF-TRA-03 | Vincular el número de DTE y el número de remito de cada movimiento | Conducta |
-| RF-TRA-04 | Registrar cantidad de kilogramos, especie y destino comercial | Conducta |
+| ID        | Requisito                                                                                           | Tipo     |
+| --------- | --------------------------------------------------------------------------------------------------- | -------- |
+| RF-TRA-01 | Registrar el ingreso de carnes a la provincia                                                       | Conducta |
+| RF-TRA-02 | Registrar el origen de la mercadería y el establecimiento de faena                                  | Conducta |
+| RF-TRA-03 | Vincular el número de DTE y el número de remito de cada movimiento                                  | Conducta |
+| RF-TRA-04 | Registrar cantidad de kilogramos, especie y destino comercial                                       | Conducta |
 | RF-TRA-05 | Reconstruir la trazabilidad comercial completa de un producto desde la faena hasta el destino final | Conducta |
 
 **Módulo III — Fiscalización**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
-| RF-FIS-01 | Registrar inspecciones de establecimientos, geolocalizadas | Conducta |
-| RF-FIS-02 | Registrar actas, decomisos, infracciones, sanciones y reincidencias | Conducta |
-| RF-FIS-03 | El inspector inicia sesión con su usuario | Conducta |
-| RF-FIS-04 | Guardar el formulario de inspección en cualquier momento, incluso sin conexión | Conducta |
-| RF-FIS-05 | Sincronizar las inspecciones guardadas cuando se recupere la conectividad | Conducta |
-| RF-FIS-06 | Generar una observación o multa ante faltantes detectados | Conducta |
+| ID        | Requisito                                                                            | Tipo     |
+| --------- | ------------------------------------------------------------------------------------ | -------- |
+| RF-FIS-01 | Registrar inspecciones de establecimientos, geolocalizadas                           | Conducta |
+| RF-FIS-02 | Registrar actas, decomisos, infracciones, sanciones y reincidencias                  | Conducta |
+| RF-FIS-03 | El inspector inicia sesión con su usuario                                            | Conducta |
+| RF-FIS-04 | Guardar el formulario de inspección en cualquier momento, incluso sin conexión       | Conducta |
+| RF-FIS-05 | Sincronizar las inspecciones guardadas cuando se recupere la conectividad            | Conducta |
+| RF-FIS-06 | Generar una observación o multa ante faltantes detectados                            | Conducta |
 | RF-FIS-07 | Registrar en la observación: lugar, fecha, hora, foto (si es posible) y posición GPS | Conducta |
-| RF-FIS-08 | Levantar un ticket ante un problema detectado en faenadores o mataderos | Conducta |
-| RF-FIS-09 | Consultar el historial de inspecciones y observaciones de un establecimiento | Conducta |
-| RF-FIS-10 | Gestionar la bandeja de observaciones y multas: estado, seguimiento y resolución | Conducta |
-| RF-FIS-11 | Registrar reincidencias por operador | Conducta |
+| RF-FIS-08 | Levantar un ticket ante un problema detectado en faenadores o mataderos              | Conducta |
+| RF-FIS-09 | Consultar el historial de inspecciones y observaciones de un establecimiento         | Conducta |
+| RF-FIS-10 | Gestionar la bandeja de observaciones y multas: estado, seguimiento y resolución     | Conducta |
+| RF-FIS-11 | Registrar reincidencias por operador                                                 | Conducta |
 
 **Módulo IV — Información Estratégica**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
-| RF-INF-01 | Estadísticas de faena provincial | Información |
-| RF-INF-02 | Estadísticas de ingreso de carnes extraprovinciales | Información |
-| RF-INF-03 | Distribución territorial de operadores y movimientos | Información |
-| RF-INF-04 | Consumo aparente de carne en la provincia | Información |
-| RF-INF-05 | Evolución de operadores registrados | Información |
-| RF-INF-06 | Indicadores económicos de la cadena cárnica | Información |
+| ID        | Requisito                                                     | Tipo        |
+| --------- | ------------------------------------------------------------- | ----------- |
+| RF-INF-01 | Estadísticas de faena provincial                              | Información |
+| RF-INF-02 | Estadísticas de ingreso de carnes extraprovinciales           | Información |
+| RF-INF-03 | Distribución territorial de operadores y movimientos          | Información |
+| RF-INF-04 | Consumo aparente de carne en la provincia                     | Información |
+| RF-INF-05 | Evolución de operadores registrados                           | Información |
+| RF-INF-06 | Indicadores económicos de la cadena cárnica                   | Información |
 | RF-INF-07 | Mapas de calor de infracciones y de establecimientos en regla | Información |
-| RF-INF-08 | Generar reportes exportables | Conducta |
+| RF-INF-08 | Generar reportes exportables                                  | Conducta    |
 
 **Módulo V — Portal Público de Operadores Verificados**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
+| ID        | Requisito                                                                        | Tipo     |
+| --------- | -------------------------------------------------------------------------------- | -------- |
 | RF-PUB-01 | Mostrar en un mapa provincial todos los operadores verificados, con su ubicación | Conducta |
-| RF-PUB-02 | Consultar el estado de un operador concreto | Conducta |
-| RF-PUB-03 | Semáforo de habilitación: 🟢 vigente, 🟡 próxima a vencer, 🔴 vencida | Conducta |
-| RF-PUB-04 | Filtrar por estado, localidad, tipo de operador y especie | Conducta |
-| RF-PUB-05 | Dar visibilidad comercial a los operadores registrados | Conducta |
+| RF-PUB-02 | Consultar el estado de un operador concreto                                      | Conducta |
+| RF-PUB-03 | Semáforo de habilitación: 🟢 vigente, 🟡 próxima a vencer, 🔴 vencida            | Conducta |
+| RF-PUB-04 | Filtrar por estado, localidad, tipo de operador y especie                        | Conducta |
+| RF-PUB-05 | Dar visibilidad comercial a los operadores registrados                           | Conducta |
 
 **Módulo VI — Programa de Incentivos**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
+| ID        | Requisito                                                                     | Tipo     |
+| --------- | ----------------------------------------------------------------------------- | -------- |
 | RF-INC-01 | Gestionar el programa de incentivos a la formalización y a la faena en origen | Conducta |
-| RF-INC-02 | Incentivar la registración y declaración de movimientos comerciales | Conducta |
-| RF-INC-03 | Otorgar visibilidad positiva a los operadores en regla | Conducta |
+| RF-INC-02 | Incentivar la registración y declaración de movimientos comerciales           | Conducta |
+| RF-INC-03 | Otorgar visibilidad positiva a los operadores en regla                        | Conducta |
 
 **Módulo VII — Movimientos Comerciales**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
-| RF-MOV-01 | Declarar ingresos y egresos de carnes | Conducta |
-| RF-MOV-02 | Vincular DTE y remitos en la declaración | Conducta |
-| RF-MOV-03 | Generar constancias provinciales de los movimientos | Conducta |
+| ID        | Requisito                                                                            | Tipo     |
+| --------- | ------------------------------------------------------------------------------------ | -------- |
+| RF-MOV-01 | Declarar ingresos y egresos de carnes                                                | Conducta |
+| RF-MOV-02 | Vincular DTE y remitos en la declaración                                             | Conducta |
+| RF-MOV-03 | Generar constancias provinciales de los movimientos                                  | Conducta |
 | RF-MOV-04 | Confirmar recepciones (equivalente provincial a la conformidad de recepción del REC) | Conducta |
-| RF-MOV-05 | Construir la trazabilidad comercial completa a partir de las declaraciones | Conducta |
+| RF-MOV-05 | Construir la trazabilidad comercial completa a partir de las declaraciones           | Conducta |
 
 **Motor de Semáforo**
 
-| ID | Regla | Tipo |
-| --- | --- | --- |
+| ID        | Regla                                                         | Tipo             |
+| --------- | ------------------------------------------------------------- | ---------------- |
 | RF-SEM-01 | 🟢 Verde: habilitación vigente, dentro del período de validez | Regla de negocio |
-| RF-SEM-02 | 🟡 Amarillo: habilitación próxima a vencer | Regla de negocio |
-| RF-SEM-03 | 🔴 Rojo: habilitación vencida | Regla de negocio |
+| RF-SEM-02 | 🟡 Amarillo: habilitación próxima a vencer                    | Regla de negocio |
+| RF-SEM-03 | 🔴 Rojo: habilitación vencida                                 | Regla de negocio |
 
 **Administración (transversal)**
 
-| ID | Requisito | Tipo |
-| --- | --- | --- |
+| ID        | Requisito                                                   | Tipo     |
+| --------- | ----------------------------------------------------------- | -------- |
 | RF-ADM-01 | Administrar usuarios (inspectores, administradores) y roles | Conducta |
-| RF-ADM-02 | Gestionar la bandeja de observaciones y multas | Conducta |
-| RF-ADM-03 | Generar reportes y las capas de mapas de calor | Conducta |
-| RF-ADM-04 | Auditoría de accesos y de cambios sobre los expedientes | Conducta |
+| RF-ADM-02 | Gestionar la bandeja de observaciones y multas              | Conducta |
+| RF-ADM-03 | Generar reportes y las capas de mapas de calor              | Conducta |
+| RF-ADM-04 | Auditoría de accesos y de cambios sobre los expedientes     | Conducta |
 
 #### 2.1.2 Requisitos No Funcionales
 
-| ID | Requisito | Categoría |
-| --- | --- | --- |
-| RNF-01 | Aplicación web responsiva; no se entrega APK | Usabilidad |
-| RNF-02 | Operación offline obligatoria: el inspector trabaja en lugares remotos sin internet y no debe perder datos | Confiabilidad |
-| RNF-03 | Persistencia local del formulario y de las evidencias (foto) mientras no hay red | Confiabilidad |
-| RNF-04 | Geolocalización del dispositivo en el momento de la inspección; sin señal se usa la última posición conocida | Funcionalidad |
-| RNF-05 | Captura de foto desde la cámara del dispositivo, tolerante a la falta de señal | Funcionalidad |
-| RNF-06 | Toda evidencia queda asociada a su observación: fecha, hora, lugar, GPS y foto | Integridad |
-| RNF-07 | Autenticación de usuarios del Organismo; los datos del expediente son visibles solo para personal autorizado | Seguridad |
-| RNF-08 | Integridad y trazabilidad de cambios: toda modificación de un expediente debe quedar auditada | Seguridad |
-| RNF-09 | Soporte de mapa provincial completo, con agrupación de marcadores (clustering) | Rendimiento |
-| RNF-10 | Interfaz en español, pensada para usuarios no técnicos en campo | Usabilidad |
-| RNF-11 | Escalabilidad: la provincia maneja un volumen alto de establecimientos, inspecciones y movimientos comerciales | Rendimiento |
-| RNF-12 | Invariancia fiscal: el sistema no crea cargas tributarias ni restricciones al comercio interjurisdiccional | Restricción legal |
+| ID     | Requisito                                                                                                      | Categoría         |
+| ------ | -------------------------------------------------------------------------------------------------------------- | ----------------- |
+| RNF-01 | Aplicación web responsiva; no se entrega APK                                                                   | Usabilidad        |
+| RNF-02 | Operación offline obligatoria: el inspector trabaja en lugares remotos sin internet y no debe perder datos     | Confiabilidad     |
+| RNF-03 | Persistencia local del formulario y de las evidencias (foto) mientras no hay red                               | Confiabilidad     |
+| RNF-04 | Geolocalización del dispositivo en el momento de la inspección; sin señal se usa la última posición conocida   | Funcionalidad     |
+| RNF-05 | Captura de foto desde la cámara del dispositivo, tolerante a la falta de señal                                 | Funcionalidad     |
+| RNF-06 | Toda evidencia queda asociada a su observación: fecha, hora, lugar, GPS y foto                                 | Integridad        |
+| RNF-07 | Autenticación de usuarios del Organismo; los datos del expediente son visibles solo para personal autorizado   | Seguridad         |
+| RNF-08 | Integridad y trazabilidad de cambios: toda modificación de un expediente debe quedar auditada                  | Seguridad         |
+| RNF-09 | Soporte de mapa provincial completo, con agrupación de marcadores (clustering)                                 | Rendimiento       |
+| RNF-10 | Interfaz en español, pensada para usuarios no técnicos en campo                                                | Usabilidad        |
+| RNF-11 | Escalabilidad: la provincia maneja un volumen alto de establecimientos, inspecciones y movimientos comerciales | Rendimiento       |
+| RNF-12 | Invariancia fiscal: el sistema no crea cargas tributarias ni restricciones al comercio interjurisdiccional     | Restricción legal |
 
 #### 2.1.3 Reglas de Negocio
 
-| ID | Regla |
-| --- | --- |
-| RN-01 | El circuito de la carne es ganado → faenador/matadero → carnicería → consumidor; cada eslabón debe poder verificarse |
-| RN-02 | El tránsito de animales en pie se ampara con el DUT; una vez faenado, rige la normativa fiscal y sanitaria del transporte de carnes (REC) |
+| ID    | Regla                                                                                                                                                       |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RN-01 | El circuito de la carne es ganado → faenador/matadero → carnicería → consumidor; cada eslabón debe poder verificarse                                        |
+| RN-02 | El tránsito de animales en pie se ampara con el DUT; una vez faenado, rige la normativa fiscal y sanitaria del transporte de carnes (REC)                   |
 | RN-03 | El frigorífico está obligado a emitir el REC, único documento válido para el traslado de carnes; el receptor debe confirmar la recepción (aceptar/rechazar) |
-| RN-04 | Las reses que salen de un matadero deben tener sello de trazabilidad de SENASA [? por confirmar] |
-| RN-05 | Ante faltantes de sellos se genera una observación de multa, con lugar, fecha, hora, foto y posición GPS |
-| RN-06 | Un establecimiento vencido se marca en rojo y deja de ser considerado habilitado a los efectos del semáforo |
-| RN-07 | La habilitación para carne vacuna y la de carne de cerdo pueden tener requisitos y vigencias distintas [?] |
-| RN-08 | Los traslados directos de exportación y el reparto de supermercados desde sus centros de distribución a sucursales quedan exceptuados del REC |
-| RN-09 | Todo operador de la cadena debe inscribirse obligatoriamente en el ROCCA |
-| RN-10 | Los movimientos comerciales declarados (Módulo VII) generan constancias provinciales y alimentan la trazabilidad comercial (Módulo II) |
+| RN-04 | Las reses que salen de un matadero deben tener sello de trazabilidad de SENASA [? por confirmar]                                                            |
+| RN-05 | Ante faltantes de sellos se genera una observación de multa, con lugar, fecha, hora, foto y posición GPS                                                    |
+| RN-06 | Un establecimiento vencido se marca en rojo y deja de ser considerado habilitado a los efectos del semáforo                                                 |
+| RN-07 | La habilitación para carne vacuna y la de carne de cerdo pueden tener requisitos y vigencias distintas [?]                                                  |
+| RN-08 | Los traslados directos de exportación y el reparto de supermercados desde sus centros de distribución a sucursales quedan exceptuados del REC               |
+| RN-09 | Todo operador de la cadena debe inscribirse obligatoriamente en el ROCCA                                                                                    |
+| RN-10 | Los movimientos comerciales declarados (Módulo VII) generan constancias provinciales y alimentan la trazabilidad comercial (Módulo II)                      |
 
 ### 2.2 Modelo de Contexto
 
@@ -206,58 +212,58 @@ La misión del Ministerio de Producción, a través de la Dirección General de 
 
 ![Modelo de Contexto](diagramas/contexto.png)
 
-*Fuente: [diagramas/contexto.drawio](diagramas/contexto.drawio)*
+_Fuente: [diagramas/contexto.drawio](diagramas/contexto.drawio)_
 
 **Interacciones principales:**
 
-| Actor | Interacción |
-| --- | --- |
-| Inspector | Inicia sesión, registra inspecciones, genera observaciones/multas, consulta historial |
-| Operador | [PENDIENTE] Declara movimientos comerciales, consulta su estado, responde observaciones |
-| Administrador | Gestiona padrón, habilitaciones, usuarios, bandeja de fiscalización |
-| Público general | Consulta mapa de operadores verificados, estado de habilitación |
-| ARCA (REC) | [?] Vinculación de remitos electrónicos cárnicos |
-| Senasa (DUT/DT-e) | [?] Vinculación de tránsitos de animales en pie |
-| Senasa (SIGSA) | [?] Vinculación de registros sanitarios |
-| Senasa (AGROTRAZA) | Convenio vigente desde 17/09/2026; acceso del Ministerio provincial ya otorgado |
+| Actor              | Interacción                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| Inspector          | Inicia sesión, registra inspecciones, genera observaciones/multas, consulta historial   |
+| Operador           | [PENDIENTE] Declara movimientos comerciales, consulta su estado, responde observaciones |
+| Administrador      | Gestiona padrón, habilitaciones, usuarios, bandeja de fiscalización                     |
+| Público general    | Consulta mapa de operadores verificados, estado de habilitación                         |
+| ARCA (REC)         | [?] Vinculación de remitos electrónicos cárnicos                                        |
+| Senasa (DUT/DT-e)  | [?] Vinculación de tránsitos de animales en pie                                         |
+| Senasa (SIGSA)     | [?] Vinculación de registros sanitarios                                                 |
+| Senasa (AGROTRAZA) | Convenio vigente desde 17/09/2026; acceso del Ministerio provincial ya otorgado         |
 
 ### 2.3 Modelo de Requisitos (Casos de Uso)
 
 **Actor: Inspector**
 
-| Caso de Uso | Descripción |
-| --- | --- |
-| Iniciar sesión | El inspector se autentica con su usuario y contraseña |
-| Registrar inspección | El inspector completa el formulario de inspección de un establecimiento, geolocalizado |
-| Guardar inspección offline | El inspector guarda el formulario en el dispositivo sin conexión a internet |
-| Sincronizar inspecciones | Al recuperar conectividad, el sistema envía las inspecciones pendientes |
-| Generar observación/multa | El inspector registra una infracción detectada, con evidencia (foto, GPS, fecha, hora) |
-| Consultar historial | El inspector consulta el historial de inspecciones y observaciones de un establecimiento |
+| Caso de Uso                | Descripción                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| Iniciar sesión             | El inspector se autentica con su usuario y contraseña                                    |
+| Registrar inspección       | El inspector completa el formulario de inspección de un establecimiento, geolocalizado   |
+| Guardar inspección offline | El inspector guarda el formulario en el dispositivo sin conexión a internet              |
+| Sincronizar inspecciones   | Al recuperar conectividad, el sistema envía las inspecciones pendientes                  |
+| Generar observación/multa  | El inspector registra una infracción detectada, con evidencia (foto, GPS, fecha, hora)   |
+| Consultar historial        | El inspector consulta el historial de inspecciones y observaciones de un establecimiento |
 
 **Actor: Operador**
 
-| Caso de Uso | Descripción |
-| --- | --- |
+| Caso de Uso                   | Descripción                                                                |
+| ----------------------------- | -------------------------------------------------------------------------- |
 | Declarar movimiento comercial | El operador declara un ingreso o egreso de carnes, vinculando DTE y remito |
-| Confirmar recepción | El operador receptor confirma la recepción de un movimiento comercial |
-| Consultar estado | El operador consulta su estado registral y habilitaciones [PENDIENTE] |
+| Confirmar recepción           | El operador receptor confirma la recepción de un movimiento comercial      |
+| Consultar estado              | El operador consulta su estado registral y habilitaciones [PENDIENTE]      |
 
 **Actor: Administrador**
 
-| Caso de Uso | Descripción |
-| --- | --- |
-| Gestionar padrón | El administrador carga y actualiza los datos de los operadores |
-| Gestionar habilitaciones | El administrador carga y actualiza habilitaciones con fechas de emisión y vencimiento |
-| Gestionar usuarios | El administrador crea, edita y desactiva usuarios del sistema |
-| Gestionar bandeja de fiscalización | El administrador da seguimiento a observaciones y multas |
-| Generar reportes | El administrador genera reportes y mapas de calor |
+| Caso de Uso                        | Descripción                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------- |
+| Gestionar padrón                   | El administrador carga y actualiza los datos de los operadores                        |
+| Gestionar habilitaciones           | El administrador carga y actualiza habilitaciones con fechas de emisión y vencimiento |
+| Gestionar usuarios                 | El administrador crea, edita y desactiva usuarios del sistema                         |
+| Gestionar bandeja de fiscalización | El administrador da seguimiento a observaciones y multas                              |
+| Generar reportes                   | El administrador genera reportes y mapas de calor                                     |
 
 **Actor: Público general**
 
-| Caso de Uso | Descripción |
-| --- | --- |
-| Consultar mapa de operadores | El ciudadano consulta el mapa provincial con los operadores verificados |
-| Filtrar operadores | El ciudadano filtra por estado, localidad, tipo de operador y especie |
+| Caso de Uso                  | Descripción                                                               |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| Consultar mapa de operadores | El ciudadano consulta el mapa provincial con los operadores verificados   |
+| Filtrar operadores           | El ciudadano filtra por estado, localidad, tipo de operador y especie     |
 | Consultar estado de operador | El ciudadano consulta el semáforo de habilitación de un operador concreto |
 
 ---
@@ -272,7 +278,7 @@ La misión del Ministerio de Producción, a través de la Dirección General de 
 
 ![Arquitectura del Software](diagramas/arquitectura.png)
 
-*Fuente: [diagramas/arquitectura.drawio](diagramas/arquitectura.drawio)*
+_Fuente: [diagramas/arquitectura.drawio](diagramas/arquitectura.drawio)_
 
 **Decisiones de diseño:**
 
@@ -289,23 +295,23 @@ La misión del Ministerio de Producción, a través de la Dirección General de 
 
 ![Diagrama Entidad-Relación](diagramas/er.png)
 
-*Fuente: [diagramas/er.drawio](diagramas/er.drawio)*
+_Fuente: [diagramas/er.drawio](diagramas/er.drawio)_
 
 **Descripción de entidades:**
 
-| Entidad | Descripción | Relación principal |
-| --- | --- | --- |
-| **Usuario** | Persona autorizada (inspector o administrador) | 1:N con Inspección (como inspector) |
-| **Operador** | Establecimiento de la cadena cárnica (12 categorías) | 1:N con Habilitación, Inscripción, Inspección, Movimiento Comercial, Sanción |
-| **Habilitación** | Autorización para operar, con vigencia | N:1 con Operador |
-| **Inscripción** | Registro en organismos nacionales/provinciales | N:1 con Operador |
-| **Inspección** | Visita de fiscalización en campo | N:1 con Operador, N:1 con Usuario (inspector) |
-| **Sello Verificado** | Verificación de sello de trazabilidad | N:1 con Inspección |
-| **Observación** | Infracción detectada en inspección | N:1 con Inspección |
-| **Evidencia** | Foto o archivo asociado a una observación | N:1 con Observación |
-| **Movimiento Comercial** | Ingreso/egreso de carnes con DTE y remito | N:1 con Operador (origen y destino) |
-| **Sanción** | Consecuencia de una observación | N:1 con Operador, N:1 con Observación |
-| **Auditoría** | Registro de acciones de usuarios | N:1 con Usuario |
+| Entidad                  | Descripción                                          | Relación principal                                                           |
+| ------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Usuario**              | Persona autorizada (inspector o administrador)       | 1:N con Inspección (como inspector)                                          |
+| **Operador**             | Establecimiento de la cadena cárnica (12 categorías) | 1:N con Habilitación, Inscripción, Inspección, Movimiento Comercial, Sanción |
+| **Habilitación**         | Autorización para operar, con vigencia               | N:1 con Operador                                                             |
+| **Inscripción**          | Registro en organismos nacionales/provinciales       | N:1 con Operador                                                             |
+| **Inspección**           | Visita de fiscalización en campo                     | N:1 con Operador, N:1 con Usuario (inspector)                                |
+| **Sello Verificado**     | Verificación de sello de trazabilidad                | N:1 con Inspección                                                           |
+| **Observación**          | Infracción detectada en inspección                   | N:1 con Inspección                                                           |
+| **Evidencia**            | Foto o archivo asociado a una observación            | N:1 con Observación                                                          |
+| **Movimiento Comercial** | Ingreso/egreso de carnes con DTE y remito            | N:1 con Operador (origen y destino)                                          |
+| **Sanción**              | Consecuencia de una observación                      | N:1 con Operador, N:1 con Observación                                        |
+| **Auditoría**            | Registro de acciones de usuarios                     | N:1 con Usuario                                                              |
 
 ### 3.3 Diagramas de Subsistemas y Colaboración
 
@@ -556,11 +562,11 @@ GET    /api/publico/semaphore/:id
 
 ## Resumen de Pendientes
 
-| # | Pendiente | Impacto |
-| --- | --- | --- |
-| 1 | Definir nivel de integración con ARCA/Senasa (API, importación, o referencia documental) | Alto — condiciona arquitectura de Módulos II y VII |
-| 2 | Definir mecanismo concreto de incentivos (Módulo VI) | Medio — afecta alcance del Módulo VI |
-| 3 | Definir quién declara movimientos comerciales y con qué periodicidad (Módulo VII) | Alto — afecta diseño del Módulo VII |
-| 4 | Confirmar si los operadores tienen acceso al sistema | Medio — afecta diseño de interfaces |
-| 5 | Definir cuántos días de anticipación para el semáforo amarillo | Bajo — afecta regla de negocio |
-| 6 | Relevamiento de la base de datos provincial existente (formato, calidad, cobertura) | Medio — afecta carga inicial |
+| #   | Pendiente                                                                                | Impacto                                            |
+| --- | ---------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1   | Definir nivel de integración con ARCA/Senasa (API, importación, o referencia documental) | Alto — condiciona arquitectura de Módulos II y VII |
+| 2   | Definir mecanismo concreto de incentivos (Módulo VI)                                     | Medio — afecta alcance del Módulo VI               |
+| 3   | Definir quién declara movimientos comerciales y con qué periodicidad (Módulo VII)        | Alto — afecta diseño del Módulo VII                |
+| 4   | Confirmar si los operadores tienen acceso al sistema                                     | Medio — afecta diseño de interfaces                |
+| 5   | Definir cuántos días de anticipación para el semáforo amarillo                           | Bajo — afecta regla de negocio                     |
+| 6   | Relevamiento de la base de datos provincial existente (formato, calidad, cobertura)      | Medio — afecta carga inicial                       |
