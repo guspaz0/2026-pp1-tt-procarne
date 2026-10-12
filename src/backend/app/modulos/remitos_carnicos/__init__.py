@@ -2,8 +2,9 @@
 
 Aplica principios SOLID:
 
-- **S**ingle **R**esponsibility: cada submódulo (operador, mercaderia,
-  remito) tiene su propia entidad, DAO, schema y servicio.
+- **S**ingle **R**esponsibility: cada submódulo (operador, remito) tiene
+  su propia entidad, DAO, schema y servicio. La mercadería es compartida
+  y proviene del módulo genérico.
 - **O**pen/**C**losed: las reglas de validación son extensibles mediante
   subclases de :class:`ReglaValidacion`.
 - **L**iskov **S**ubstitution: los DAOs son intercambiables.
@@ -18,8 +19,8 @@ Estructura::
     ├── base.py          # Entidad (ABC)
     ├── enums.py         # CasoRemito, TipoMovimiento, EstadoRemito, UnidadMedida
     ├── operador/        # Operador: entidad, DAO, schema, servicio
-    ├── mercaderia/      # Mercadería: entidad, DAO, schema, servicio
     ├── remito/          # Remito: DAO, schema, validación, servicio
+    # (la mercadería vive en modulos/genericos/mercaderia)
     └── renglon/         # (RenglonRemito está en remito/dao.py)
 """
 
@@ -32,7 +33,7 @@ from .operador import (
     OperadorService,
     OperadorError,
 )
-from .mercaderia import (
+from modulos.genericos.mercaderia import (
     Mercaderia,
     MercaderiaDAO,
     MercaderiaIn,

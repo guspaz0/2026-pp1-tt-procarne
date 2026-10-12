@@ -47,8 +47,6 @@ class OperadorIn(BaseModel):
     domicilio_fiscal: Optional[str] = None
     telefono: Optional[str] = None
     email: Optional[str] = None
-    categoria: Optional[str] = None
-    situacion: Optional[str] = None
 
 
 class OperadorOut(BaseModel):
@@ -67,8 +65,6 @@ class OperadorOut(BaseModel):
     domicilio_fiscal: Optional[str] = None
     telefono: Optional[str] = None
     email: Optional[str] = None
-    categoria: Optional[str] = None
-    situacion: Optional[str] = None
     actividades: list[ActividadOut] = []
 
     @classmethod
@@ -104,7 +100,5 @@ class OperadorOut(BaseModel):
             domicilio_fiscal=operador.domicilio_fiscal,
             telefono=operador.telefono,
             email=operador.email,
-            categoria=operador.categoria,
-            situacion=operador.situacion,
             actividades=actividades,
         )

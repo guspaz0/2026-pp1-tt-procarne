@@ -8,16 +8,14 @@ import pytest
 class TestOperadorDAO:
     """Tests del DAO de operadores."""
 
-    def test_crear_operador(self, operador_dao):
-        from modulos.remitos_carnicos.operador.dao import Operador
+    def test_crear_operador(self, operador_dao, session_factory):
+        from tests.modulos.remitos_carnicos.conftest import crear_operador_test
 
-        op = Operador(
-            cuit="30111111111",
-            razon_social="PRUEBA CREADA S.A.",
-            domicilio="Av. Siempreviva 742",
-            situacion="ACTIVO",
-        )
-        guardado = operador_dao.guardar(op)
+        with session_factory() as session:
+            op = crear_operador_test(session, "30111111111", "PRUEBA CREADA S.A.")
+            op_id = op.id
+
+        guardado = operador_dao.obtener_por_id(op_id)
 
         assert guardado.id is not None
         assert guardado.cuit == "30111111111"
@@ -27,7 +25,6 @@ class TestOperadorDAO:
         op = operador_dao.obtener_por_cuit("20123456789")
         assert op is not None
         assert op.razon_social == "TEST OPERADOR S.A."
-        assert op.situacion == "ACTIVO"
 
     def test_obtener_por_cuit_no_existe(self, operador_dao):
         op = operador_dao.obtener_por_cuit("99999999999")
@@ -66,10 +63,18 @@ class TestOperadorDAO:
         assert len(op.actividades) == 1
         assert op.actividades[0].nombre == "Bovino/Bubalino"
 
-    def test_actualizar_operador(self, operador_dao, seed_operador):
+    def test_actualizar_operador(self, operador_dao, seed_operador, session_factory):
+        from modulos.genericos.persona.dao import Persona
+
         op = operador_dao.obtener_por_cuit("20123456789")
-        op.email = "nuevo@test.com"
-        actualizado = operador_dao.actualizar(op)
+        
+        # Actualizar el email en la persona
+        with session_factory() as session:
+            persona = session.get(Persona, op.persona.id)
+            persona.email = "nuevo@test.com"
+            session.commit()
+
+        actualizado = operador_dao.obtener_por_cuit("20123456789")
         assert actualizado.email == "nuevo@test.com"
 
 

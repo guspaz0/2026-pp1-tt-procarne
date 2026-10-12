@@ -1,27 +1,34 @@
-"""ORM y DAO de la mercadería (catálogo de códigos AFIP)."""
+"""ORM y DAO de la mercadería (catálogo genérico de productos)."""
 
 from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import Boolean, String
+from sqlalchemy import Boolean, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from configs.db import Base
 
 
 class Mercaderia(Base):
-    """Catálogo de códigos de mercadería (tabla de producción pública AFIP)."""
+    """Catálogo genérico de mercaderías.
 
-    __tablename__ = "mercaderias"
+    Es la única entidad de mercadería del sistema: almacena el código
+    (p. ej. el código AFIP), la descripción, la unidad de medida y los
+    flags de trazabilidad y de requerimiento de N° de tropa.
+    """
+
+    __tablename__ = "mercaderias_genericas"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    codigo_afip: Mapped[str] = mapped_column(String(10), unique=True, index=True, nullable=False)
+    codigo: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
     descripcion: Mapped[str] = mapped_column(String(255), nullable=False)
+    unidad_medida: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    requiere_trazabilidad: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     requiere_numero_tropa: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     def __repr__(self) -> str:
-        return f"<Mercaderia codigo={self.codigo_afip!r}>"
+        return f"<Mercaderia codigo={self.codigo!r}>"
 
 
 class MercaderiaDAO:
@@ -30,11 +37,9 @@ class MercaderiaDAO:
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
 
-    def obtener_por_codigo(self, codigo_afip: str) -> Optional[Mercaderia]:
-        from sqlalchemy import select
-
+    def obtener_por_codigo(self, codigo: str) -> Optional[Mercaderia]:
         with self._session_factory() as session:
-            stmt = select(Mercaderia).where(Mercaderia.codigo_afip == codigo_afip)
+            stmt = select(Mercaderia).where(Mercaderia.codigo == codigo)
             return session.execute(stmt).scalar_one_or_none()
 
     def obtener_por_id(self, mercaderia_id: int) -> Optional[Mercaderia]:
@@ -42,10 +47,13 @@ class MercaderiaDAO:
             return session.get(Mercaderia, mercaderia_id)
 
     def listar(self, limite: int = 200, offset: int = 0) -> list[Mercaderia]:
-        from sqlalchemy import select
-
         with self._session_factory() as session:
-            stmt = select(Mercaderia).order_by(Mercaderia.codigo_afip).limit(limite).offset(offset)
+            stmt = (
+                select(Mercaderia)
+                .order_by(Mercaderia.codigo)
+                .limit(limite)
+                .offset(offset)
+            )
             return list(session.execute(stmt).scalars().all())
 
     def guardar(self, mercaderia: Mercaderia) -> Mercaderia:

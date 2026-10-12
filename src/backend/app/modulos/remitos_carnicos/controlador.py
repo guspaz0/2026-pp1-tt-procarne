@@ -18,8 +18,9 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from .mercaderia.schema import MercaderiaIn, MercaderiaOut
-from .mercaderia.servicio import MercaderiaError, MercaderiaService
+from modulos.genericos.mercaderia.schema import MercaderiaIn, MercaderiaOut
+from modulos.genericos.mercaderia.servicio import MercaderiaError, MercaderiaService
+
 from .operador.schema import OperadorIn, OperadorOut
 from .operador.servicio import OperadorError, OperadorService
 from .remito.schema import RemitoCarnicoIn, RemitoCarnicoOut

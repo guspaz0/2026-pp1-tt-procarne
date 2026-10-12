@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from modulos.genericos.persona.dao import Persona
 from .dao import Operador, OperadorDAO
 from .schema import OperadorIn, OperadorOut
 
@@ -23,17 +24,24 @@ class OperadorService:
         if existente is not None:
             raise OperadorError(f"Operador ya existe: CUIT {datos.cuit}")
 
-        operador = Operador(
+        # Crear persona jurídica
+        persona = Persona(
+            tipo="PJ",
+            identificador=datos.cuit,
+            nombre=datos.razon_social,
             cuit=datos.cuit,
-            razon_social=datos.razon_social,
             domicilio=datos.domicilio,
-            domicilio_fiscal=datos.domicilio_fiscal,
             telefono=datos.telefono,
             email=datos.email,
-            categoria=datos.categoria,
-            situacion=datos.situacion,
         )
-        guardado = self._dao.guardar(operador)
+        
+        # Crear operador referenciando a la persona
+        operador = Operador(
+            persona_id=persona.id,
+            domicilio_fiscal=datos.domicilio_fiscal,
+        )
+        
+        guardado = self._dao.guardar(operador, persona)
         return OperadorOut.from_orm(guardado)
 
     def obtener(self, cuit: str) -> OperadorOut:

@@ -4,56 +4,48 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy import insert
 
-from configs.db import Base
-from configs.dao import SQLiteDAO
+from modulos.remitos_carnicos.operador.dao import Operador, operador_actividades
+from modulos.remitos_carnicos.operador.categoria import Actividad, CategoriaOperador
 
 
 @pytest.fixture()
-def api_client(engine):
-    """Cliente HTTP con la BD en memoria."""
+def api_client(db_engine):
+    """Cliente HTTP con la BD en memoria y seed mínimo."""
     from fastapi import FastAPI
     from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
     from configs.dao import SQLiteDAO
-    from modulos.remitos_carnicos.operador.dao import Operador
-    from modulos.remitos_carnicos.operador.categoria import Actividad, CategoriaAfip, CategoriaOperador
-    from modulos.remitos_carnicos.operador.dao import operador_actividades
-    from sqlalchemy import insert
+    from sqlalchemy.orm import sessionmaker
 
-    # Crear app con el engine de test
     app = FastAPI(title="ROCCA Test")
 
-    # DAO con el engine en memoria
     dao = SQLiteDAO("sqlite://")
-    dao._engine = engine
-    dao._session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    dao._engine = db_engine
+    dao._session_factory = sessionmaker(
+        autocommit=False, autoflush=False, bind=db_engine
+    )
 
-    # Módulo
     modulo = RemitosCarnicosModulo(dao)
     modulo.registrar(app)
 
-    # Health check
     @app.get("/api/health")
     def health():
         return {"status": "ok"}
 
     # Seed mínimo
+    from tests.modulos.remitos_carnicos.conftest import crear_operador_test
+
     with dao.obtener_sesion() as session:
         bov = Actividad(id=1, nombre="Bovino/Bubalino")
         por = Actividad(id=2, nombre="Porcino")
         session.add_all([bov, por])
         session.commit()
 
-        op = Operador(cuit="20123456789", razon_social="API TEST S.A.", situacion="ACTIVO")
-        session.add(op)
-        session.commit()
-        session.refresh(op)
+        op = crear_operador_test(session, "20123456789", "API TEST S.A.")
 
         session.execute(
-            insert(operador_actividades).values(cuit="20123456789", actividad_id=1)
+            insert(operador_actividades).values(operador_id=op.id, actividad_id=1)
         )
         cat = CategoriaOperador(
             operador_id=op.id,

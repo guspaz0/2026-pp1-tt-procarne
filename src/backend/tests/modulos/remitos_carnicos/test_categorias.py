@@ -123,11 +123,15 @@ class TestRelaciones:
 
     def test_operador_categorias(self, session_factory, seed_operador):
         from modulos.remitos_carnicos.operador.dao import Operador, _eager_options
+        from modulos.genericos.persona.dao import Persona
         from sqlalchemy import select
 
         with session_factory() as session:
             op = session.execute(
-                select(Operador).where(Operador.cuit == "20123456789").options(*_eager_options())
+                select(Operador)
+                .join(Operador.persona)
+                .where(Persona.identificador == "20123456789")
+                .options(*_eager_options())
             ).unique().scalar_one()
 
             assert len(op.categorias) == 2
@@ -135,11 +139,15 @@ class TestRelaciones:
 
     def test_operador_actividades(self, session_factory, seed_operador):
         from modulos.remitos_carnicos.operador.dao import Operador, _eager_options
+        from modulos.genericos.persona.dao import Persona
         from sqlalchemy import select
 
         with session_factory() as session:
             op = session.execute(
-                select(Operador).where(Operador.cuit == "20123456789").options(*_eager_options())
+                select(Operador)
+                .join(Operador.persona)
+                .where(Persona.identificador == "20123456789")
+                .options(*_eager_options())
             ).unique().scalar_one()
 
             assert len(op.actividades) == 1
@@ -170,7 +178,7 @@ class TestRelaciones:
         # Agregar a actividad Porcino
         with session_factory() as session:
             session.execute(
-                insert(operador_actividades).values(cuit="20123456789", actividad_id=2)
+                insert(operador_actividades).values(operador_id=op_id, actividad_id=2)
             )
             cat_por = CategoriaOperador(
                 operador_id=op_id,

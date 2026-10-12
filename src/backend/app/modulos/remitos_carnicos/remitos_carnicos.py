@@ -16,8 +16,8 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from configs.dao import DatabaseDAO
-from .mercaderia.dao import MercaderiaDAO
-from .mercaderia.servicio import MercaderiaService
+from modulos.genericos.mercaderia.dao import MercaderiaDAO
+from modulos.genericos.mercaderia.servicio import MercaderiaService
 from .operador.dao import OperadorDAO
 from .operador.servicio import OperadorService
 from .remito.dao import RemitoCarnicoDAO

@@ -2,93 +2,27 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
-from configs.db import Base
 from modulos.remitos_carnicos.operador.dao import Operador
-from modulos.remitos_carnicos.mercaderia.dao import Mercaderia
-from modulos.remitos_carnicos.remito.dao import RemitoCarnico, RenglonRemito, RemitoCarnicoDAO
+from modulos.genericos.mercaderia.dao import Mercaderia
+from modulos.remitos_carnicos.remito.dao import RemitoCarnico, RenglonRemito
 from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoService, RemitoCarnicoError
 from modulos.remitos_carnicos.remito.schema import RemitoCarnicoIn, RenglonRemitoIn
 from modulos.remitos_carnicos.enums import CasoRemito, TipoMovimiento
+from tests.modulos.remitos_carnicos.conftest import obtener_operador_id_por_cuit
 
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Fixtures locales (los fixtures de BD provienen de conftest.py)
 # ---------------------------------------------------------------------------
-
-@pytest.fixture()
-def engine():
-    eng = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
-    Base.metadata.create_all(bind=eng)
-    yield eng
-    eng.dispose()
-
-
-@pytest.fixture()
-def session_factory(engine):
-    return sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
-
-
-@pytest.fixture()
-def remito_dao(session_factory):
-    return RemitoCarnicoDAO(session_factory)
-
-
-@pytest.fixture()
-def operador_dao(session_factory):
-    from modulos.remitos_carnicos.operador.dao import OperadorDAO
-    return OperadorDAO(session_factory)
-
-
-@pytest.fixture()
-def mercaderia_dao(session_factory):
-    from modulos.remitos_carnicos.mercaderia.dao import MercaderiaDAO
-    return MercaderiaDAO(session_factory)
-
 
 @pytest.fixture()
 def remito_service(remito_dao, operador_dao, mercaderia_dao):
     return RemitoCarnicoService(remito_dao, operador_dao, mercaderia_dao)
-
-
-@pytest.fixture()
-def seed_operadores(session_factory):
-    """Crea operadores de prueba: titular, transportista, depositario, destinatario."""
-    ops = {
-        "titular": Operador(cuit="20111111111", razon_social="TITULAR TEST S.A.", situacion="ACTIVO"),
-        "transportista": Operador(cuit="20222222222", razon_social="TRANSPORTISTA TEST", situacion="ACTIVO"),
-        "depositario": Operador(cuit="20333333333", razon_social="DEPOSITARIO TEST", situacion="ACTIVO"),
-        "destinatario": Operador(cuit="20444444444", razon_social="DESTINATARIO TEST", situacion="ACTIVO"),
-    }
-    with session_factory() as session:
-        for op in ops.values():
-            session.add(op)
-        session.commit()
-        for op in ops.values():
-            session.refresh(op)
-    return {k: v.cuit for k, v in ops.items()}
-
-
-@pytest.fixture()
-def seed_mercaderias(session_factory):
-    """Crea mercaderías de prueba."""
-    mercs = [
-        Mercaderia(codigo_afip="1101", descripcion="Carne de bovino fresca", requiere_numero_tropa=True),
-        Mercaderia(codigo_afip="1102", descripcion="Carne de bovino congelada", requiere_numero_tropa=False),
-        Mercaderia(codigo_afip="2101", descripcion="Carne de porcino fresca", requiere_numero_tropa=True),
-    ]
-    with session_factory() as session:
-        for m in mercs:
-            session.add(m)
-        session.commit()
-    return [m.codigo_afip for m in mercs]
 
 
 def _datos_remito_base(seed_operadores, **overrides):
@@ -125,9 +59,8 @@ class TestRemitoDAO:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1101").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1101").first()
             merc_id = merc.id
 
         remito = RemitoCarnico(
@@ -150,12 +83,13 @@ class TestRemitoDAO:
         assert guardado.codigo_remito == "001-0000000001"
 
     def test_obtener_por_codigo(self, remito_dao, session_factory, seed_operadores, seed_mercaderias):
+        from tests.modulos.remitos_carnicos.conftest import obtener_operador_id_por_cuit
+
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1102").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1102").first()
             merc_id = merc.id
 
         remito = RemitoCarnico(
@@ -185,9 +119,8 @@ class TestRemitoDAO:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1101").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1101").first()
             merc_id = merc.id
 
         # Crear 3 remitos
@@ -217,9 +150,8 @@ class TestRemitoDAO:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1101").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1101").first()
             merc_id = merc.id
 
         remito = RemitoCarnico(
@@ -341,7 +273,7 @@ class TestRemitoService:
         # Cargar la mercadería en la sesión para que la relación lazy funcione
         from sqlalchemy import select
         with session_factory() as session:
-            merc = session.execute(select(Mercaderia).where(Mercaderia.codigo_afip == "1101")).scalar_one()
+            merc = session.execute(select(Mercaderia).where(Mercaderia.codigo == "1101")).scalar_one()
             assert merc.requiere_numero_tropa is True
 
         datos = _datos_remito_base(seed_operadores)
@@ -430,9 +362,8 @@ class TestValidacion:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1102").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1102").first()
 
         remito = RemitoCarnico(
             punto_emision="001",
@@ -457,9 +388,8 @@ class TestValidacion:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1102").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1102").first()
 
         remito = RemitoCarnico(
             punto_emision="001",
@@ -484,9 +414,8 @@ class TestValidacion:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1102").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1102").first()
 
         remito = RemitoCarnico(
             punto_emision="001",
@@ -512,9 +441,8 @@ class TestValidacion:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1102").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1102").first()
 
         remito = RemitoCarnico(
             punto_emision="001",
@@ -540,9 +468,8 @@ class TestValidacion:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
-            merc = session.query(Mercaderia).filter_by(codigo_afip="1102").first()
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
+            merc = session.query(Mercaderia).filter_by(codigo="1102").first()
 
         remito = RemitoCarnico(
             punto_emision="001",
@@ -568,8 +495,7 @@ class TestValidacion:
         op_ids = {}
         with session_factory() as session:
             for cuit in seed_operadores.values():
-                op = session.query(Operador).filter_by(cuit=cuit).first()
-                op_ids[cuit] = op.id
+                op_ids[cuit] = obtener_operador_id_por_cuit(session, cuit)
 
         remito = RemitoCarnico(
             punto_emision="001",
@@ -597,17 +523,18 @@ class TestAPIRemitos:
     """Tests de los endpoints /api/remitos."""
 
     @pytest.fixture()
-    def api_client(self, engine):
+    def api_client(self, db_engine):
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
         from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
         from configs.dao import SQLiteDAO
+        from sqlalchemy.orm import sessionmaker
 
         app = FastAPI(title="ROCCA Test")
         dao = SQLiteDAO("sqlite://")
-        dao._engine = engine
+        dao._engine = db_engine
         dao._session_factory = sessionmaker(
-            autocommit=False, autoflush=False, expire_on_commit=False, bind=engine
+            autocommit=False, autoflush=False, expire_on_commit=False, bind=db_engine
         )
         modulo = RemitosCarnicosModulo(dao)
         modulo.registrar(app)
@@ -618,17 +545,16 @@ class TestAPIRemitos:
 
         # Seed
         with dao.obtener_sesion() as session:
+            from tests.modulos.remitos_carnicos.conftest import crear_operador_test
             ops = [
-                Operador(cuit="20111111111", razon_social="TITULAR API", situacion="ACTIVO"),
-                Operador(cuit="20222222222", razon_social="TRANSPORTISTA API", situacion="ACTIVO"),
-                Operador(cuit="20444444444", razon_social="DESTINATARIO API", situacion="ACTIVO"),
+                crear_operador_test(session, "20111111111", "TITULAR API"),
+                crear_operador_test(session, "20222222222", "TRANSPORTISTA API"),
+                crear_operador_test(session, "20444444444", "DESTINATARIO API"),
             ]
-            session.add_all(ops)
-            session.commit()
 
             mercs = [
-                Mercaderia(codigo_afip="1101", descripcion="Carne bovino fresca", requiere_numero_tropa=True),
-                Mercaderia(codigo_afip="1102", descripcion="Carne bovino congelada", requiere_numero_tropa=False),
+                Mercaderia(codigo="1101", descripcion="Carne bovino fresca", requiere_numero_tropa=True),
+                Mercaderia(codigo="1102", descripcion="Carne bovino congelada", requiere_numero_tropa=False),
             ]
             session.add_all(mercs)
             session.commit()

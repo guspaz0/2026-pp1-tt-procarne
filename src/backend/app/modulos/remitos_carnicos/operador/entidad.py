@@ -10,14 +10,16 @@ from __future__ import annotations
 from typing import Optional
 
 from ..base import Entidad
+from modulos.genericos.persona.entidad import PersonaJuridica
 
 
-class Operador(Entidad):
+class Operador(PersonaJuridica):
     """Operador de la cadena cárnica (padrón AFIP).
 
-    Identificado por su CUIT. Puede cumplir distintos roles en un remito:
-    titular de la mercadería, depositario/autorizante, destinatario o
-    transportista.
+    Extiende :class:`PersonaJuridica` (identificado por su CUIT) y le
+    añade el campo ``razon_social`` y el domicilio fiscal. Puede cumplir
+    distintos roles en un remito: titular de la mercadería,
+    depositario/autorizante, destinatario o transportista.
     """
 
     def __init__(
@@ -29,24 +31,21 @@ class Operador(Entidad):
         telefono: Optional[str] = None,
         email: Optional[str] = None,
     ) -> None:
-        super().__init__()
-        self.cuit = cuit
+        super().__init__(
+            cuit=cuit,
+            nombre=razon_social,
+            domicilio=domicilio,
+            telefono=telefono,
+            email=email,
+        )
         self.razon_social = razon_social
-        self.domicilio = domicilio
         self.domicilio_fiscal = domicilio_fiscal
-        self.telefono = telefono
-        self.email = email
 
     def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "cuit": self.cuit,
-            "razon_social": self.razon_social,
-            "domicilio": self.domicilio,
-            "domicilio_fiscal": self.domicilio_fiscal,
-            "telefono": self.telefono,
-            "email": self.email,
-        }
+        base = super().to_dict()
+        base["razon_social"] = self.razon_social
+        base["domicilio_fiscal"] = self.domicilio_fiscal
+        return base
 
     def __repr__(self) -> str:
         return f"<Operador cuit={self.cuit} razon_social={self.razon_social!r}>"

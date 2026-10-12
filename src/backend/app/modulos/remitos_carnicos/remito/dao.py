@@ -39,10 +39,10 @@ class RemitoCarnico(Base):
     dominio_vehiculo: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     # Relaciones
-    titular: Mapped["Operador"] = relationship("Operador", foreign_keys=[titular_id], lazy="joined")
-    depositario: Mapped[Optional["Operador"]] = relationship("Operador", foreign_keys=[depositario_id], lazy="joined")
-    destinatario: Mapped[Optional["Operador"]] = relationship("Operador", foreign_keys=[destinatario_id], lazy="joined")
-    transportista: Mapped["Operador"] = relationship("Operador", foreign_keys=[transportista_id], lazy="joined")
+    titular: Mapped["modulos.remitos_carnicos.operador.dao.Operador"] = relationship("modulos.remitos_carnicos.operador.dao.Operador", foreign_keys=[titular_id], lazy="joined")
+    depositario: Mapped[Optional["modulos.remitos_carnicos.operador.dao.Operador"]] = relationship("modulos.remitos_carnicos.operador.dao.Operador", foreign_keys=[depositario_id], lazy="joined")
+    destinatario: Mapped[Optional["modulos.remitos_carnicos.operador.dao.Operador"]] = relationship("modulos.remitos_carnicos.operador.dao.Operador", foreign_keys=[destinatario_id], lazy="joined")
+    transportista: Mapped["modulos.remitos_carnicos.operador.dao.Operador"] = relationship("modulos.remitos_carnicos.operador.dao.Operador", foreign_keys=[transportista_id], lazy="joined")
     renglones: Mapped[list["RenglonRemito"]] = relationship(
         "RenglonRemito", back_populates="remito", cascade="all, delete-orphan", lazy="selectin"
     )
@@ -62,17 +62,17 @@ class RenglonRemito(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     remito_id: Mapped[int] = mapped_column(ForeignKey("remitos_carnicos.id", ondelete="CASCADE"), nullable=False, index=True)
-    mercaderia_id: Mapped[int] = mapped_column(ForeignKey("mercaderias.id"), nullable=False, index=True)
+    mercaderia_id: Mapped[int] = mapped_column(ForeignKey("mercaderias_genericas.id"), nullable=False, index=True)
     unidades: Mapped[float] = mapped_column(default=0.0, nullable=False)
     kilos: Mapped[float] = mapped_column(default=0.0, nullable=False)
     numero_tropa: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     # Relaciones
     remito: Mapped["RemitoCarnico"] = relationship("RemitoCarnico", back_populates="renglones")
-    mercaderia: Mapped["Mercaderia"] = relationship("Mercaderia", lazy="joined")
+    mercaderia: Mapped["modulos.genericos.mercaderia.dao.Mercaderia"] = relationship("modulos.genericos.mercaderia.dao.Mercaderia", lazy="joined")
 
     def __repr__(self) -> str:
-        return f"<RenglonRemito remito_id={self.remito_id} mercaderia={self.mercaderia.codigo_afip if self.mercaderia else '?'} kg={self.kilos}>"
+        return f"<RenglonRemito remito_id={self.remito_id} mercaderia={self.mercaderia.codigo if self.mercaderia else '?'} kg={self.kilos}>"
 
 
 class RemitoCarnicoDAO:

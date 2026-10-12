@@ -93,7 +93,7 @@ class ReglaNumeroTropa(ReglaValidacion):
         for i, renglon in enumerate(remito.renglones, start=1):
             if renglon.mercaderia and renglon.mercaderia.requiere_numero_tropa and not renglon.numero_tropa:
                 return ResultadoValidacion.error(
-                    f"Renglón {i}: la mercadería {renglon.mercaderia.codigo_afip} "
+                    f"Renglón {i}: la mercadería {renglon.mercaderia.codigo} "
                     f"({renglon.mercaderia.descripcion}) requiere N° de tropa"
                 )
         return ResultadoValidacion.ok()

@@ -6,8 +6,9 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
+from modulos.genericos.mercaderia.dao import MercaderiaDAO
+
 from ..enums import EstadoRemito
-from ..mercaderia.dao import MercaderiaDAO
 from ..operador.dao import OperadorDAO
 from .dao import RemitoCarnico, RenglonRemito, RemitoCarnicoDAO
 from .schema import RemitoCarnicoIn, RemitoCarnicoOut, RenglonRemitoOut, ParticipanteOut
@@ -169,7 +170,7 @@ class RemitoCarnicoService:
             ),
             renglones=[
                 RenglonRemitoOut(
-                    codigo_afip=r.mercaderia.codigo_afip,
+                    codigo_afip=r.mercaderia.codigo,
                     descripcion=r.mercaderia.descripcion,
                     unidades=Decimal(str(r.unidades)),
                     kilos=Decimal(str(r.kilos)),

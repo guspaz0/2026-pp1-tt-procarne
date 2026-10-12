@@ -3,3 +3,4 @@
 .DS_Store
 */.DS_Store
 */**/rocca.db
+src/backend/migrations/versions
