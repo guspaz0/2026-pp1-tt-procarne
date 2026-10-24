@@ -123,7 +123,7 @@ class TestRelaciones:
 
     def test_operador_categorias(self, session_factory, seed_operador):
         from modulos.remitos_carnicos.operador.dao import Operador, _eager_options
-        from modulos.genericos.persona.dao import Persona
+        from core.persona.dao import Persona
         from sqlalchemy import select
 
         with session_factory() as session:
@@ -139,7 +139,7 @@ class TestRelaciones:
 
     def test_operador_actividades(self, session_factory, seed_operador):
         from modulos.remitos_carnicos.operador.dao import Operador, _eager_options
-        from modulos.genericos.persona.dao import Persona
+        from core.persona.dao import Persona
         from sqlalchemy import select
 
         with session_factory() as session:

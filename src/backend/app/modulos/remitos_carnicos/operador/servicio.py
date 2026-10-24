@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from modulos.genericos.persona.dao import Persona
+from core import PersonaRef
 from .dao import Operador, OperadorDAO
 from .schema import OperadorIn, OperadorOut
 
@@ -24,8 +24,9 @@ class OperadorService:
         if existente is not None:
             raise OperadorError(f"Operador ya existe: CUIT {datos.cuit}")
 
-        # Crear persona jurídica
-        persona = Persona(
+        # Crear persona jurídica (referencia de identidad; la persistencia
+        # la resuelve el DAO del operador, que conoce la ORM concreta).
+        persona = PersonaRef(
             tipo="PJ",
             identificador=datos.cuit,
             nombre=datos.razon_social,
@@ -35,9 +36,10 @@ class OperadorService:
             email=datos.email,
         )
         
-        # Crear operador referenciando a la persona
+        # Crear operador referenciando a la persona (el id se asigna al
+        # guardar; el DAO lo resuelve con el id real de la persona).
         operador = Operador(
-            persona_id=persona.id,
+            persona_id=0,
             domicilio_fiscal=datos.domicilio_fiscal,
         )
         

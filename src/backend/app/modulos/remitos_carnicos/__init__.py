@@ -20,7 +20,7 @@ Estructura::
     ├── enums.py         # CasoRemito, TipoMovimiento, EstadoRemito, UnidadMedida
     ├── operador/        # Operador: entidad, DAO, schema, servicio
     ├── remito/          # Remito: DAO, schema, validación, servicio
-    # (la mercadería vive en modulos/genericos/mercaderia)
+    # (la mercadería vive en core/mercaderia)
     └── renglon/         # (RenglonRemito está en remito/dao.py)
 """
 
@@ -32,14 +32,6 @@ from .operador import (
     OperadorOut,
     OperadorService,
     OperadorError,
-)
-from modulos.genericos.mercaderia import (
-    Mercaderia,
-    MercaderiaDAO,
-    MercaderiaIn,
-    MercaderiaOut,
-    MercaderiaService,
-    MercaderiaError,
 )
 from .remito import (
     RemitoCarnico,
@@ -65,13 +57,6 @@ __all__ = [
     "OperadorOut",
     "OperadorService",
     "OperadorError",
-    # Mercadería
-    "Mercaderia",
-    "MercaderiaDAO",
-    "MercaderiaIn",
-    "MercaderiaOut",
-    "MercaderiaService",
-    "MercaderiaError",
     # Remito
     "RemitoCarnico",
     "RemitoCarnicoDAO",

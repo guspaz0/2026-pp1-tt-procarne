@@ -16,10 +16,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
+from typing import Protocol
+
 from fastapi import APIRouter, HTTPException, Query
 
-from modulos.genericos.mercaderia.schema import MercaderiaIn, MercaderiaOut
-from modulos.genericos.mercaderia.servicio import MercaderiaError, MercaderiaService
+from core.mercaderia.schema import MercaderiaIn, MercaderiaOut
 
 from .operador.schema import OperadorIn, OperadorOut
 from .operador.servicio import OperadorError, OperadorService
@@ -27,27 +28,16 @@ from .remito.schema import RemitoCarnicoIn, RemitoCarnicoOut
 from .remito.servicio import RemitoCarnicoError, RemitoCarnicoService
 
 
-def crear_router(
+def _errores_a_http(exception: Exception, status_code: int) -> HTTPException:
+    """Convierte un error de servicio en :class:`HTTPException`."""
+    raise HTTPException(status_code=status_code, detail=str(exception))
+
+
+def _registrar_rutas_operadores(
+    router: APIRouter,
     operador_service: OperadorService,
-    mercaderia_service: MercaderiaService,
-    remito_service: RemitoCarnicoService,
-) -> APIRouter:
-    """Crea el router del módulo inyectando los servicios.
-
-    Args:
-        operador_service: Servicio de operadores.
-        mercaderia_service: Servicio de mercaderías.
-        remito_service: Servicio de remitos.
-
-    Returns:
-        APIRouter con todos los endpoints del módulo.
-    """
-
-    router = APIRouter(tags=["Remitos Cárnicos"])
-
-    # ------------------------------------------------------------------
-    # Operadores
-    # ------------------------------------------------------------------
+) -> None:
+    """Registra los endpoints de operadores."""
 
     @router.get("/api/operadores", response_model=list[OperadorOut])
     def listar_operadores(
@@ -63,7 +53,7 @@ def crear_router(
         try:
             return operador_service.obtener(cuit)
         except OperadorError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+            _errores_a_http(e, 404)
 
     @router.post("/api/operadores", response_model=OperadorOut, status_code=201)
     def crear_operador(datos: OperadorIn) -> OperadorOut:
@@ -71,11 +61,31 @@ def crear_router(
         try:
             return operador_service.crear(datos)
         except OperadorError as e:
-            raise HTTPException(status_code=409, detail=str(e))
+            _errores_a_http(e, 409)
 
-    # ------------------------------------------------------------------
-    # Mercaderías
-    # ------------------------------------------------------------------
+
+class MercaderiaServiceProtocol(Protocol):
+    """Contrato mínimo del servicio de mercaderías (catálogo genérico).
+
+    Permite a este controlador depender del *tipo* del servicio sin
+    importar la clase concreta de otro módulo.
+    """
+
+    def listar(self, limite: int = 200, offset: int = 0) -> list[MercaderiaOut]:
+        ...
+
+    def obtener(self, codigo_afip: str) -> MercaderiaOut:
+        ...
+
+    def crear(self, datos: MercaderiaIn) -> MercaderiaOut:
+        ...
+
+
+def _registrar_rutas_mercaderias(
+    router: APIRouter,
+    mercaderia_service: MercaderiaServiceProtocol,
+) -> None:
+    """Registra los endpoints de mercaderías."""
 
     @router.get("/api/mercaderias", response_model=list[MercaderiaOut])
     def listar_mercaderias(
@@ -90,20 +100,23 @@ def crear_router(
         """Obtiene una mercadería por su código AFIP."""
         try:
             return mercaderia_service.obtener(codigo_afip)
-        except MercaderiaError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            _errores_a_http(e, 404)
 
     @router.post("/api/mercaderias", response_model=MercaderiaOut, status_code=201)
     def crear_mercaderia(datos: MercaderiaIn) -> MercaderiaOut:
         """Crea una nueva mercadería en el catálogo."""
         try:
             return mercaderia_service.crear(datos)
-        except MercaderiaError as e:
-            raise HTTPException(status_code=409, detail=str(e))
+        except Exception as e:
+            _errores_a_http(e, 409)
 
-    # ------------------------------------------------------------------
-    # Remitos
-    # ------------------------------------------------------------------
+
+def _registrar_rutas_remitos(
+    router: APIRouter,
+    remito_service: RemitoCarnicoService,
+) -> None:
+    """Registra los endpoints de remitos electrónicos cárnicos."""
 
     @router.get("/api/remitos", response_model=list[RemitoCarnicoOut])
     def listar_remitos(
@@ -122,7 +135,7 @@ def crear_router(
         try:
             return remito_service.obtener(punto_emision, numero_comprobante)
         except RemitoCarnicoError as e:
-            raise HTTPException(status_code=404, detail=str(e))
+            _errores_a_http(e, 404)
 
     @router.post("/api/remitos", response_model=RemitoCarnicoOut, status_code=201)
     def crear_remito(datos: RemitoCarnicoIn) -> RemitoCarnicoOut:
@@ -130,7 +143,7 @@ def crear_router(
         try:
             return remito_service.crear(datos)
         except RemitoCarnicoError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            _errores_a_http(e, 400)
 
     @router.post("/api/remitos/{remito_id}/anular", response_model=RemitoCarnicoOut)
     def anular_remito(remito_id: int) -> RemitoCarnicoOut:
@@ -138,6 +151,26 @@ def crear_router(
         try:
             return remito_service.anular(remito_id)
         except RemitoCarnicoError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            _errores_a_http(e, 400)
 
+
+def crear_router(
+    operador_service: OperadorService,
+    mercaderia_service: MercaderiaService,
+    remito_service: RemitoCarnicoService,
+) -> APIRouter:
+    """Crea el router del módulo inyectando los servicios.
+
+    Args:
+        operador_service: Servicio de operadores.
+        mercaderia_service: Servicio de mercaderías.
+        remito_service: Servicio de remitos.
+
+    Returns:
+        APIRouter con todos los endpoints del módulo.
+    """
+    router = APIRouter(tags=["Remitos Cárnicos"])
+    _registrar_rutas_operadores(router, operador_service)
+    _registrar_rutas_mercaderias(router, mercaderia_service)
+    _registrar_rutas_remitos(router, remito_service)
     return router

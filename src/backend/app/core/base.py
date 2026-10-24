@@ -1,4 +1,4 @@
-"""Clase base abstracta para todas las entidades de dominio genéricas.
+"""Clase base abstracta para las entidades de dominio del núcleo.
 
 Proporciona un identificador único y un método de serialización a
 diccionario. Las subclases concretas definen sus campos específicos.

@@ -12,40 +12,13 @@ ciclo de vida (crear tablas, cerrar conexiones).
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from typing import Optional
 
 from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from core import DatabaseDAO  # noqa: F401  (re-export de la interfaz)
 from .db import Base, DATABASE_URL
-
-
-class DatabaseDAO(ABC):
-    """Interfaz abstracta de acceso a la base de datos.
-
-    Cada implementación concreta encapsula la configuración del motor
-    y la sesión para un motor específico.
-    """
-
-    @abstractmethod
-    def __init__(self, url: str) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def crear_tablas(self) -> None:
-        """Crea todas las tablas definidas en :class:`Base`."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def obtener_sesion(self) -> Session:
-        """Devuelve una nueva sesión transaccional."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def cerrar(self) -> None:
-        """Cierra el motor y libera recursos."""
-        raise NotImplementedError
 
 
 class SQLiteDAO(DatabaseDAO):

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from modulos.genericos.persona.dao import Persona
+from core import PersonaRef
 
 from .dao import ROCCAOperador, ROCCAOperadorDAO
 from .enums import EstadoRegistral, TipoOperador
@@ -41,7 +41,8 @@ class ROCCAOperadorService:
                 f"Operador ya inscripto en el ROCCA: CUIT {datos.cuit}"
             )
 
-        persona = Persona(
+        # Referencia de identidad; el DAO materializa la ORM concreta.
+        persona = PersonaRef(
             tipo="PJ",
             identificador=datos.cuit,
             nombre=datos.razon_social,

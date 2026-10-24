@@ -15,10 +15,13 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from configs.dao import DATABASE_URL, crear_dao
+from core.mercaderia.dao import MercaderiaDAO
+from core.mercaderia.servicio import MercaderiaService
 from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
 from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
 from modulos.trazabilidad_comercial.trazabilidad_comercial import TrazabilidadComercialModulo
@@ -39,6 +42,23 @@ class RoccaApp:
         # 1. Instancia de FastAPI
         self.app = FastAPI(title="ROCCA", version="0.1.0")
 
+        # 1b. CORS (el frontend vive en Netlify, la API en Render)
+        allowed_origins = [
+            o.strip()
+            for o in os.environ.get(
+                "ROCCA_CORS_ORIGINS",
+                "http://localhost:5173",
+            ).split(",")
+            if o.strip()
+        ]
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=allowed_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
         # 2. DAO de base de datos (SQLite o PostgreSQL según la URL)
         url = database_url or DATABASE_URL
         self.db_dao = crear_dao(url)
@@ -48,7 +68,16 @@ class RoccaApp:
         self.registro_operadores = RegistroOperadoresModulo(self.db_dao)
         self.registro_operadores.registrar(self.app)
 
-        self.remitos_carnicos = RemitosCarnicosModulo(self.db_dao)
+        # El catálogo genérico de mercaderías se compone aquí (orquestador):
+        # el módulo de remitos depende solo de sus contratos (tipos).
+        self.mercaderia_dao = MercaderiaDAO(self.db_dao.obtener_sesion)
+        self.mercaderia_service = MercaderiaService(self.mercaderia_dao)
+
+        self.remitos_carnicos = RemitosCarnicosModulo(
+            self.db_dao,
+            mercaderia_dao=self.mercaderia_dao,
+            mercaderia_service=self.mercaderia_service,
+        )
         self.remitos_carnicos.registrar(self.app)
 
         self.trazabilidad_comercial = TrazabilidadComercialModulo(self.db_dao)

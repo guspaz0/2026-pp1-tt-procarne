@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 
 from modulos.remitos_carnicos.operador.dao import Operador
-from modulos.genericos.mercaderia.dao import Mercaderia
+from core.mercaderia.dao import Mercaderia
 from modulos.remitos_carnicos.remito.dao import RemitoCarnico, RenglonRemito
 from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoService, RemitoCarnicoError
 from modulos.remitos_carnicos.remito.schema import RemitoCarnicoIn, RenglonRemitoIn
@@ -526,6 +526,8 @@ class TestAPIRemitos:
     def api_client(self, db_engine):
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
+        from core.mercaderia.dao import MercaderiaDAO
+        from core.mercaderia.servicio import MercaderiaService
         from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
         from configs.dao import SQLiteDAO
         from sqlalchemy.orm import sessionmaker
@@ -536,7 +538,13 @@ class TestAPIRemitos:
         dao._session_factory = sessionmaker(
             autocommit=False, autoflush=False, expire_on_commit=False, bind=db_engine
         )
-        modulo = RemitosCarnicosModulo(dao)
+        mercaderia_dao = MercaderiaDAO(dao.obtener_sesion)
+        mercaderia_service = MercaderiaService(mercaderia_dao)
+        modulo = RemitosCarnicosModulo(
+            dao,
+            mercaderia_dao=mercaderia_dao,
+            mercaderia_service=mercaderia_service,
+        )
         modulo.registrar(app)
 
         @app.get("/api/health")

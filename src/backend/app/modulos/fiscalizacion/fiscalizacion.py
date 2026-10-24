@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from configs.dao import DatabaseDAO
+from core import DatabaseDAO
 
 from .controlador import crear_router
 from .dao import FiscalizacionDAO

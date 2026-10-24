@@ -69,7 +69,7 @@ class RenglonRemito(Base):
 
     # Relaciones
     remito: Mapped["RemitoCarnico"] = relationship("RemitoCarnico", back_populates="renglones")
-    mercaderia: Mapped["modulos.genericos.mercaderia.dao.Mercaderia"] = relationship("modulos.genericos.mercaderia.dao.Mercaderia", lazy="joined")
+    mercaderia: Mapped["core.mercaderia.dao.Mercaderia"] = relationship("core.mercaderia.dao.Mercaderia", lazy="joined")
 
     def __repr__(self) -> str:
         return f"<RenglonRemito remito_id={self.remito_id} mercaderia={self.mercaderia.codigo if self.mercaderia else '?'} kg={self.kilos}>"

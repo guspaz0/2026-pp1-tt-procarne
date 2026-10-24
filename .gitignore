@@ -4,3 +4,14 @@
 */.DS_Store
 */**/rocca.db
 src/backend/migrations/versions
+
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+override.tf
+override.tf.json
+terraform/.netlify
+terraform/.terraform.lock.hcl

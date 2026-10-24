@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+/// <reference types="vite/client" />
+
 type Operador = {
   id: number;
   nombre: string;
@@ -7,11 +9,14 @@ type Operador = {
   estado: string;
 };
 
+// En dev (Vite) el proxy lleva /api al backend; en prod la API vive en Render.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
 export default function App() {
   const [operadores, setOperadores] = useState<Operador[]>([]);
 
   useEffect(() => {
-    fetch("/api/operadores")
+    fetch(`${API_BASE}/api/operadores`)
       .then((res) => res.json())
       .then(setOperadores);
   }, []);

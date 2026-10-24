@@ -7,7 +7,7 @@ from datetime import date
 import pytest
 from sqlalchemy import insert
 
-from modulos.genericos.persona.dao import Persona
+from core.persona.dao import Persona
 from modulos.registro_operadores.dao import (
     DomicilioOperativo,
     Habilitacion,

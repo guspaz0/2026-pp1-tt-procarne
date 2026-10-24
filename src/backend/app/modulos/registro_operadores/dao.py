@@ -19,7 +19,9 @@ from typing import Optional
 from sqlalchemy import Boolean, Date, ForeignKey, String, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
+from core import PersonaRef
 from configs.db import Base
+from core.persona.dao import Persona  # ORM concreta (solo aquí)
 
 
 class ROCCAOperador(Base):
@@ -221,14 +223,24 @@ class ROCCAOperadorDAO:
             return list(session.execute(stmt).unique().scalars().all())
 
     def guardar(
-        self, operador: ROCCAOperador, persona: Optional["Persona"] = None
+        self, operador: ROCCAOperador, persona: Optional[PersonaRef] = None
     ) -> ROCCAOperador:
         with self._session_factory() as session:
             if persona is not None:
-                session.add(persona)
+                # La referencia de identidad se materializa como ORM de persona.
+                persona_orm = Persona(
+                    tipo=persona.tipo,
+                    identificador=persona.identificador,
+                    nombre=persona.nombre,
+                    cuit=persona.cuit,
+                    domicilio=persona.domicilio,
+                    telefono=persona.telefono,
+                    email=persona.email,
+                )
+                session.add(persona_orm)
                 session.commit()
-                session.refresh(persona)
-                operador.persona_id = persona.id
+                session.refresh(persona_orm)
+                operador.persona_id = persona_orm.id
             session.add(operador)
             session.commit()
             operador_id = operador.id

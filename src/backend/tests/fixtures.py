@@ -65,6 +65,8 @@ def api_client(db_engine):
     """Cliente HTTP de test con la BD en memoria inyectada."""
     from fastapi.testclient import TestClient
     from fastapi import FastAPI
+    from core.mercaderia.dao import MercaderiaDAO
+    from core.mercaderia.servicio import MercaderiaService
     from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
 
     app = FastAPI(title="ROCCA Test")
@@ -74,7 +76,15 @@ def api_client(db_engine):
         autocommit=False, autoflush=False, expire_on_commit=False, bind=db_engine
     )
 
-    modulo = RemitosCarnicosModulo(dao)
+    # El catálogo genérico de mercaderías se compone aquí (orquestador de test).
+    mercaderia_dao = MercaderiaDAO(dao.obtener_sesion)
+    mercaderia_service = MercaderiaService(mercaderia_dao)
+
+    modulo = RemitosCarnicosModulo(
+        dao,
+        mercaderia_dao=mercaderia_dao,
+        mercaderia_service=mercaderia_service,
+    )
     modulo.registrar(app)
 
     @app.get("/api/health")

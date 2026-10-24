@@ -16,8 +16,8 @@ from sqlalchemy import insert
 from tests.fixtures import db_engine, db_session_factory, db_dao  # noqa: F401
 
 # Importar todos los modelos para que Base.metadata los conozca
-from modulos.genericos.persona.dao import Persona
-from modulos.genericos.mercaderia.dao import Mercaderia, MercaderiaDAO
+from core.persona.dao import Persona
+from core.mercaderia.dao import Mercaderia, MercaderiaDAO
 from modulos.remitos_carnicos.operador.dao import Operador, OperadorDAO, operador_actividades
 from modulos.remitos_carnicos.operador.categoria import (
     Actividad,
@@ -124,7 +124,7 @@ def crear_operador_test(session, cuit: str, razon_social: str) -> Operador:
 def obtener_operador_id_por_cuit(session, cuit: str) -> int:
     """Obtiene el id del operador a partir del CUIT (helper para tests)."""
     from sqlalchemy import select
-    from modulos.genericos.persona.dao import Persona
+    from core.persona.dao import Persona
 
     stmt = (
         select(Operador.id)

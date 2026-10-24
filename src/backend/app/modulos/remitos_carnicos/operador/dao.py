@@ -11,7 +11,10 @@ from typing import Optional
 
 from sqlalchemy import String, Table, Column, ForeignKey, Integer, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
+
+from core import PersonaRef
 from configs.db import Base
+from core.persona.dao import Persona  # ORM concreta (solo aquí)
 
 # Tabla intermedia operador <-> actividad (many-to-many)
 operador_actividades = Table(
@@ -121,13 +124,23 @@ class OperadorDAO:
             )
             return list(session.execute(stmt).unique().scalars().all())
 
-    def guardar(self, operador: Operador, persona: Optional["Persona"] = None) -> Operador:
+    def guardar(self, operador: Operador, persona: Optional[PersonaRef] = None) -> Operador:
         with self._session_factory() as session:
             if persona is not None:
-                session.add(persona)
+                # La referencia de identidad se materializa como ORM de persona.
+                persona_orm = Persona(
+                    tipo=persona.tipo,
+                    identificador=persona.identificador,
+                    nombre=persona.nombre,
+                    cuit=persona.cuit,
+                    domicilio=persona.domicilio,
+                    telefono=persona.telefono,
+                    email=persona.email,
+                )
+                session.add(persona_orm)
                 session.commit()
-                session.refresh(persona)
-                operador.persona_id = persona.id
+                session.refresh(persona_orm)
+                operador.persona_id = persona_orm.id
             session.add(operador)
             session.commit()
             operador_id = operador.id

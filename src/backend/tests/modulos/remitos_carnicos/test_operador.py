@@ -64,7 +64,7 @@ class TestOperadorDAO:
         assert op.actividades[0].nombre == "Bovino/Bubalino"
 
     def test_actualizar_operador(self, operador_dao, seed_operador, session_factory):
-        from modulos.genericos.persona.dao import Persona
+        from core.persona.dao import Persona
 
         op = operador_dao.obtener_por_cuit("20123456789")
         

@@ -4,15 +4,28 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Protocol, runtime_checkable
 
-from modulos.genericos.mercaderia.dao import MercaderiaDAO
+from core import MercaderiaRef
 
 from ..enums import EstadoRemito
 from ..operador.dao import OperadorDAO
 from .dao import RemitoCarnico, RenglonRemito, RemitoCarnicoDAO
 from .schema import RemitoCarnicoIn, RemitoCarnicoOut, RenglonRemitoOut, ParticipanteOut
 from .validacion import ValidadorRemito
+
+
+@runtime_checkable
+class MercaderiaDAOProtocol(Protocol):
+    """Contrato mínimo de consulta de mercaderías (catálogo genérico).
+
+    Permite a este servicio depender del *tipo* de consulta de mercaderías
+    sin importar el DAO concreto de otro módulo.
+    """
+
+    def obtener_por_codigo(self, codigo: str) -> Optional[MercaderiaRef]:
+        """Devuelve la referencia de la mercadería o ``None``."""
+        ...
 
 
 class RemitoCarnicoError(Exception):
@@ -30,7 +43,7 @@ class RemitoCarnicoService:
         self,
         remito_dao: RemitoCarnicoDAO,
         operador_dao: OperadorDAO,
-        mercaderia_dao: MercaderiaDAO,
+        mercaderia_dao: MercaderiaDAOProtocol,
         validador: Optional[ValidadorRemito] = None,
     ) -> None:
         self._remito_dao = remito_dao

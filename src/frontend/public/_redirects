@@ -1,0 +1,2 @@
+# SPA fallback: toda ruta que no sea un archivo real sirve index.html
+/*    /index.html   200
