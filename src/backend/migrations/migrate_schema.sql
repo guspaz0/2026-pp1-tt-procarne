@@ -60,7 +60,7 @@ CREATE TABLE fiscalizacion_reincidencias (
 
 CREATE TABLE mercaderias_genericas (
 	id SERIAL NOT NULL,
-	codigo VARCHAR(20) NOT NULL,
+	codigo VARCHAR(20) NOT NULL UNIQUE,
 	descripcion VARCHAR(255) NOT NULL,
 	unidad_medida VARCHAR(20),
 	requiere_trazabilidad BOOLEAN NOT NULL,
@@ -72,7 +72,7 @@ CREATE TABLE personas (
 	id SERIAL NOT NULL,
 	tipo VARCHAR(2) NOT NULL,
 	tipo_documento VARCHAR(4) NOT NULL,
-	identificador VARCHAR(13) NOT NULL,
+	identificador VARCHAR(13) NOT NULL UNIQUE,
 	nombre VARCHAR(120),
 	apellido VARCHAR(120),
 	razon_social VARCHAR(255),
@@ -119,7 +119,8 @@ CREATE TABLE categorias_afip (
 	codigo VARCHAR(10) NOT NULL,
 	descripcion VARCHAR(255) NOT NULL,
 	PRIMARY KEY (id),
-	FOREIGN KEY(actividad_id) REFERENCES actividades (id)
+	FOREIGN KEY(actividad_id) REFERENCES actividades (id),
+	CONSTRAINT uq_categorias_afip_actividad_codigo UNIQUE (actividad_id, codigo)
 );
 
 CREATE TABLE fiscalizacion_actas (

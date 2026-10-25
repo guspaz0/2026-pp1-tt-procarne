@@ -4,8 +4,8 @@
 
 resource "render_web_service" "api" {
   name             = var.render_api_name
-  plan             = "starter"
-  region           = "frankfurt"
+  plan             = "free" # --- el plan "starter" <- no es gratis
+  region           = "virginia" # --- lo mas cercano a suramerica y el servidor de insforge (base de datos)
   root_directory   = "src/backend"
   start_command    = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
   health_check_path = "/api/health"
@@ -27,31 +27,10 @@ resource "render_web_service" "api" {
 }
 
 # ---------------------------------------------------------------------------
-# Frontend — Netlify
-# El site se crea una vez en el UI de Netlify.
-# El provider gestiona build settings y env vars; el deploy se hace con netlify-cli.
+# Frontend — Netlify (deploy de Vite build)
+# El site se crea una vez en el UI de Netlify; Terraform solo hace el deploy.
 # ---------------------------------------------------------------------------
 
-resource "netlify_site_build_settings" "frontend" {
-  site_id           = var.netlify_site_id
-  build_command     = "cd src/frontend && pnpm install --frozen-lockfile && pnpm run build"
-  publish_directory = "src/frontend/dist"
-  production_branch = var.github_branch
-}
-
-resource "netlify_environment_variable" "vite_api_base_url" {
-  site_id = var.netlify_site_id
-  key     = "VITE_API_BASE_URL"
-
-  values = [
-    {
-      context = "all"
-      value   = render_web_service.api.url
-    }
-  ]
-}
-
-# Deploy del build local de Vite
 resource "terraform_data" "netlify_deploy" {
   # Re-deploy cuando cambie cualquier archivo en dist/
   triggers_replace = [

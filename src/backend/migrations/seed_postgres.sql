@@ -1425,7 +1425,7 @@ INSERT INTO operador_categorias (operador_id, actividad_id, categoria_id, situac
     (248, 1, 1,  1, '04/01/2023', NULL),
     (249, 1, 1,  1, '08/08/2026', NULL),
     (250, 1, 4,  1, '10/08/2026', NULL)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- ---------------------------------------------------------
 -- 6. Personas — Porcino (250 operadores)
@@ -2196,6 +2196,15 @@ INSERT INTO operadores (id, persona_id) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ---------------------------------------------------------
+-- 6. Operador Actividades — Bovino/Bubalino (join many-to-many)
+-- ---------------------------------------------------------
+
+INSERT INTO operador_actividades (operador_id, actividad_id)
+SELECT DISTINCT operador_id, actividad_id FROM operador_categorias
+WHERE actividad_id = 1
+ON CONFLICT (operador_id, actividad_id) DO NOTHING;
+
+-- ---------------------------------------------------------
 -- 7. Operador Categorías — Porcino
 -- ---------------------------------------------------------
 
@@ -2478,7 +2487,24 @@ INSERT INTO operador_categorias (operador_id, actividad_id, categoria_id, situac
     (13180, 2, 12,  1, '11/08/2025', NULL),
     (13180, 2, 13,  1, '11/08/2025', NULL),
     (13202, 2, 12,  1, '05/07/2022', NULL)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------
+-- 8. Operador Actividades — Porcino (join many-to-many)
+-- ---------------------------------------------------------
+
+INSERT INTO operador_actividades (operador_id, actividad_id)
+SELECT DISTINCT operador_id, actividad_id FROM operador_categorias
+WHERE actividad_id = 2
+ON CONFLICT (operador_id, actividad_id) DO NOTHING;
+
+-- ---------------------------------------------------------
+-- 9. Secuencias (re-sincronizar tras INSERT con ids explícitos)
+-- ---------------------------------------------------------
+
+SELECT setval(pg_get_serial_sequence('personas', 'id'), (SELECT MAX(id) FROM personas));
+SELECT setval(pg_get_serial_sequence('operadores', 'id'), (SELECT MAX(id) FROM operadores));
+SELECT setval(pg_get_serial_sequence('operador_categorias', 'id'), (SELECT MAX(id) FROM operador_categorias));
 
 COMMIT;
 
@@ -2488,4 +2514,5 @@ UNION ALL SELECT 'actividades', COUNT(*) FROM actividades
 UNION ALL SELECT 'categorias_afip', COUNT(*) FROM categorias_afip
 UNION ALL SELECT 'mercaderias_genericas', COUNT(*) FROM mercaderias_genericas
 UNION ALL SELECT 'personas', COUNT(*) FROM personas
-UNION ALL SELECT 'operador_categorias', COUNT(*) FROM operador_categorias;
+UNION ALL SELECT 'operador_categorias', COUNT(*) FROM operador_categorias
+UNION ALL SELECT 'operador_actividades', COUNT(*) FROM operador_actividades;

@@ -17,7 +17,7 @@ terraform/
 
 ## Requisitos
 
-- Terraform >= 1.5
+- Terraform >= 1.5 (cómo instalarlo: [Instalar Terraform](#instalar-terraform))
 - `netlify-cli` instalado (`npm i -g netlify-cli`)
 - API key de Render: <https://dashboard.render.com/api-keys>
 - Owner ID de Render (lo ves en la URL de tu perfil/equipo en el dashboard)
@@ -37,6 +37,73 @@ terraform/
 | `netlify_token`      | sí        | Personal access token de Netlify                         | —                          |
 | `netlify_site_id`    | no        | ID del site en Netlify (lo ves en la URL del dashboard)   | —                          |
 | `netlify_site_name`  | no        | Nombre del site en Netlify                               | `rocca`                    |
+
+## Instalar Terraform
+
+Descargas oficiales y checksums: <https://developer.hashicorp.com/terraform/install>
+
+### macOS
+
+Con [Homebrew](https://brew.sh):
+
+```bash
+brew install hashicorp/tap/terraform
+```
+
+Alternativa: descargar el `.zip` para macOS (arm64 o amd64) desde la página de
+install, descomprimirlo y mover el binario a un directorio en el `PATH`:
+
+```bash
+# ejemplo para Apple Silicon (arm64); usar la versión y el hash actuales del sitio
+curl -O https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_darwin_arm64.zip
+unzip terraform_1.9.8_darwin_arm64.zip
+sudo mv terraform /usr/local/bin/
+```
+
+### Linux
+
+Con el repositorio oficial de HashiCorp (Debian/Ubuntu):
+
+```bash
+# 1. Agregar la clave GPG y el repositorio (ajustar la versión de Terraform y la de tu distro)
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+```
+
+Alternativa (cualquier distro): descargar el `.zip` de la página de install,
+descomprimirlo y mover el binario a un directorio en el `PATH`:
+
+```bash
+# ejemplo para amd64; usar la versión y el hash actuales del sitio
+curl -O https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
+unzip terraform_1.9.8_linux_amd64.zip
+sudo mv terraform /usr/local/bin/
+```
+
+### Windows
+
+Con [WinGet](https://github.com/microsoft/winget-cli) (incluido en Windows 10/11 recientes):
+
+```powershell
+winget install HashiCorp.Terraform
+```
+
+Alternativas:
+
+- Con [Chocolatey](https://chocolatey.org): `choco install terraform`
+- Con [Scoop](https://scoop.sh): `scoop install terraform`
+- Manual: descargar el `.zip` para Windows (amd64) desde la página de
+  install, descomprimirlo y agregar la carpeta al `PATH` de sistema
+  (Configuración → Sistema → Sobre → Información del sistema → Variables de
+  entorno).
+
+### Verificar la instalación
+
+```bash
+terraform version
+# Terraform v1.9.x
+```
 
 ## Uso
 

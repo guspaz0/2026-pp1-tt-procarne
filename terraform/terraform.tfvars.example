@@ -1,0 +1,11 @@
+## --- RENDER ---
+render_api_key="rnd_xxxxxxx"
+
+render_owner_id="usr-xxxxxxx"
+
+## ---- NETLIFY ----
+netlify_token="nfp_xxxxxxx"
+netlify_site_id="procarne-sde"
+
+## --- ROCCA_DATABASE_URL insforge o supabase ---
+rocca_database_url=postrgresql:/xxxxx

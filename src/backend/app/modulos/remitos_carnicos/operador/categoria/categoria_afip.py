@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from configs.db import Base
@@ -25,6 +25,9 @@ class CategoriaAfip(Base):
     """
 
     __tablename__ = "categorias_afip"
+    __table_args__ = (
+        UniqueConstraint("actividad_id", "codigo", name="uq_categorias_afip_actividad_codigo"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     actividad_id: Mapped[int] = mapped_column(ForeignKey("actividades.id"), nullable=False, index=True)
