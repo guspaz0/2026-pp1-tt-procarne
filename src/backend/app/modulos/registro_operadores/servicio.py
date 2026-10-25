@@ -44,8 +44,9 @@ class ROCCAOperadorService:
         # Referencia de identidad; el DAO materializa la ORM concreta.
         persona = PersonaRef(
             tipo="PJ",
+            tipo_documento="CUIT",
             identificador=datos.cuit,
-            nombre=datos.razon_social,
+            razon_social=datos.razon_social,
             domicilio=datos.domicilio,
             telefono=datos.telefono,
             email=datos.email,

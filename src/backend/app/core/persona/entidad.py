@@ -69,28 +69,37 @@ class PersonaFisica(Persona):
     """
 
     tipo = TipoPersona.PF
+    tipo_documento = "DNI"
 
     def __init__(
         self,
         dni: str,
         nombre: str,
-        cuit: Optional[str] = None,
+        apellido: str,
         domicilio: Optional[str] = None,
         telefono: Optional[str] = None,
         email: Optional[str] = None,
     ) -> None:
-        super().__init__(nombre, domicilio, telefono, email)
+        super().__init__(f"{nombre} {apellido}", domicilio, telefono, email)
         self.dni = dni
-        self.cuit = cuit
+        self.nombre_p = nombre
+        self.apellido = apellido
 
     @property
     def identificador(self) -> str:
         return self.dni
 
+    @property
+    def razon_social(self) -> str:
+        """Se infiere de apellido + nombre."""
+        return f"{self.apellido} {self.nombre_p}"
+
     def to_dict(self) -> dict:
         base = super().to_dict()
         base["dni"] = self.dni
-        base["cuit"] = self.cuit
+        base["nombre"] = self.nombre_p
+        base["apellido"] = self.apellido
+        base["razon_social"] = self.razon_social
         return base
 
 
@@ -98,17 +107,19 @@ class PersonaJuridica(Persona):
     """Persona jurídica, identificada únicamente por su CUIT."""
 
     tipo = TipoPersona.PJ
+    tipo_documento = "CUIT"
 
     def __init__(
         self,
         cuit: str,
-        nombre: str,
+        razon_social: str,
         domicilio: Optional[str] = None,
         telefono: Optional[str] = None,
         email: Optional[str] = None,
     ) -> None:
-        super().__init__(nombre, domicilio, telefono, email)
+        super().__init__(razon_social, domicilio, telefono, email)
         self.cuit = cuit
+        self.razon_social = razon_social
 
     @property
     def identificador(self) -> str:
@@ -117,4 +128,5 @@ class PersonaJuridica(Persona):
     def to_dict(self) -> dict:
         base = super().to_dict()
         base["cuit"] = self.cuit
+        base["razon_social"] = self.razon_social
         return base

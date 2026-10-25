@@ -58,8 +58,8 @@ class Operador(Base):
 
     @property
     def razon_social(self) -> str:
-        """La razón social es el nombre de la persona jurídica."""
-        return self.persona.nombre
+        """La razón social de la persona jurídica."""
+        return self.persona.razon_social or self.persona.nombre_completo
 
     @property
     def domicilio(self) -> Optional[str]:
@@ -130,8 +130,11 @@ class OperadorDAO:
                 # La referencia de identidad se materializa como ORM de persona.
                 persona_orm = Persona(
                     tipo=persona.tipo,
+                    tipo_documento=persona.tipo_documento,
                     identificador=persona.identificador,
                     nombre=persona.nombre,
+                    apellido=persona.apellido,
+                    razon_social=persona.razon_social,
                     domicilio=persona.domicilio,
                     telefono=persona.telefono,
                     email=persona.email,

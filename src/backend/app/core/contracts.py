@@ -65,8 +65,11 @@ class PersonaRef:
     """
 
     tipo: str
+    tipo_documento: str
     identificador: str
-    nombre: str
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    razon_social: Optional[str] = None
     domicilio: Optional[str] = None
     telefono: Optional[str] = None
     email: Optional[str] = None

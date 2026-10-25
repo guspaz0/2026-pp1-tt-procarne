@@ -46,12 +46,18 @@ CREATE TABLE IF NOT EXISTS situaciones (
 -- Personas (física o jurídica)
 CREATE TABLE IF NOT EXISTS personas (
     id SERIAL PRIMARY KEY,
-    tipo VARCHAR(10) NOT NULL,
+    tipo VARCHAR(2) NOT NULL CHECK (tipo IN ('PF', 'PJ')),
+    tipo_documento VARCHAR(4) NOT NULL CHECK (tipo_documento IN ('DNI', 'CUIT')),
     identificador VARCHAR(13) NOT NULL UNIQUE,
-    nombre VARCHAR(255) NOT NULL,
+    nombre VARCHAR(120),
+    apellido VARCHAR(120),
+    razon_social VARCHAR(255),
     domicilio VARCHAR(255),
     telefono VARCHAR(30),
-    email VARCHAR(255)
+    email VARCHAR(255),
+    CONSTRAINT chk_identificador_longitud
+        CHECK ((tipo_documento = 'DNI' AND LENGTH(identificador) = 8)
+            OR (tipo_documento = 'CUIT' AND LENGTH(identificador) = 11))
 );
 
 -- Mercaderías genéricas
@@ -64,13 +70,11 @@ CREATE TABLE IF NOT EXISTS mercaderias_genericas (
     requiere_numero_tropa BOOLEAN NOT NULL DEFAULT FALSE
 );
 
--- Operadores (remitos cárnicos)
+-- Operadores (solo referencia a persona + datos específicos)
 CREATE TABLE IF NOT EXISTS operadores (
     id SERIAL PRIMARY KEY,
-    persona_id INTEGER REFERENCES personas(id),
-    cuit VARCHAR(13) NOT NULL UNIQUE,
-    razon_social VARCHAR(255) NOT NULL,
-    tipo_operador VARCHAR(30)
+    persona_id INTEGER NOT NULL UNIQUE REFERENCES personas(id),
+    domicilio_fiscal VARCHAR(255)
 );
 
 -- Inscripción de un operador en una categoría de una actividad

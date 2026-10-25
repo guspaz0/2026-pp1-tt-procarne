@@ -23,7 +23,7 @@ from modulos.registro_operadores.dao import (
 
 
 def _crear_persona_juridica(session, cuit: str, nombre: str) -> Persona:
-    persona = Persona(tipo="PJ", identificador=cuit, nombre=nombre, cuit=cuit)
+    persona = Persona(tipo="PJ", tipo_documento="CUIT", identificador=cuit, razon_social=nombre)
     session.add(persona)
     session.commit()
     session.refresh(persona)

@@ -94,9 +94,9 @@ def _crear_persona_juridica(session, cuit: str, nombre: str) -> Persona:
     """Crea una persona jurídica y la devuelve."""
     persona = Persona(
         tipo="PJ",
+        tipo_documento="CUIT",
         identificador=cuit,
-        nombre=nombre,
-        cuit=cuit,
+        razon_social=nombre,
     )
     session.add(persona)
     session.commit()
