@@ -1,0 +1,1715 @@
+{
+  "schemas": [
+    [
+      {
+        "name": "page_border",
+        "type": "rectangle",
+        "position": {
+          "x": 8,
+          "y": 8
+        },
+        "width": 194,
+        "height": 281,
+        "rotate": 0,
+        "opacity": 1,
+        "borderWidth": 0.6,
+        "borderColor": "#000000",
+        "color": "",
+        "readOnly": true,
+        "radius": 0,
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "f101_badge",
+        "type": "rectangle",
+        "position": {
+          "x": 90,
+          "y": 13
+        },
+        "width": 24,
+        "height": 9,
+        "rotate": 0,
+        "opacity": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "color": "#000000",
+        "readOnly": true,
+        "radius": 1,
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "f101_badge_text",
+        "type": "text",
+        "content": "F 101",
+        "position": {
+          "x": 90,
+          "y": 14.5
+        },
+        "width": 24,
+        "height": 6,
+        "rotate": 0,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "fontSize": 10,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 1,
+        "fontColor": "#ffffff",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "dj_title",
+        "type": "text",
+        "content": "Declaración Jurada",
+        "position": {
+          "x": 60,
+          "y": 25
+        },
+        "width": 80,
+        "height": 5,
+        "rotate": 0,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "fontSize": 10,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "ministry",
+        "type": "text",
+        "content": "Ministerio de Producción,\nRecursos Naturales,\nForestation y Tierras",
+        "position": {
+          "x": 156.46,
+          "y": 30.99
+        },
+        "width": 26.99,
+        "height": 8.2,
+        "rotate": 0,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "fontSize": 5.5,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1.1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "registro",
+        "type": "text",
+        "content": "Registro Provincial de\nOPERADORES DE CARNE",
+        "position": {
+          "x": 26.72,
+          "y": 32.95
+        },
+        "width": 31.22,
+        "height": 7.14,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1.2,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "cuit_label",
+        "type": "text",
+        "content": "C.U.I.T",
+        "position": {
+          "x": 12,
+          "y": 47
+        },
+        "width": 14,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "CUIT",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 27,
+          "y": 47
+        },
+        "width": 40,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0.3,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": true
+      },
+      {
+        "name": "operador_label",
+        "type": "text",
+        "content": "Operador o establecimiento",
+        "position": {
+          "x": 126.94,
+          "y": 41.03
+        },
+        "width": 51.06,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "center",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "plain",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false,
+        "fontVariants": {
+          "bold": "",
+          "italic": "",
+          "boldItalic": "",
+          "code": ""
+        }
+      },
+      {
+        "name": "operador_nro",
+        "type": "text",
+        "content": "Nº",
+        "position": {
+          "x": 127.79,
+          "y": 46
+        },
+        "width": 8,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "operador_numero",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 127,
+          "y": 46
+        },
+        "width": 51,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0.3,
+          "right": 0.3,
+          "bottom": 0.3,
+          "left": 0.3
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 1
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": true
+      },
+      {
+        "name": "datos_operador_bar",
+        "type": "rectangle",
+        "position": {
+          "x": 10,
+          "y": 54
+        },
+        "width": 190,
+        "height": 6,
+        "rotate": 0,
+        "opacity": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "color": "#000000",
+        "readOnly": true,
+        "radius": 0,
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "datos_operador_title",
+        "type": "text",
+        "content": "Datos del Operador",
+        "position": {
+          "x": 11,
+          "y": 54
+        },
+        "width": 80,
+        "height": 6,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#ffffff",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "apellido_paterno_label",
+        "type": "text",
+        "content": "Apellido Paterno",
+        "position": {
+          "x": 12,
+          "y": 62.47
+        },
+        "width": 19.31,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "APELLIDO_PATERNO",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 32.2,
+          "y": 62.8
+        },
+        "width": 165.63,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": true
+      },
+      {
+        "name": "nombre_completo_label",
+        "type": "text",
+        "content": "Nombre Completo",
+        "position": {
+          "x": 12.26,
+          "y": 69.3
+        },
+        "width": 40,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "NOMBRE_COMPLETO",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 33.26,
+          "y": 69.36
+        },
+        "width": 164.84,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": true
+      },
+      {
+        "name": "apellido_materno_label",
+        "type": "text",
+        "content": "Apellido Materno",
+        "position": {
+          "x": 12.27,
+          "y": 75.58
+        },
+        "width": 40,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "APELLIDO_MATERNO",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 33.06,
+          "y": 75.12
+        },
+        "width": 67.47,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": true
+      },
+      {
+        "name": "apellido_casada_label",
+        "type": "text",
+        "content": "Apellido de Casada",
+        "position": {
+          "x": 104.53,
+          "y": 75.32
+        },
+        "width": 40,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "APELLIDO_CASADA",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 126.85,
+          "y": 75.13
+        },
+        "width": 71.7,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": false
+      },
+      {
+        "name": "domicilio_bar",
+        "type": "rectangle",
+        "position": {
+          "x": 10,
+          "y": 121
+        },
+        "width": 190,
+        "height": 6,
+        "rotate": 0,
+        "opacity": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "color": "#000000",
+        "readOnly": true,
+        "radius": 0,
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "domicilio_title",
+        "type": "text",
+        "content": "Domicilio Fiscal del Operador",
+        "position": {
+          "x": 11,
+          "y": 121
+        },
+        "width": 100,
+        "height": 6,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#ffffff",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "calle_label",
+        "type": "text",
+        "content": "Calle",
+        "position": {
+          "x": 12.8,
+          "y": 128.94
+        },
+        "width": 10.05,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "numero_label",
+        "type": "text",
+        "content": "Número",
+        "position": {
+          "x": 144.82,
+          "y": 128.44
+        },
+        "width": 11.11,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "right",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "CALLE",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 21.67,
+          "y": 128.74
+        },
+        "width": 118.53,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": true
+      },
+      {
+        "name": "DOMICILIO_NUMERO",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 157,
+          "y": 128.74
+        },
+        "width": 41.54,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": true
+      },
+      {
+        "name": "naturaleza_bar",
+        "type": "rectangle",
+        "position": {
+          "x": 10,
+          "y": 164
+        },
+        "width": 190,
+        "height": 6,
+        "rotate": 0,
+        "opacity": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "color": "#000000",
+        "readOnly": true,
+        "radius": 0,
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "naturaleza_title",
+        "type": "text",
+        "content": "Naturaleza Jurídica y Otros Datos",
+        "position": {
+          "x": 11,
+          "y": 164
+        },
+        "width": 100,
+        "height": 6,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#ffffff",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "naturaleza_juridica_label",
+        "type": "text",
+        "content": "Naturaleza Jurídica",
+        "position": {
+          "x": 12.26,
+          "y": 171.67
+        },
+        "width": 23.81,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "NATURALEZA_JURIDICA",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 35.11,
+          "y": 172
+        },
+        "width": 163.25,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": false
+      },
+      {
+        "name": "inscripcion_label",
+        "type": "text",
+        "content": "Inscripción en el Registro Correspondiente",
+        "position": {
+          "x": 12,
+          "y": 184
+        },
+        "width": 100,
+        "height": 4,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "inscripcion_table",
+        "type": "table",
+        "position": {
+          "x": 10,
+          "y": 189
+        },
+        "required": false,
+        "width": 190,
+        "height": 0,
+        "content": "[[]]",
+        "showHead": false,
+        "repeatHead": false,
+        "head": [],
+        "headWidthPercentages": [],
+        "tableStyles": {
+          "borderWidth": 0.3,
+          "borderColor": "#000000"
+        },
+        "headStyles": {
+          "fontName": "Roboto",
+          "fontSize": 6.5,
+          "characterSpacing": 0,
+          "alignment": "left",
+          "verticalAlignment": "middle",
+          "lineHeight": 1,
+          "fontColor": "#000000",
+          "borderColor": "#000000",
+          "backgroundColor": "#d9d9d9",
+          "borderWidth": {
+            "top": 0.3,
+            "right": 0.3,
+            "bottom": 0.3,
+            "left": 0.3
+          },
+          "padding": {
+            "top": 1,
+            "right": 1,
+            "bottom": 1,
+            "left": 1
+          }
+        },
+        "bodyStyles": {
+          "fontName": "Roboto",
+          "fontSize": 6.5,
+          "characterSpacing": 0,
+          "alignment": "left",
+          "verticalAlignment": "middle",
+          "lineHeight": 1,
+          "fontColor": "#000000",
+          "borderColor": "#000000",
+          "backgroundColor": "#ffffff",
+          "alternateBackgroundColor": "",
+          "borderWidth": {
+            "top": 0.3,
+            "right": 0.3,
+            "bottom": 0.3,
+            "left": 0.3
+          },
+          "padding": {
+            "top": 1,
+            "right": 1,
+            "bottom": 1,
+            "left": 1
+          }
+        },
+        "columnStyles": {
+          "alignment": {
+            "0": "left",
+            "1": "left",
+            "2": "left",
+            "3": "left",
+            "4": "left",
+            "5": "left",
+            "6": "left",
+            "7": "left",
+            "8": "left"
+          }
+        },
+        "readOnly": false
+      },
+      {
+        "name": "actividades_bar",
+        "type": "rectangle",
+        "position": {
+          "x": 10,
+          "y": 200
+        },
+        "width": 190,
+        "height": 6,
+        "rotate": 0,
+        "opacity": 1,
+        "borderWidth": 0,
+        "borderColor": "#000000",
+        "color": "#000000",
+        "readOnly": true,
+        "radius": 0,
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "actividades_title",
+        "type": "text",
+        "content": "Detalle de Actividades que desarrolla",
+        "position": {
+          "x": 11,
+          "y": 200
+        },
+        "width": 120,
+        "height": 6,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#ffffff",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "actividad_principal_label",
+        "type": "text",
+        "content": "Actividad Principal",
+        "position": {
+          "x": 13.05,
+          "y": 208.47
+        },
+        "width": 26.46,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "ACTIVIDAD_PRINCIPAL",
+        "type": "text",
+        "content": "",
+        "position": {
+          "x": 38.82,
+          "y": 208.53
+        },
+        "width": 160.34,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "plain",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": false,
+        "required": false
+      },
+      {
+        "name": "otras_actividades_label",
+        "type": "text",
+        "content": "Otras Actividades",
+        "position": {
+          "x": 12,
+          "y": 230
+        },
+        "width": 26.19,
+        "height": 3.97,
+        "rotate": 0,
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "fontSize": 7,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 0,
+        "fontColor": "#000000",
+        "backgroundColor": "",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "datos_operador_sidebar",
+        "type": "text",
+        "content": "DATOS DEL",
+        "position": {
+          "x": 189,
+          "y": 35.42
+        },
+        "width": 18.789999999999992,
+        "height": 3.97,
+        "rotate": 270,
+        "alignment": "center",
+        "verticalAlignment": "bottom",
+        "fontSize": 8,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 1,
+        "fontColor": "#ffffff",
+        "backgroundColor": "#000000",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "logo_registro_ope_carne",
+        "type": "image",
+        "content": "__PDFME_ASSET__:asset_1",
+        "position": {
+          "x": 18.3,
+          "y": 31.68
+        },
+        "width": 7.94,
+        "height": 7.67,
+        "objectFit": "contain",
+        "objectPosition": "center center",
+        "rotate": 0,
+        "opacity": 1,
+        "required": true,
+        "readOnly": false
+      },
+      {
+        "name": "logo_m_produccion",
+        "type": "image",
+        "content": "__PDFME_ASSET__:asset_2",
+        "position": {
+          "x": 161.93,
+          "y": 12.65
+        },
+        "width": 16.93,
+        "height": 16.93,
+        "objectFit": "contain",
+        "objectPosition": "center center",
+        "rotate": 0,
+        "opacity": 1,
+        "required": true,
+        "readOnly": false
+      },
+      {
+        "name": "datos_operador_sidebar copy 2",
+        "type": "text",
+        "content": "OPERADOR",
+        "position": {
+          "x": 189,
+          "y": 17.05
+        },
+        "width": 18.79,
+        "height": 3.97,
+        "rotate": 270,
+        "alignment": "center",
+        "verticalAlignment": "bottom",
+        "fontSize": 8,
+        "textFormat": "bold",
+        "overflow": "visible",
+        "fontVariantFallback": "synthetic",
+        "lineHeight": 1,
+        "characterSpacing": 1,
+        "fontColor": "#ffffff",
+        "backgroundColor": "#000000",
+        "borderColor": "#000000",
+        "borderWidth": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": null,
+          "left": 0
+        },
+        "opacity": 1,
+        "strikethrough": false,
+        "underline": false,
+        "fontName": "Roboto",
+        "readOnly": true,
+        "required": false
+      },
+      {
+        "name": "field47",
+        "type": "rectangle",
+        "position": {
+          "x": 195.92,
+          "y": 8.92
+        },
+        "width": 5.03,
+        "height": 38.36,
+        "rotate": 0,
+        "opacity": 1,
+        "borderWidth": 1,
+        "borderColor": "#000000",
+        "color": "",
+        "readOnly": true,
+        "radius": 1,
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "linea_apellido_paterno",
+        "type": "line",
+        "position": {
+          "x": 11.64,
+          "y": 66.43
+        },
+        "width": 186,
+        "height": 0.1,
+        "rotate": 0,
+        "opacity": 1,
+        "readOnly": true,
+        "color": "#000000",
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "linea_nombre_completo",
+        "type": "line",
+        "position": {
+          "x": 11.85,
+          "y": 72.99
+        },
+        "width": 186.41,
+        "height": 0.1,
+        "rotate": 0,
+        "opacity": 1,
+        "readOnly": true,
+        "color": "#000000",
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "linea_ape_materno",
+        "type": "line",
+        "position": {
+          "x": 11.81,
+          "y": 79.28
+        },
+        "width": 186,
+        "height": 0.1,
+        "rotate": 0,
+        "opacity": 1,
+        "readOnly": true,
+        "color": "#000000",
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "linea_domicilio_fiscal",
+        "type": "line",
+        "position": {
+          "x": 12.29,
+          "y": 132.68
+        },
+        "width": 186,
+        "height": 0.1,
+        "rotate": 0,
+        "opacity": 1,
+        "readOnly": true,
+        "color": "#000000",
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "linea_naturaleza_juridica",
+        "type": "line",
+        "position": {
+          "x": 12.24,
+          "y": 176.01
+        },
+        "width": 186,
+        "height": 0.1,
+        "rotate": 0,
+        "opacity": 1,
+        "readOnly": true,
+        "color": "#000000",
+        "required": false,
+        "content": ""
+      },
+      {
+        "name": "linea_activdad_principal",
+        "type": "line",
+        "position": {
+          "x": 12.19,
+          "y": 212.47
+        },
+        "width": 186,
+        "height": 0.1,
+        "rotate": 0,
+        "opacity": 1,
+        "readOnly": true,
+        "color": "#000000",
+        "required": false,
+        "content": ""
+      }
+    ]
+  ],
+  "basePdf": {
+    "width": 210,
+    "height": 297,
+    "padding": [0, 0, 0, 0]
+  },
+  "pdfmeVersion": "6.2.4"
+}
