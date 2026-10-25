@@ -9,6 +9,7 @@ Contiene:
 from .actividad import Actividad, ActividadDAO
 from .categoria_afip import CategoriaAfip, CategoriaAfipDAO
 from .operador_categoria import CategoriaOperador, CategoriaOperadorDAO
+from .situacion import Situacion, SituacionDAO
 
 __all__ = [
     "Actividad",
@@ -17,4 +18,6 @@ __all__ = [
     "CategoriaAfipDAO",
     "CategoriaOperador",
     "CategoriaOperadorDAO",
+    "Situacion",
+    "SituacionDAO",
 ]

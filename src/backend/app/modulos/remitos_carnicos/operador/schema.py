@@ -32,8 +32,10 @@ class CategoriaOperadorOut(BaseModel):
 
     id: int
     actividad_id: Optional[int] = None
-    categoria: str
-    situacion: str
+    categoria_id: int
+    categoria: Optional[str] = None  # descripción (via relationship)
+    situacion_id: int
+    situacion: Optional[str] = None  # descripción (via relationship)
     desde_fecha: Optional[str] = None
     hasta_fecha: Optional[str] = None
 
@@ -76,8 +78,10 @@ class OperadorOut(BaseModel):
                 CategoriaOperadorOut(
                     id=c.id,
                     actividad_id=c.actividad_id,
-                    categoria=c.categoria,
-                    situacion=c.situacion,
+                    categoria_id=c.categoria_id,
+                    categoria=c.categoria.descripcion if c.categoria else None,
+                    situacion_id=c.situacion_id,
+                    situacion=c.situacion.descripcion if c.situacion else None,
                     desde_fecha=c.desde_fecha,
                     hasta_fecha=c.hasta_fecha,
                 )

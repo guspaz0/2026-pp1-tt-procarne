@@ -77,7 +77,7 @@ class TestCategoriaOperadorDAO:
     def test_listar_activas_por_operador(self, categoria_operador_dao, seed_operador):
         cats = categoria_operador_dao.listar_activas_por_operador(seed_operador["id"])
         assert len(cats) == 2
-        assert all(c.situacion == "ACTIVO" for c in cats)
+        assert all(c.situacion_id == 1 for c in cats)  # 1 = ACTIVO
 
     def test_listar_por_operador_y_actividad(self, categoria_operador_dao, seed_operador):
         cats = categoria_operador_dao.listar_por_operador_y_actividad(
@@ -102,13 +102,13 @@ class TestCategoriaOperadorDAO:
         nueva = CategoriaOperador(
             operador_id=seed_operador["id"],
             actividad_id=1,
-            categoria="Feed lots",
-            situacion="ACTIVO",
+            categoria_id=3,  # B3 = Feed lots
+            situacion_id=1,  # ACTIVO
             desde_fecha="01/03/2025",
         )
         guardada = categoria_operador_dao.guardar(nueva)
         assert guardada.id is not None
-        assert guardada.categoria == "Feed lots"
+        assert guardada.categoria_id == 3
 
     def test_eliminar_por_operador(self, categoria_operador_dao, seed_operador):
         eliminadas = categoria_operador_dao.eliminar_por_operador(seed_operador["id"])
@@ -183,8 +183,8 @@ class TestRelaciones:
             cat_por = CategoriaOperador(
                 operador_id=op_id,
                 actividad_id=2,
-                categoria="Productores/Criadores Comerciales",
-                situacion="ACTIVO",
+                categoria_id=12,  # P1 = Productores/Criadores Comerciales
+                situacion_id=1,  # ACTIVO
                 desde_fecha="01/01/2025",
             )
             session.add(cat_por)

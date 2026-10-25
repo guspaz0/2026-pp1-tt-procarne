@@ -14,10 +14,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 from configs.dao import DATABASE_URL, crear_dao
 from core.mercaderia.dao import MercaderiaDAO
@@ -89,8 +89,11 @@ class RoccaApp:
         # 4. Health check
         self._registrar_health_check()
 
-        # 5. Frontend estático
-        self._registrar_frontend()
+        # 5. Manejador global de errores
+        self._registrar_error_handlers()
+
+        # 6. Frontend estático (comentado: el frontend vive en Netlify)
+        # self._registrar_frontend()
 
     # ------------------------------------------------------------------
     # Health check
@@ -104,21 +107,57 @@ class RoccaApp:
             return {"status": "ok"}
 
     # ------------------------------------------------------------------
-    # Frontend estático
+    # Manejador global de errores
     # ------------------------------------------------------------------
 
-    def _registrar_frontend(self) -> None:
-        """Registra el montaje del frontend estático y el SPA fallback."""
-        default_static = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
-        static_dir = Path(os.environ.get("ROCCA_STATIC_DIR", default_static))
+    def _registrar_error_handlers(self) -> None:
+        """Registra manejadores globales de errores para respuestas JSON
+        consistentes en todo el API."""
 
-        if static_dir.exists():
-            self.app.mount("/static", StaticFiles(directory=static_dir / "static"), name="static")
+        @self.app.exception_handler(FastAPIHTTPException)
+        async def http_exception_handler(request: Request, exc: FastAPIHTTPException) -> JSONResponse:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={
+                    "detail": exc.detail,
+                    "status_code": exc.status_code,
+                },
+            )
 
-        @self.app.get("/{path:path}")
-        def frontend_fallback(path: str) -> FileResponse:
-            """SPA fallback: toda ruta no-API y no-estática sirve index.html."""
-            return FileResponse(static_dir / "index.html")
+        @self.app.exception_handler(Exception)
+        async def global_error_handler(request: Request, exc: Exception) -> JSONResponse:
+            import logging
+            logging.getLogger("rocca").exception("Error no manejado en %s %s", request.method, request.url.path)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "detail": "Error interno del servidor",
+                    "status_code": 500,
+                },
+            )
+
+    # ------------------------------------------------------------------
+    # Frontend estático (desactivado: el frontend se sirve desde Netlify)
+    # ------------------------------------------------------------------
+
+    # def _registrar_frontend(self) -> None:
+    #     """Registra el montaje del frontend estático y el SPA fallback.
+    #
+    #     Desactivado: el frontend se sirve desde Netlify, no desde el backend.
+    #     """
+    #     from fastapi.responses import FileResponse
+    #     from fastapi.staticfiles import StaticFiles
+    #
+    #     default_static = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+    #     static_dir = Path(os.environ.get("ROCCA_STATIC_DIR", default_static))
+    #
+    #     if static_dir.exists():
+    #         self.app.mount("/static", StaticFiles(directory=static_dir / "static"), name="static")
+    #
+    #     @self.app.get("/{path:path}")
+    #     def frontend_fallback(path: str) -> FileResponse:
+    #         """SPA fallback: toda ruta no-API y no-estática sirve index.html."""
+    #         return FileResponse(static_dir / "index.html")
 
     # ------------------------------------------------------------------
     # Ciclo de vida

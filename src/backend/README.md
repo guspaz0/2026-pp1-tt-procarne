@@ -42,8 +42,8 @@ src/backend/
 │   ├── script.py.mako       # Plantilla de migración
 │   ├── seed_categorias_afip.sql
 │   ├── seed_mercaderias.sql         # → mercaderias_genericas
-│   ├── seed_operadores.sql          # → personas (jurídicas, bovinos)
-│   ├── seed_operadores_porcinos.sql # → personas (jurídicas, porcinos)
+│   ├── migrate_schema.sql           # → DDL (drop + recreate tables)
+│   ├── seed_postgres.sql            # → 500 personas (250 bovinos, 250 porcinos)
 │   └── versions/            # Migraciones generadas
 └── tests/
     ├── conftest.py          # Prepara sys.path para importar `app`
@@ -121,8 +121,8 @@ archivos de seed:
 
 - `seed_categorias_afip.sql` — actividades y categorías AFIP
 - `seed_mercaderias.sql` — 327 códigos de la tabla AFIP → `mercaderias_genericas`
-- `seed_operadores.sql` — 72.943 personas jurídicas (bovinos)
-- `seed_operadores_porcinos.sql` — 3.166 personas jurídicas (porcinos)
+- `migrate_schema.sql` — DDL para drop + recreate de tablas (PostgreSQL)
+- `seed_postgres.sql` — 500 personas jurídicas (250 bovinos, 250 porcinos) + catálogos
 
 ### 4. Ejecutar
 

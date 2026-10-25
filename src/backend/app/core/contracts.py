@@ -67,7 +67,6 @@ class PersonaRef:
     tipo: str
     identificador: str
     nombre: str
-    cuit: Optional[str] = None
     domicilio: Optional[str] = None
     telefono: Optional[str] = None
     email: Optional[str] = None

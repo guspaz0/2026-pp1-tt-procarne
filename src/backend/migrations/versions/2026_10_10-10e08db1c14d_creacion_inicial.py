@@ -175,11 +175,9 @@ def upgrade() -> None:
     )
     # ### end Alembic commands ###
 
-    # Cargar datos semilla
+    # Cargar datos semilla (solo catálogos; personas via seed_postgres.sql)
     _cargar_seed("seed_categorias_afip.sql")
     _cargar_seed("seed_mercaderias.sql")
-    _cargar_seed("seed_operadores.sql")
-    _cargar_seed("seed_operadores_porcinos.sql")
 
 
 def downgrade() -> None:

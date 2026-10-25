@@ -10,12 +10,18 @@ terraform {
       source  = "render-oss/render"
       version = "~> 1.3"
     }
+    netlify = {
+      source  = "netlify/netlify"
+      version = "~> 0.4"
+    }
   }
 }
 
 provider "render" {
-  # RENDER_API_KEY (https://dashboard.render.com/api-keys)
-  # RENDER_OWNER_ID (usr-... o tea-..., lo ves en la URL de tu perfil en el dashboard)
   api_key  = var.render_api_key
   owner_id = var.render_owner_id
+}
+
+provider "netlify" {
+  token = var.netlify_token
 }

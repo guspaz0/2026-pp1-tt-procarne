@@ -174,19 +174,20 @@ def seed_operador(session_factory, seed_actividades):
         )
         session.commit()
 
-    # Agregar categorías
+    # Agregar categorías (categoria_id referencia a categorias_afip)
+    # B1 = Productor/criador (id=1), B4 = Invernador (id=4)
     cat1 = CategoriaOperador(
         operador_id=op_id,
         actividad_id=1,
-        categoria="Productor/criador",
-        situacion="ACTIVO",
+        categoria_id=1,
+        situacion_id=1,  # ACTIVO
         desde_fecha="01/01/2024",
     )
     cat2 = CategoriaOperador(
         operador_id=op_id,
         actividad_id=1,
-        categoria="Invernador",
-        situacion="ACTIVO",
+        categoria_id=4,
+        situacion_id=1,  # ACTIVO
         desde_fecha="15/06/2023",
     )
     with session_factory() as session:

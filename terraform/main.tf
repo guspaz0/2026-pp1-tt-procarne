@@ -27,10 +27,31 @@ resource "render_web_service" "api" {
 }
 
 # ---------------------------------------------------------------------------
-# Frontend — Netlify (deploy de Vite build)
-# El site se crea una vez en el UI de Netlify; Terraform solo hace el deploy.
+# Frontend — Netlify
+# El site se crea una vez en el UI de Netlify.
+# El provider gestiona build settings y env vars; el deploy se hace con netlify-cli.
 # ---------------------------------------------------------------------------
 
+resource "netlify_site_build_settings" "frontend" {
+  site_id           = var.netlify_site_id
+  build_command     = "cd src/frontend && pnpm install --frozen-lockfile && pnpm run build"
+  publish_directory = "src/frontend/dist"
+  production_branch = var.github_branch
+}
+
+resource "netlify_environment_variable" "vite_api_base_url" {
+  site_id = var.netlify_site_id
+  key     = "VITE_API_BASE_URL"
+
+  values = [
+    {
+      context = "all"
+      value   = render_web_service.api.url
+    }
+  ]
+}
+
+# Deploy del build local de Vite
 resource "terraform_data" "netlify_deploy" {
   # Re-deploy cuando cambie cualquier archivo en dist/
   triggers_replace = [

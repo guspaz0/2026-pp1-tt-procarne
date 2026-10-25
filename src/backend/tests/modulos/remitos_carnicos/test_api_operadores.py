@@ -50,8 +50,8 @@ def api_client(db_engine):
         cat = CategoriaOperador(
             operador_id=op.id,
             actividad_id=1,
-            categoria="Productor/criador",
-            situacion="ACTIVO",
+            categoria_id=1,
+            situacion_id=1,  # ACTIVO
             desde_fecha="01/01/2024",
         )
         session.add(cat)
@@ -98,7 +98,7 @@ class TestAPIOperadores:
             json={
                 "cuit": "30333333333",
                 "razon_social": "NUEVO OPERADOR S.A.",
-                "situacion": "ACTIVO",
+                "situacion_id": 1,
             },
         )
         assert r.status_code == 201
@@ -120,4 +120,4 @@ class TestAPIOperadores:
         act = data["actividades"][0]
         assert act["nombre"] == "Bovino/Bubalino"
         assert len(act["categorias"]) == 1
-        assert act["categorias"][0]["categoria"] == "Productor/criador"
+        assert act["categorias"][0]["categoria_id"] == 1

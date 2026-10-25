@@ -53,9 +53,9 @@ class TestOperadorDAO:
         op = operador_dao.obtener_por_cuit("20123456789")
         assert op is not None
         assert len(op.categorias) == 2
-        cats = {c.categoria for c in op.categorias}
-        assert "Productor/criador" in cats
-        assert "Invernador" in cats
+        cat_ids = {c.categoria_id for c in op.categorias}
+        assert 1 in cat_ids  # B1 = Productor/criador
+        assert 4 in cat_ids  # B4 = Invernador
 
     def test_operador_tiene_actividades(self, operador_dao, seed_operador):
         op = operador_dao.obtener_por_cuit("20123456789")
@@ -148,8 +148,8 @@ class TestOperadorSchema:
         dto = OperadorOut.from_orm(op)
 
         act = dto.actividades[0]
-        cat_nombres = {c.categoria for c in act.categorias}
-        assert cat_nombres == {"Productor/criador", "Invernador"}
+        cat_ids = {c.categoria_id for c in act.categorias}
+        assert cat_ids == {1, 4}  # B1, B4
 
     def test_operador_out_json(self, operador_dao, seed_operador):
         from modulos.remitos_carnicos.operador.schema import OperadorOut

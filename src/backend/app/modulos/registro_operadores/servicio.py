@@ -46,7 +46,6 @@ class ROCCAOperadorService:
             tipo="PJ",
             identificador=datos.cuit,
             nombre=datos.razon_social,
-            cuit=datos.cuit,
             domicilio=datos.domicilio,
             telefono=datos.telefono,
             email=datos.email,

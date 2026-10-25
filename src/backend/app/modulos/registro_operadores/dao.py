@@ -232,7 +232,6 @@ class ROCCAOperadorDAO:
                     tipo=persona.tipo,
                     identificador=persona.identificador,
                     nombre=persona.nombre,
-                    cuit=persona.cuit,
                     domicilio=persona.domicilio,
                     telefono=persona.telefono,
                     email=persona.email,

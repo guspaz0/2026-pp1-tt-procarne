@@ -34,8 +34,12 @@ class CategoriaOperador(Base):
     actividad_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("actividades.id"), nullable=True, index=True
     )
-    categoria: Mapped[str] = mapped_column(String(120), nullable=False)
-    situacion: Mapped[str] = mapped_column(String(40), nullable=False)
+    categoria_id: Mapped[int] = mapped_column(
+        ForeignKey("categorias_afip.id"), nullable=False, index=True
+    )
+    situacion_id: Mapped[int] = mapped_column(
+        ForeignKey("situaciones.id"), nullable=False, index=True
+    )
     desde_fecha: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     hasta_fecha: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
 
@@ -44,13 +48,15 @@ class CategoriaOperador(Base):
     actividad: Mapped[Optional["Actividad"]] = relationship(
         "Actividad", back_populates="categorias"
     )
+    categoria: Mapped["CategoriaAfip"] = relationship("CategoriaAfip", lazy="joined")
+    situacion: Mapped["Situacion"] = relationship("Situacion", lazy="joined")
 
     def __repr__(self) -> str:
         return (
             f"<CategoriaOperador operador_id={self.operador_id} "
             f"actividad_id={self.actividad_id} "
-            f"categoria={self.categoria!r} "
-            f"situacion={self.situacion!r}>"
+            f"categoria_id={self.categoria_id} "
+            f"situacion_id={self.situacion_id}>"
         )
 
 
@@ -72,7 +78,7 @@ class CategoriaOperadorDAO:
             stmt = (
                 select(CategoriaOperador)
                 .where(CategoriaOperador.operador_id == operador_id)
-                .where(CategoriaOperador.situacion == "ACTIVO")
+                .where(CategoriaOperador.situacion_id == 1)  # 1 = ACTIVO
             )
             return list(session.execute(stmt).scalars().all())
 
@@ -88,11 +94,11 @@ class CategoriaOperadorDAO:
             )
             return list(session.execute(stmt).scalars().all())
 
-    def listar_por_categoria(self, categoria: str, limite: int = 100, offset: int = 0) -> list[CategoriaOperador]:
+    def listar_por_categoria(self, categoria_id: int, limite: int = 100, offset: int = 0) -> list[CategoriaOperador]:
         with self._session_factory() as session:
             stmt = (
                 select(CategoriaOperador)
-                .where(CategoriaOperador.categoria == categoria)
+                .where(CategoriaOperador.categoria_id == categoria_id)
                 .limit(limite)
                 .offset(offset)
             )

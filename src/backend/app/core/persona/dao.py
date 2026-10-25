@@ -24,7 +24,6 @@ class Persona(Base):
     tipo: Mapped[str] = mapped_column(String(10), nullable=False)
     identificador: Mapped[str] = mapped_column(String(13), unique=True, index=True, nullable=False)
     nombre: Mapped[str] = mapped_column(String(255), nullable=False)
-    cuit: Mapped[Optional[str]] = mapped_column(String(13), unique=True, index=True, nullable=True)
     domicilio: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     telefono: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
