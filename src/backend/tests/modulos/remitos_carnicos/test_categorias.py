@@ -1,202 +1,189 @@
-"""Tests del submódulo de categorías (actividades y categorías AFIP)."""
+"""Tests del submódulo de categorías (actividad, categoría AFIP, situación)."""
 
 from __future__ import annotations
 
 import pytest
 
+from modulos.remitos_carnicos.operador.categoria import (
+    Actividad,
+    ActividadDAO,
+    CategoriaAfip,
+    CategoriaAfipDAO,
+    CategoriaOperador,
+    CategoriaOperadorDAO,
+    Situcion,
+    SitucionDAO,
+)
+from modulos.remitos_carnicos.operador.dao import Operador
+from core.persona.dao import Persona
+
+
+@pytest.fixture()
+def situacion_dao(session_factory):
+    """DAO de situaciones."""
+    return SitucionDAO(session_factory)
+
+
+@pytest.fixture()
+def seed_situaciones(session_factory):
+    """Crea situaciones de prueba."""
+    with session_factory() as session:
+        s1 = Situcion(descripcion="ACTIVO")
+        s2 = Situcion(descripcion="INACTIVO")
+        s3 = Situcion(descripcion="EXCLUIDO")
+        session.add_all([s1, s2, s3])
+        session.commit()
+        session.refresh(s1)
+        session.refresh(s2)
+        session.refresh(s3)
+    return {"ACTIVO": s1.id, "INACTIVO": s2.id, "EXCLUIDO": s3.id}
+
+
+@pytest.fixture()
+def seed_operador(session_factory):
+    """Crea un operador de prueba y devuelve su id."""
+    with session_factory() as session:
+        persona = Persona(
+            tipo="JURIDICA",
+            tipo_documento="CUIT",
+            identificador="30111111111",
+            nombre="OPERADOR TEST S.A.",
+        )
+        session.add(persona)
+        session.commit()
+        session.refresh(persona)
+
+        op = Operador(persona_id=persona.id)
+        session.add(op)
+        session.commit()
+        session.refresh(op)
+        return op.id
+
 
 class TestActividadDAO:
     """Tests del DAO de actividades."""
 
-    def test_listar(self, actividad_dao, seed_actividades):
+    def test_listar(self, actividad_dao, session_factory):
+        with session_factory() as session:
+            a1 = Actividad(nombre="Bovino/Bubalino")
+            a2 = Actividad(nombre="Porcino")
+            session.add_all([a1, a2])
+            session.commit()
+
         actividades = actividad_dao.listar()
         assert len(actividades) == 2
-        nombres = {a.nombre for a in actividades}
-        assert "Bovino/Bubalino" in nombres
-        assert "Porcino" in nombres
 
-    def test_obtener_por_id(self, actividad_dao, seed_actividades):
-        act = actividad_dao.obtener_por_id(1)
-        assert act is not None
-        assert act.nombre == "Bovino/Bubalino"
+    def test_obtener_por_id(self, actividad_dao, session_factory):
+        with session_factory() as session:
+            a = Actividad(nombre="Bovino/Bubalino")
+            session.add(a)
+            session.commit()
+            session.refresh(a)
+            id_a = a.id
 
-    def test_obtener_por_nombre(self, actividad_dao, seed_actividades):
-        act = actividad_dao.obtener_por_nombre("Porcino")
-        assert act is not None
-        assert act.id == 2
-
-    def test_obtener_por_nombre_no_existe(self, actividad_dao, seed_actividades):
-        act = actividad_dao.obtener_por_nombre("Ovino")
-        assert act is None
-
-    def test_guardar(self, actividad_dao, seed_actividades):
-        from modulos.remitos_carnicos.operador.categoria import Actividad
-
-        nueva = Actividad(nombre="Ovino")
-        guardada = actividad_dao.guardar(nueva)
-        assert guardada.id is not None
-        assert guardada.nombre == "Ovino"
+        obtenida = actividad_dao.obtener_por_id(id_a)
+        assert obtenida is not None
+        assert obtenida.nombre == "Bovino/Bubalino"
 
 
 class TestCategoriaAfipDAO:
-    """Tests del DAO de categorías AFIP (catálogo)."""
+    """Tests del DAO de categorías AFIP."""
 
-    def test_listar_por_actividad_bovino(self, categoria_afip_dao, seed_actividades):
-        cats = categoria_afip_dao.listar_por_actividad(1)
-        assert len(cats) == 4
-        codigos = {c.codigo for c in cats}
-        assert codigos == {"B1", "B2", "B3", "B4"}
+    def test_listar(self, categoria_afip_dao, session_factory):
+        with session_factory() as session:
+            actividad = Actividad(nombre="Bovino/Bubalino")
+            session.add(actividad)
+            session.commit()
+            session.refresh(actividad)
 
-    def test_listar_por_actividad_porcino(self, categoria_afip_dao, seed_actividades):
-        cats = categoria_afip_dao.listar_por_actividad(2)
-        assert len(cats) == 2
-        codigos = {c.codigo for c in cats}
-        assert codigos == {"P1", "P2"}
+            c1 = CategoriaAfip(actividad_id=actividad.id, codigo="B1", descripcion="Productor/criador")
+            c2 = CategoriaAfip(actividad_id=actividad.id, codigo="B6", descripcion="Frigorífico")
+            session.add_all([c1, c2])
+            session.commit()
 
-    def test_obtener_por_codigo(self, categoria_afip_dao, seed_actividades):
-        cat = categoria_afip_dao.obtener_por_codigo(1, "B1")
-        assert cat is not None
-        assert cat.descripcion == "Productor/criador"
+        categorias = categoria_afip_dao.listar()
+        assert len(categorias) == 2
 
-    def test_obtener_por_codigo_no_existe(self, categoria_afip_dao, seed_actividades):
-        cat = categoria_afip_dao.obtener_por_codigo(1, "P1")
-        assert cat is None
+    def test_listar_por_actividad(self, categoria_afip_dao, session_factory):
+        with session_factory() as session:
+            a1 = Actividad(nombre="Bovino/Bubalino")
+            a2 = Actividad(nombre="Porcino")
+            session.add_all([a1, a2])
+            session.commit()
+            session.refresh(a1)
+            session.refresh(a2)
 
-    def test_listar_todas(self, categoria_afip_dao, seed_actividades):
-        cats = categoria_afip_dao.listar()
-        assert len(cats) == 6
+            c1 = CategoriaAfip(actividad_id=a1.id, codigo="B1", descripcion="Productor")
+            c2 = CategoriaAfip(actividad_id=a2.id, codigo="P1", descripcion="Productor porcino")
+            session.add_all([c1, c2])
+            session.commit()
+
+        categorias = categoria_afip_dao.listar(actividad_id=a1.id)
+        assert len(categorias) == 1
+        assert categorias[0].codigo == "B1"
+
+    def test_obtener_por_codigo(self, categoria_afip_dao, session_factory):
+        with session_factory() as session:
+            actividad = Actividad(nombre="Bovino/Bubalino")
+            session.add(actividad)
+            session.commit()
+            session.refresh(actividad)
+
+            c = CategoriaAfip(actividad_id=actividad.id, codigo="B1", descripcion="Productor/criador")
+            session.add(c)
+            session.commit()
+
+        obtenida = categoria_afip_dao.obtener_por_codigo("B1")
+        assert obtenida is not None
+        assert obtenida.descripcion == "Productor/criador"
+
+
+class TestSitucionDAO:
+    """Tests del DAO de situaciones."""
+
+    def test_listar(self, situacion_dao, seed_situaciones):
+        situaciones = situacion_dao.listar()
+        assert len(situaciones) == 3
+
+    def test_obtener_por_id(self, situacion_dao, seed_situaciones):
+        obtenida = situacion_dao.obtener_por_id(seed_situaciones["ACTIVO"])
+        assert obtenida is not None
+        assert obtenida.descripcion == "ACTIVO"
 
 
 class TestCategoriaOperadorDAO:
-    """Tests del DAO de categorías de operador (inscripciones)."""
+    """Tests del DAO de categorías de operador."""
 
-    def test_listar_por_operador(self, categoria_operador_dao, seed_operador):
-        cats = categoria_operador_dao.listar_por_operador(seed_operador["id"])
-        assert len(cats) == 2
-
-    def test_listar_activas_por_operador(self, categoria_operador_dao, seed_operador):
-        cats = categoria_operador_dao.listar_activas_por_operador(seed_operador["id"])
-        assert len(cats) == 2
-        assert all(c.situacion_id == 1 for c in cats)  # 1 = ACTIVO
-
-    def test_listar_por_operador_y_actividad(self, categoria_operador_dao, seed_operador):
-        cats = categoria_operador_dao.listar_por_operador_y_actividad(
-            seed_operador["id"], actividad_id=1
+    def test_crear(self, categoria_operador_dao, seed_categorias, seed_situaciones, seed_operador):
+        categoria = categoria_operador_dao.crear(
+            operador_id=seed_operador,
+            categoria_id=seed_categorias["B1"],
+            situacion_id=seed_situaciones["ACTIVO"],
         )
-        assert len(cats) == 2
+        assert categoria.id is not None
+        assert categoria.operador_id == seed_operador
 
-    def test_listar_por_operador_y_actividad_vacia(self, categoria_operador_dao, seed_operador):
-        cats = categoria_operador_dao.listar_por_operador_y_actividad(
-            seed_operador["id"], actividad_id=2
+    def test_listar_por_operador(self, categoria_operador_dao, seed_categorias, seed_situaciones, seed_operador):
+        categoria_operador_dao.crear(
+            operador_id=seed_operador,
+            categoria_id=seed_categorias["B1"],
+            situacion_id=seed_situaciones["ACTIVO"],
         )
-        assert len(cats) == 0
-
-    def test_listar_por_categoria(self, categoria_operador_dao, seed_operador):
-        cats = categoria_operador_dao.listar_por_categoria("Productor/criador")
-        assert len(cats) == 1
-        assert cats[0].operador_id == seed_operador["id"]
-
-    def test_guardar(self, categoria_operador_dao, seed_operador):
-        from modulos.remitos_carnicos.operador.categoria import CategoriaOperador
-
-        nueva = CategoriaOperador(
-            operador_id=seed_operador["id"],
-            actividad_id=1,
-            categoria_id=3,  # B3 = Feed lots
-            situacion_id=1,  # ACTIVO
-            desde_fecha="01/03/2025",
+        categoria_operador_dao.crear(
+            operador_id=seed_operador,
+            categoria_id=seed_categorias["B6"],
+            situacion_id=seed_situaciones["ACTIVO"],
         )
-        guardada = categoria_operador_dao.guardar(nueva)
-        assert guardada.id is not None
-        assert guardada.categoria_id == 3
 
-    def test_eliminar_por_operador(self, categoria_operador_dao, seed_operador):
-        eliminadas = categoria_operador_dao.eliminar_por_operador(seed_operador["id"])
-        assert eliminadas == 2
+        categorias = categoria_operador_dao.listar_por_operador(seed_operador)
+        assert len(categorias) == 2
 
-        cats = categoria_operador_dao.listar_por_operador(seed_operador["id"])
-        assert len(cats) == 0
+    def test_listar_por_categoria(self, categoria_operador_dao, seed_categorias, seed_situaciones, seed_operador):
+        categoria_operador_dao.crear(
+            operador_id=seed_operador,
+            categoria_id=seed_categorias["B1"],
+            situacion_id=seed_situaciones["ACTIVO"],
+        )
 
-
-class TestRelaciones:
-    """Tests de las relaciones entre entidades."""
-
-    def test_operador_categorias(self, session_factory, seed_operador):
-        from modulos.remitos_carnicos.operador.dao import Operador, _eager_options
-        from core.persona.dao import Persona
-        from sqlalchemy import select
-
-        with session_factory() as session:
-            op = session.execute(
-                select(Operador)
-                .join(Operador.persona)
-                .where(Persona.identificador == "20123456789")
-                .options(*_eager_options())
-            ).unique().scalar_one()
-
-            assert len(op.categorias) == 2
-            assert all(c.operador_id == op.id for c in op.categorias)
-
-    def test_operador_actividades(self, session_factory, seed_operador):
-        from modulos.remitos_carnicos.operador.dao import Operador, _eager_options
-        from core.persona.dao import Persona
-        from sqlalchemy import select
-
-        with session_factory() as session:
-            op = session.execute(
-                select(Operador)
-                .join(Operador.persona)
-                .where(Persona.identificador == "20123456789")
-                .options(*_eager_options())
-            ).unique().scalar_one()
-
-            assert len(op.actividades) == 1
-            assert op.actividades[0].nombre == "Bovino/Bubalino"
-
-    def test_actividad_categorias_afip(self, session_factory, seed_actividades):
-        from modulos.remitos_carnicos.operador.categoria import Actividad
-        from sqlalchemy import select
-        from sqlalchemy.orm import selectinload
-
-        with session_factory() as session:
-            act = session.execute(
-                select(Actividad)
-                .where(Actividad.id == 1)
-                .options(selectinload(Actividad.categorias_afip))
-            ).scalar_one()
-
-            assert len(act.categorias_afip) == 4
-
-    def test_operador_en_ambas_actividades(self, session_factory, seed_operador, seed_actividades):
-        """Un operador puede pertenecer a ambas actividades."""
-        from modulos.remitos_carnicos.operador.dao import Operador, _eager_options, operador_actividades
-        from modulos.remitos_carnicos.operador.categoria import CategoriaOperador
-        from sqlalchemy import select, insert
-
-        op_id = seed_operador["id"]
-
-        # Agregar a actividad Porcino
-        with session_factory() as session:
-            session.execute(
-                insert(operador_actividades).values(operador_id=op_id, actividad_id=2)
-            )
-            cat_por = CategoriaOperador(
-                operador_id=op_id,
-                actividad_id=2,
-                categoria_id=12,  # P1 = Productores/Criadores Comerciales
-                situacion_id=1,  # ACTIVO
-                desde_fecha="01/01/2025",
-            )
-            session.add(cat_por)
-            session.commit()
-
-        # Verificar
-        with session_factory() as session:
-            op = session.execute(
-                select(Operador).where(Operador.id == op_id).options(*_eager_options())
-            ).unique().scalar_one()
-
-            assert len(op.actividades) == 2
-            nombres = {a.nombre for a in op.actividades}
-            assert nombres == {"Bovino/Bubalino", "Porcino"}
-            assert len(op.categorias) == 3
+        categorias = categoria_operador_dao.listar_por_categoria("B1")
+        assert len(categorias) == 1

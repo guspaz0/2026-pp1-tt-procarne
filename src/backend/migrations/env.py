@@ -1,6 +1,6 @@
-"""Entorno de migraciones Alembic para ROCCA.
+"""Alembic configuration for ROCCA.
 
-Se ejecuta desde el directorio ``src/backend``::
+Run from ``src/backend``::
 
     alembic upgrade head
     alembic revision --autogenerate -m "descripcion"
@@ -18,27 +18,30 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 # ---------------------------------------------------------------------------
-# Asegurar que el directorio ``app`` esté en sys.path para poder importar
-# ``configs`` y ``modulos`` como paquetes top-level.
+# Ensure the ``app`` directory is on sys.path so that ``configs`` and
+# ``modulos`` can be imported as top-level packages.
 # ---------------------------------------------------------------------------
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
 _APP_DIR = str(_BACKEND_DIR / "app")
 if _APP_DIR not in sys.path:
     sys.path.insert(0, _APP_DIR)
 
-# Importar Base y todos los modelos para que autogenerate los detecte.
+# Import Base and all models so autogenerate can detect them.
 from configs.db import Base  # noqa: E402
-import modulos.remitos_carnicos.remitos_carnicos  # noqa: F401, E402  (registra modelos)
+import modulos.remitos_carnicos.remitos_carnicos  # noqa: F401, E402  (registers models)
+import modulos.registro_operadores.registro_operadores  # noqa: F401, E402
+import modulos.trazabilidad_comercial.trazabilidad_comercial  # noqa: F401, E402
+import modulos.fiscalizacion.fiscalizacion  # noqa: F401, E402
 
 # ---------------------------------------------------------------------------
-# Configuración de Alembic
+# Alembic configuration
 # ---------------------------------------------------------------------------
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# URL de la base de datos (misma variable que usa la aplicación)
+# Database URL (same variable used by the application)
 DATABASE_URL = os.environ.get(
     "ROCCA_DATABASE_URL",
     "sqlite:///./rocca.db",
@@ -49,7 +52,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Ejecutar migraciones en modo offline (solo generar SQL)."""
+    """Run migrations in offline mode (SQL generation only)."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -64,7 +67,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Ejecutar migraciones en modo online (conexión real)."""
+    """Run migrations in online mode (real connection)."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

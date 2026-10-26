@@ -1,256 +1,196 @@
-"""ORM y DAO del Módulo I — Registro Provincial de Operadores (ROCCA).
+"""DAO y modelos ORM del Módulo I — Registro Provincial de Operadores.
 
-Entidades:
-
-- :class:`ROCCAOperador` — registro provincial del operador (datos
-  identificatorios, tipo de actividad, estado registral).
-- :class:`Habilitacion` — habilitación sanitaria/comercial del operador.
-- :class:`Inscripcion` — inscripción nacional o provincial (ARCA, SIGSA,
-  RFOCB, etc.).
-- :class:`DomicilioOperativo` — domicilio operativo (principal o
-  secundario) del establecimiento.
+Modelos:
+- ``ROCCAOperador`` — operador de la cadena cárnica.
+- ``Habilitacion`` — habilitación de un operador para una actividad.
+- ``Inscripcion`` — inscripción de un operador en el registro.
+- ``DomicilioOperativo`` — domicilio operativo de un operador.
 """
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, ForeignKey, String, select
-from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
+from sqlalchemy import Boolean, Date, ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core import PersonaRef
 from configs.db import Base
-from core.persona.dao import Persona  # ORM concreta (solo aquí)
+from modulos.registro_operadores.enums import (
+    EstadoRegistral,
+    TipoDomicilio,
+    TipoInscripcion,
+    TipoOperador,
+)
 
 
 class ROCCAOperador(Base):
-    """Operador inscripto en el Registro Provincial (Módulo I).
-
-    Se refiere a una :class:`Persona` jurídica (identificada por CUIT)
-    y a un tipo de operador de la cadena cárnica. Guarda además el
-    estado registral y la fecha de inscripción.
-    """
+    """Modelo ORM de operador de la cadena cárnica."""
 
     __tablename__ = "rocca_operadores"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    persona_id: Mapped[int] = mapped_column(
-        ForeignKey("personas.id"), unique=True, index=True, nullable=False
-    )
-    tipo: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    cuit: Mapped[str] = mapped_column(String(13), nullable=False, unique=True, index=True)
+    razon_social: Mapped[str] = mapped_column(String(255), nullable=False)
+    domicilio: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    domicilio_fiscal: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    telefono: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    tipo: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
     estado_registral: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="ACTIVO", index=True
+        String(20), default=EstadoRegistral.ACTIVO.value, nullable=False, index=True
     )
-    fecha_inscripcion: Mapped[date] = mapped_column(Date, nullable=False)
-    observaciones: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    alta_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    baja_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
-    # Relaciones
-    persona: Mapped["Persona"] = relationship("Persona", lazy="joined")
     habilitaciones: Mapped[list["Habilitacion"]] = relationship(
-        "Habilitacion", back_populates="operador", cascade="all, delete-orphan"
+        back_populates="operador", cascade="all, delete-orphan"
     )
     inscripciones: Mapped[list["Inscripcion"]] = relationship(
-        "Inscripcion", back_populates="operador", cascade="all, delete-orphan"
+        back_populates="operador", cascade="all, delete-orphan"
     )
-    domicilios: Mapped[list["DomicilioOperativo"]] = relationship(
-        "DomicilioOperativo", back_populates="operador", cascade="all, delete-orphan"
+    domicilios_operativos: Mapped[list["DomicilioOperativo"]] = relationship(
+        back_populates="operador", cascade="all, delete-orphan"
     )
-
-    @property
-    def cuit(self) -> str:
-        return self.persona.identificador
-
-    @property
-    def razon_social(self) -> str:
-        return self.persona.razon_social or self.persona.nombre_completo
-
-    @property
-    def domicilio(self) -> Optional[str]:
-        return self.persona.domicilio
-
-    @property
-    def telefono(self) -> Optional[str]:
-        return self.persona.telefono
-
-    @property
-    def email(self) -> Optional[str]:
-        return self.persona.email
 
     def __repr__(self) -> str:
-        return (
-            f"<ROCCAOperador id={self.id} cuit={self.cuit!r} "
-            f"tipo={self.tipo!r} estado={self.estado_registral!r}>"
-        )
+        return f"<ROCCAOperador id={self.id} cuit={self.cuit} tipo={self.tipo}>"
 
 
 class Habilitacion(Base):
-    """Habilitación de un operador (sanitaria, comercial, etc.)."""
+    """Modelo ORM de habilitación de un operador para una actividad."""
 
     __tablename__ = "rocca_habilitaciones"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
-        ForeignKey("rocca_operadores.id"), nullable=False, index=True
+        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    tipo: Mapped[str] = mapped_column(String(80), nullable=False)
-    numero: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    autoridad: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
-    fecha_emision: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    fecha_vencimiento: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    estado: Mapped[str] = mapped_column(String(20), nullable=False, default="VIGENTE")
+    actividad: Mapped[str] = mapped_column(String(120), nullable=False)
+    estado: Mapped[str] = mapped_column(
+        String(20), default=EstadoRegistral.ACTIVO.value, nullable=False
+    )
+    fecha_habilitacion: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    fecha_vencimiento: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
-    # Relaciones
-    operador: Mapped["ROCCAOperador"] = relationship(
-        "ROCCAOperador", back_populates="habilitaciones"
-    )
+    operador: Mapped["ROCCAOperador"] = relationship(back_populates="habilitaciones")
 
     def __repr__(self) -> str:
-        return (
-            f"<Habilitacion id={self.id} tipo={self.tipo!r} "
-            f"numero={self.numero!r} estado={self.estado!r}>"
-        )
+        return f"<Habilitacion id={self.id} operador_id={self.operador_id} actividad={self.actividad}>"
 
 
 class Inscripcion(Base):
-    """Inscripción nacional o provincial del operador.
-
-    Ejemplos: RFOCB (nacional), ARCA/AFIP (nacional), SIGSA/Senasa
-    (nacional), registro provincial de la Dirección General de
-    Agricultura y Ganadería.
-    """
+    """Modelo ORM de inscripción de un operador en el registro."""
 
     __tablename__ = "rocca_inscripciones"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
-        ForeignKey("rocca_operadores.id"), nullable=False, index=True
+        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    tipo: Mapped[str] = mapped_column(String(20), nullable=False)  # NACIONAL | PROVINCIAL
-    organismo: Mapped[str] = mapped_column(String(120), nullable=False)
-    numero: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    fecha_inscripcion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    estado: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVA")
+    tipo: Mapped[str] = mapped_column(
+        String(20), default=TipoInscripcion.PRINCIPAL.value, nullable=False
+    )
+    fecha_inscripcion: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    numero_inscripcion: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
-    # Relaciones
-    operador: Mapped["ROCCAOperador"] = relationship(
-        "ROCCAOperador", back_populates="inscripciones"
-    )
+    operador: Mapped["ROCCAOperador"] = relationship(back_populates="inscripciones")
 
     def __repr__(self) -> str:
-        return (
-            f"<Inscripcion id={self.id} tipo={self.tipo!r} "
-            f"organismo={self.organismo!r} numero={self.numero!r}>"
-        )
+        return f"<Inscripcion id={self.id} operador_id={self.operador_id}>"
 
 
 class DomicilioOperativo(Base):
-    """Domicilio operativo del establecimiento del operador."""
+    """Modelo ORM de domicilio operativo de un operador."""
 
     __tablename__ = "rocca_domicilios_operativos"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
-        ForeignKey("rocca_operadores.id"), nullable=False, index=True
+        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    tipo: Mapped[str] = mapped_column(String(20), nullable=False, default="PRINCIPAL")
-    calle: Mapped[str] = mapped_column(String(255), nullable=False)
-    numero: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    tipo: Mapped[str] = mapped_column(
+        String(20), default=TipoDomicilio.OPERATIVO.value, nullable=False
+    )
+    direccion: Mapped[str] = mapped_column(String(255), nullable=False)
     localidad: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
-    departamento: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
-    provincia: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    provincia: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
     codigo_postal: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
-    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    es_principal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
-    # Relaciones
-    operador: Mapped["ROCCAOperador"] = relationship(
-        "ROCCAOperador", back_populates="domicilios"
-    )
+    operador: Mapped["ROCCAOperador"] = relationship(back_populates="domicilios_operativos")
 
     def __repr__(self) -> str:
-        return (
-            f"<DomicilioOperativo id={self.id} tipo={self.tipo!r} "
-            f"calle={self.calle!r} localidad={self.localidad!r}>"
-        )
-
-
-def _eager_options():
-    """Opciones de carga eager para :class:`ROCCAOperador`."""
-    return [
-        selectinload(ROCCAOperador.persona),
-        selectinload(ROCCAOperador.habilitaciones),
-        selectinload(ROCCAOperador.inscripciones),
-        selectinload(ROCCAOperador.domicilios),
-    ]
+        return f"<DomicilioOperativo id={self.id} operador_id={self.operador_id}>"
 
 
 class ROCCAOperadorDAO:
-    """Data Access Object del operador del Registro Provincial."""
+    """DAO de operadores de la cadena cárnica."""
 
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
 
-    def obtener_por_id(self, operador_id: int) -> Optional[ROCCAOperador]:
+    def crear(self, cuit: str, razon_social: str, tipo: TipoOperador | str,
+              domicilio: str | None = None, domicilio_fiscal: str | None = None,
+              telefono: str | None = None, email: str | None = None) -> ROCCAOperador:
+        """Crea y persiste un operador nuevo."""
         with self._session_factory() as session:
-            return session.get(
-                ROCCAOperador, operador_id, options=_eager_options()
+            operador = ROCCAOperador(
+                cuit=cuit,
+                razon_social=razon_social,
+                tipo=tipo if isinstance(tipo, str) else tipo.value,
+                domicilio=domicilio,
+                domicilio_fiscal=domicilio_fiscal,
+                telefono=telefono,
+                email=email,
+                alta_fecha=datetime.now(timezone.utc),
             )
-
-    def obtener_por_cuit(self, cuit: str) -> Optional[ROCCAOperador]:
-        with self._session_factory() as session:
-            stmt = (
-                select(ROCCAOperador)
-                .join(ROCCAOperador.persona)
-                .where(ROCCAOperador.persona.has(identificador=cuit, tipo="PJ"))
-                .options(*_eager_options())
-            )
-            return session.execute(stmt).unique().scalar_one_or_none()
-
-    def listar(
-        self,
-        tipo: Optional[str] = None,
-        estado_registral: Optional[str] = None,
-        limite: int = 100,
-        offset: int = 0,
-    ) -> list[ROCCAOperador]:
-        with self._session_factory() as session:
-            stmt = select(ROCCAOperador).options(*_eager_options())
-            if tipo is not None:
-                stmt = stmt.where(ROCCAOperador.tipo == tipo)
-            if estado_registral is not None:
-                stmt = stmt.where(ROCCAOperador.estado_registral == estado_registral)
-            stmt = stmt.order_by(ROCCAOperador.id).limit(limite).offset(offset)
-            return list(session.execute(stmt).unique().scalars().all())
-
-    def guardar(
-        self, operador: ROCCAOperador, persona: Optional[PersonaRef] = None
-    ) -> ROCCAOperador:
-        with self._session_factory() as session:
-            if persona is not None:
-                # La referencia de identidad se materializa como ORM de persona.
-                persona_orm = Persona(
-                    tipo=persona.tipo,
-                    tipo_documento=persona.tipo_documento,
-                    identificador=persona.identificador,
-                    nombre=persona.nombre,
-                    apellido=persona.apellido,
-                    razon_social=persona.razon_social,
-                    domicilio=persona.domicilio,
-                    telefono=persona.telefono,
-                    email=persona.email,
-                )
-                session.add(persona_orm)
-                session.commit()
-                session.refresh(persona_orm)
-                operador.persona_id = persona_orm.id
             session.add(operador)
             session.commit()
-            operador_id = operador.id
-        return self.obtener_por_id(operador_id)
+            session.refresh(operador)
+            return operador
 
-    def actualizar(self, operador: ROCCAOperador) -> ROCCAOperador:
+    def obtener_por_id(self, operador_id: int) -> ROCCAOperador | None:
+        """Devuelve el operador con el id dado, o ``None``."""
         with self._session_factory() as session:
-            session.merge(operador)
+            return session.get(ROCCAOperador, operador_id)
+
+    def obtener_por_cuit(self, cuit: str) -> ROCCAOperador | None:
+        """Devuelve el operador con el CUIT dado, o ``None``."""
+        with self._session_factory() as session:
+            return (
+                session.query(ROCCAOperador)
+                .filter_by(cuit=cuit)
+                .first()
+            )
+
+    def listar(self, tipo: TipoOperador | str | None = None,
+               estado_registral: EstadoRegistral | str | None = None) -> list[ROCCAOperador]:
+        """Lista operadores, opcionalmente filtrados por tipo y estado."""
+        with self._session_factory() as session:
+            query = session.query(ROCCAOperador)
+            if tipo is not None:
+                query = query.filter_by(tipo=tipo if isinstance(tipo, str) else tipo.value)
+            if estado_registral is not None:
+                query = query.filter_by(
+                    estado_registral=estado_registral if isinstance(estado_registral, str) else estado_registral.value
+                )
+            return list(query.all())
+
+    def actualizar_estado(self, operador_id: int, estado: EstadoRegistral) -> ROCCAOperador | None:
+        """Actualiza el estado registral de un operador."""
+        with self._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                return None
+            operador.estado_registral = estado.value
+            if estado == EstadoRegistral.BAJADO:
+                operador.baja_fecha = datetime.now(timezone.utc)
+            elif estado == EstadoRegistral.ACTIVO:
+                operador.baja_fecha = None
             session.commit()
-            operador_id = operador.id
-        return self.obtener_por_id(operador_id)
+            session.refresh(operador)
+            return operador

@@ -1,176 +1,51 @@
-"""Controlador (rutas API) del módulo de Remitos Electrónicos Cárnicos.
-
-Agrega los routers de los submódulos (operador, mercadería, remito) en un
-único :class:`APIRouter`. Recibe los servicios por inyección de dependencias
-(**Dependency Inversion**).
-
-Endpoints:
-
-- ``/api/operadores`` — CRUD de operadores de la cadena cárnica
-- ``/api/mercaderias`` — CRUD del catálogo de mercaderías (códigos AFIP)
-- ``/api/remitos`` — CRUD de remitos electrónicos cárnicos
-"""
+"""Controlador (router API) del módulo de Remitos Electrónicos Cárnicos."""
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional
-
-from typing import Protocol
-
 from fastapi import APIRouter, HTTPException, Query
 
-from core.mercaderia.schema import MercaderiaIn, MercaderiaOut
-
-from .operador.schema import OperadorIn, OperadorOut
-from .operador.servicio import OperadorError, OperadorService
-from .remito.schema import RemitoCarnicoIn, RemitoCarnicoOut
-from .remito.servicio import RemitoCarnicoError, RemitoCarnicoService
+from modulos.remitos_carnicos.enums import EstadoRemito
+from modulos.remitos_carnicos.remito.schema import RemitoCarnicoIn, RemitoCarnicoOut
+from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoError, RemitoCarnicoService
 
 
-def _errores_a_http(exception: Exception, status_code: int) -> HTTPException:
-    """Convierte un error de servicio en :class:`HTTPException`."""
-    raise HTTPException(status_code=status_code, detail=str(exception))
+def crear_router(servicio: RemitoCarnicoService) -> APIRouter:
+    """Crea el router API del módulo de remitos electrónicos cárnicos."""
+    router = APIRouter(prefix="/api/remitos-carnicos", tags=["Remitos Electrónicos Cárnicos"])
 
-
-def _registrar_rutas_operadores(
-    router: APIRouter,
-    operador_service: OperadorService,
-) -> None:
-    """Registra los endpoints de operadores."""
-
-    @router.get("/api/operadores", response_model=list[OperadorOut])
-    def listar_operadores(
-        limite: int = Query(default=100, ge=1, le=500),
-        offset: int = Query(default=0, ge=0),
-    ) -> list[OperadorOut]:
-        """Lista operadores de la cadena cárnica."""
-        return operador_service.listar(limite=limite, offset=offset)
-
-    @router.get("/api/operadores/{cuit}", response_model=OperadorOut)
-    def obtener_operador(cuit: str) -> OperadorOut:
-        """Obtiene un operador por su CUIT."""
-        try:
-            return operador_service.obtener(cuit)
-        except OperadorError as e:
-            _errores_a_http(e, 404)
-
-    @router.post("/api/operadores", response_model=OperadorOut, status_code=201)
-    def crear_operador(datos: OperadorIn) -> OperadorOut:
-        """Crea un nuevo operador."""
-        try:
-            return operador_service.crear(datos)
-        except OperadorError as e:
-            _errores_a_http(e, 409)
-
-
-class MercaderiaServiceProtocol(Protocol):
-    """Contrato mínimo del servicio de mercaderías (catálogo genérico).
-
-    Permite a este controlador depender del *tipo* del servicio sin
-    importar la clase concreta de otro módulo.
-    """
-
-    def listar(self, limite: int = 200, offset: int = 0) -> list[MercaderiaOut]:
-        ...
-
-    def obtener(self, codigo_afip: str) -> MercaderiaOut:
-        ...
-
-    def crear(self, datos: MercaderiaIn) -> MercaderiaOut:
-        ...
-
-
-def _registrar_rutas_mercaderias(
-    router: APIRouter,
-    mercaderia_service: MercaderiaServiceProtocol,
-) -> None:
-    """Registra los endpoints de mercaderías."""
-
-    @router.get("/api/mercaderias", response_model=list[MercaderiaOut])
-    def listar_mercaderias(
-        limite: int = Query(default=200, ge=1, le=500),
-        offset: int = Query(default=0, ge=0),
-    ) -> list[MercaderiaOut]:
-        """Lista el catálogo de mercaderías (códigos AFIP)."""
-        return mercaderia_service.listar(limite=limite, offset=offset)
-
-    @router.get("/api/mercaderias/{codigo_afip}", response_model=MercaderiaOut)
-    def obtener_mercaderia(codigo_afip: str) -> MercaderiaOut:
-        """Obtiene una mercadería por su código AFIP."""
-        try:
-            return mercaderia_service.obtener(codigo_afip)
-        except Exception as e:
-            _errores_a_http(e, 404)
-
-    @router.post("/api/mercaderias", response_model=MercaderiaOut, status_code=201)
-    def crear_mercaderia(datos: MercaderiaIn) -> MercaderiaOut:
-        """Crea una nueva mercadería en el catálogo."""
-        try:
-            return mercaderia_service.crear(datos)
-        except Exception as e:
-            _errores_a_http(e, 409)
-
-
-def _registrar_rutas_remitos(
-    router: APIRouter,
-    remito_service: RemitoCarnicoService,
-) -> None:
-    """Registra los endpoints de remitos electrónicos cárnicos."""
-
-    @router.get("/api/remitos", response_model=list[RemitoCarnicoOut])
+    @router.get("", response_model=list[RemitoCarnicoOut])
     def listar_remitos(
-        estado: Optional[str] = Query(default=None, description="Filtrar por estado (E, AN, NU)"),
-        desde: Optional[datetime] = Query(default=None, description="Fecha de emisión mínima"),
-        hasta: Optional[datetime] = Query(default=None, description="Fecha de emisión máxima"),
-        limite: int = Query(default=100, ge=1, le=500),
-        offset: int = Query(default=0, ge=0),
-    ) -> list[RemitoCarnicoOut]:
-        """Lista remitos con filtros opcionales."""
-        return remito_service.listar(estado=estado, desde=desde, hasta=hasta, limite=limite, offset=offset)
+        estado: str | None = Query(None, description="Filtrar por estado"),
+    ):
+        """Lista remitos, opcionalmente filtrados por estado."""
+        return servicio.listar(estado=estado)
 
-    @router.get("/api/remitos/{punto_emision}/{numero_comprobante}", response_model=RemitoCarnicoOut)
-    def obtener_remito(punto_emision: str, numero_comprobante: str) -> RemitoCarnicoOut:
-        """Obtiene un remito por su código (punto de emisión + número)."""
+    @router.post("", response_model=RemitoCarnicoOut, status_code=201)
+    def emitir_remito(data: RemitoCarnicoIn):
+        """Emite un remito electrónico cárnico."""
         try:
-            return remito_service.obtener(punto_emision, numero_comprobante)
+            return servicio.emitir_remito(data)
         except RemitoCarnicoError as e:
-            _errores_a_http(e, 404)
+            raise HTTPException(status_code=400, detail=str(e))
 
-    @router.post("/api/remitos", response_model=RemitoCarnicoOut, status_code=201)
-    def crear_remito(datos: RemitoCarnicoIn) -> RemitoCarnicoOut:
-        """Crea un nuevo Remito Electrónico Cárnico."""
+    @router.get("/{remito_id}", response_model=RemitoCarnicoOut)
+    def obtener_remito(remito_id: int):
+        """Obtiene un remito por su id."""
+        remitos = servicio.listar()
+        for r in remitos:
+            if r.id == remito_id:
+                return r
+        raise HTTPException(status_code=404, detail=f"No existe un remito con id {remito_id}")
+
+    @router.patch("/{remito_id}/estado", response_model=RemitoCarnicoOut)
+    def cambiar_estado(
+        remito_id: int,
+        estado: EstadoRemito = Query(..., description="Nuevo estado"),
+    ):
+        """Cambia el estado de un remito."""
         try:
-            return remito_service.crear(datos)
+            return servicio.cambiar_estado(remito_id, estado)
         except RemitoCarnicoError as e:
-            _errores_a_http(e, 400)
+            raise HTTPException(status_code=404, detail=str(e))
 
-    @router.post("/api/remitos/{remito_id}/anular", response_model=RemitoCarnicoOut)
-    def anular_remito(remito_id: int) -> RemitoCarnicoOut:
-        """Anula un remito (cambia su estado a AN)."""
-        try:
-            return remito_service.anular(remito_id)
-        except RemitoCarnicoError as e:
-            _errores_a_http(e, 400)
-
-
-def crear_router(
-    operador_service: OperadorService,
-    mercaderia_service: MercaderiaService,
-    remito_service: RemitoCarnicoService,
-) -> APIRouter:
-    """Crea el router del módulo inyectando los servicios.
-
-    Args:
-        operador_service: Servicio de operadores.
-        mercaderia_service: Servicio de mercaderías.
-        remito_service: Servicio de remitos.
-
-    Returns:
-        APIRouter con todos los endpoints del módulo.
-    """
-    router = APIRouter(tags=["Remitos Cárnicos"])
-    _registrar_rutas_operadores(router, operador_service)
-    _registrar_rutas_mercaderias(router, mercaderia_service)
-    _registrar_rutas_remitos(router, remito_service)
     return router

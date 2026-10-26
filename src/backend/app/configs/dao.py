@@ -1,79 +1,112 @@
-"""Data Access Objects (DAO) para cada motor de base de datos.
+"""Capa de acceso a datos (DAO) de base de datos de ROCCA.
 
-Aplica **Dependency Inversion**: los módulos de negocio dependen de la
-interfaz abstracta :class:`DatabaseDAO`, no de una implementación concreta.
+Abstrahe el driver concreto (SQLite para desarrollo/tests, PostgreSQL
+para producción) detrás de una interfaz única.
 
-- :class:`SQLiteDAO` — para SQLite (dev)
-- :class:`PostgreSQLDAO` — para PostgreSQL (producción)
+Uso::
 
-El DAO encapsula la creación del motor, la sesión y las operaciones de
-ciclo de vida (crear tablas, cerrar conexiones).
+    from configs.dao import crear_dao
+    db_dao = crear_dao()
+    with db_dao.obtener_sesion() as session:
+        ...
 """
 
 from __future__ import annotations
 
-from typing import Optional
+import os
+from collections.abc import Generator
+from contextlib import contextmanager
 
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from core import DatabaseDAO  # noqa: F401  (re-export de la interfaz)
-from .db import Base, DATABASE_URL
+from configs.db import Base
+
+# URL de la base de datos: se toma de la variable de entorno
+# ``ROCCA_DATABASE_URL`` o se usa SQLite local por defecto.
+DATABASE_URL = os.environ.get("ROCCA_DATABASE_URL", "sqlite:///./rocca.db")
 
 
-class SQLiteDAO(DatabaseDAO):
-    """DAO para SQLite (desarrollo)."""
+class DatabaseDAO:
+    """DAO de base de datos genérico.
 
-    def __init__(self, url: Optional[str] = None) -> None:
-        self._url = url or "sqlite:///./rocca.db"
-        self._engine: Engine = create_engine(
-            self._url,
-            echo=False,
-            connect_args={"check_same_thread": False},
+    Encapsula el motor y la fábrica de sesiones. Expone
+    ``obtener_sesion()`` como contexto manager para que los servicios
+    de negocio no dependan de SQLAlchemy directamente.
+    """
+
+    def __init__(self, database_url: str | None = None) -> None:
+        self._database_url = database_url or DATABASE_URL
+        self._engine = self._crear_engine()
+        self._session_factory = self._crear_session_factory()
+
+    def _crear_engine(self):
+        """Crea el motor según el tipo de base de datos."""
+        kwargs: dict = {}
+        if self._database_url.startswith("sqlite"):
+            kwargs["connect_args"] = {"check_same_thread": False}
+            if self._database_url in ("sqlite://", "sqlite:///:memory:"):
+                kwargs["poolclass"] = StaticPool
+        return create_engine(self._database_url, **kwargs)
+
+    def _crear_session_factory(self) -> sessionmaker[Session]:
+        """Crea la fábrica de sesiones vinculada al motor."""
+        return sessionmaker(
+            autocommit=False, autoflush=False, expire_on_commit=False,
+            bind=self._engine,
         )
-        self._session_factory = sessionmaker(
-            autocommit=False, autoflush=False, expire_on_commit=False, bind=self._engine
-        )
+
+    @contextmanager
+    def obtener_sesion(self) -> Generator[Session, None, None]:
+        """Abre una sesión transaccional (commit/rollback automático)."""
+        session = self._session_factory()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def crear_tablas(self) -> None:
+        """Crea todas las tablas definidas en ``Base.metadata``."""
         Base.metadata.create_all(bind=self._engine)
 
-    def obtener_sesion(self) -> Session:
-        return self._session_factory()
+    @property
+    def engine(self):
+        """Motor SQLAlchemy (útil para tests y Alembic)."""
+        return self._engine
 
-    def cerrar(self) -> None:
-        self._engine.dispose()
+    @property
+    def session_factory(self) -> sessionmaker[Session]:
+        """Fábrica de sesiones (útil para tests y DAOs de entidad)."""
+        return self._session_factory
+
+
+# ---------------------------------------------------------------------------
+# DAOs concretos por driver
+# ---------------------------------------------------------------------------
+
+class SQLiteDAO(DatabaseDAO):
+    """DAO para SQLite (desarrollo y tests)."""
 
 
 class PostgreSQLDAO(DatabaseDAO):
     """DAO para PostgreSQL (producción)."""
 
-    def __init__(self, url: Optional[str] = None) -> None:
-        if url is None:
-            import os
-
-            url = os.environ.get(
-                "ROCCA_DATABASE_URL",
-                "postgresql+psycopg2://rocca:rocca@localhost:5432/rocca",
+    def __init__(self, database_url: str | None = None) -> None:
+        super().__init__(
+            database_url or os.environ.get(
+                "ROCCA_DATABASE_URL", "postgresql+psycopg://rocca:rocca@localhost/rocca"
             )
-        self._url = url
-        self._engine: Engine = create_engine(self._url, echo=False)
-        self._session_factory = sessionmaker(
-            autocommit=False, autoflush=False, expire_on_commit=False, bind=self._engine
         )
 
-    def crear_tablas(self) -> None:
-        Base.metadata.create_all(bind=self._engine)
 
-    def obtener_sesion(self) -> Session:
-        return self._session_factory()
-
-    def cerrar(self) -> None:
-        self._engine.dispose()
-
-
-def crear_dao(url: str) -> DatabaseDAO:
-    """Fábrica: crea el DAO apropiado según el esquema de la URL."""
+def crear_dao(database_url: str | None = None) -> DatabaseDAO:
+    """Factory: crea el DAO adecuado según la URL de la base de datos."""
+    url = database_url or DATABASE_URL
     if url.startswith("sqlite"):
         return SQLiteDAO(url)
     return PostgreSQLDAO(url)

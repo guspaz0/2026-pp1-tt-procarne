@@ -1,49 +1,31 @@
-"""Módulo III — Fiscalización (ROCCA).
+"""Composición del Módulo III — Fiscalización.
 
-Encapsula la inyección de dependencias del módulo: crea el DAO,
-el servicio y el controlador (router).
-
-Uso::
-
-    from modulos.fiscalizacion.fiscalizacion import FiscalizacionModulo
-
-    modulo = FiscalizacionModulo(db_dao)
-    modulo.registrar(app)
+Clase que inyecta las dependencias (DAO, servicio) y registra el
+router en la aplicación FastAPI.
 """
 
 from __future__ import annotations
 
 from fastapi import FastAPI
 
-from core import DatabaseDAO
-
-from .controlador import crear_router
-from .dao import FiscalizacionDAO
-from .servicio import FiscalizacionService
+from modulos.fiscalizacion.controlador import crear_router
+from modulos.fiscalizacion.dao import FiscalizacionDAO
+from modulos.fiscalizacion.servicio import FiscalizacionService
 
 
 class FiscalizacionModulo:
-    """Módulo III: Fiscalización.
+    """Módulo III — Fiscalización.
 
-    Encapsula:
-    - El DAO de fiscalización (inspecciones, actas, decomisos,
-      infracciones, sanciones, reincidencias)
-    - El servicio de negocio
-    - El controlador (router)
-
-    Args:
-        db_dao: DAO de base de datos (SQLite o PostgreSQL).
+    Responsabilidad única: componer el módulo (DAO + servicio + router)
+    y registrar sus endpoints en la aplicación.
     """
 
-    def __init__(self, db_dao: DatabaseDAO) -> None:
-        self.fiscalizacion_dao = FiscalizacionDAO(db_dao.obtener_sesion)
-        self.fiscalizacion_service = FiscalizacionService(self.fiscalizacion_dao)
-        self.router = crear_router(fiscalizacion_service=self.fiscalizacion_service)
+    def __init__(self, db_dao) -> None:
+        self._db_dao = db_dao
+        self._dao = FiscalizacionDAO(db_dao.obtener_sesion)
+        self._servicio = FiscalizacionService(self._dao)
 
     def registrar(self, app: FastAPI) -> None:
-        """Registra el router del módulo en la aplicación.
-
-        Args:
-            app: Instancia de :class:`FastAPI`.
-        """
-        app.include_router(self.router)
+        """Registra el router del módulo en la aplicación."""
+        router = crear_router(self._servicio)
+        app.include_router(router)

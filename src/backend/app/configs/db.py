@@ -1,53 +1,58 @@
-"""Configuración de la base de datos.
+"""Configuración de base de datos de ROCCA.
 
-Define la :class:`Base` declarativa, el motor de conexión y la sesión.
-El motor se selecciona según la URL de la base de datos (SQLite en dev,
-PostgreSQL en producción).
+Define la clase base declarativa de SQLAlchemy y los helpers para crear
+el motor y la fábrica de sesiones.
+
+Uso::
+
+    from configs.db import Base, crear_engine, crear_session_factory
 """
 
 from __future__ import annotations
 
-import os
-from typing import Optional
+from collections.abc import Generator
+from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-# URL de la base de datos. En dev: SQLite; en prod: PostgreSQL.
-# Ej: postgresql+psycopg2://rocca:rocca@localhost:5432/rocca
-DATABASE_URL: str = os.environ.get(
-    "ROCCA_DATABASE_URL",
-    "sqlite:///./rocca.db",
-)
-
-# ``connect_args`` solo aplica a SQLite; en PostgreSQL no se usa.
-_connect_args: dict = (
-    {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-)
-
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,
-    connect_args=_connect_args,
-    pool_pre_ping=True,
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 class Base(DeclarativeBase):
-    """Clase base declarativa para todas las entidades ORM."""
+    """Clase base declarativa para todos los modelos ORM de ROCCA."""
 
 
-def get_db():
-    """Dependencia de FastAPI para obtener una sesión transaccional."""
-    db: Session = SessionLocal()
+def crear_engine(database_url: str, echo: bool = False):
+    """Crea un motor SQLAlchemy para la URL dada.
+
+    Para SQLite en memoria se usa ``StaticPool`` para que todas las
+    conexiones compartan la misma base de datos.
+    """
+    kwargs: dict = {"echo": echo}
+    if database_url.startswith("sqlite"):
+        kwargs["connect_args"] = {"check_same_thread": False}
+        if database_url in ("sqlite://", "sqlite:///:memory:"):
+            from sqlalchemy.pool import StaticPool
+
+            kwargs["poolclass"] = StaticPool
+    return create_engine(database_url, **kwargs)
+
+
+def crear_session_factory(engine) -> sessionmaker[Session]:
+    """Crea la fábrica de sesiones vinculada a un motor."""
+    return sessionmaker(
+        autocommit=False, autoflush=False, expire_on_commit=False, bind=engine
+    )
+
+
+@contextmanager
+def sesion_de(session_factory: sessionmaker[Session]) -> Generator[Session, None, None]:
+    """Context manager que abre y cierra una sesión de base de datos."""
+    session = session_factory()
     try:
-        yield db
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
-        db.close()
-
-
-def init_db() -> None:
-    """Crea todas las tablas (solo en dev; en producción usar Alembic)."""
-    Base.metadata.create_all(bind=engine)
+        session.close()

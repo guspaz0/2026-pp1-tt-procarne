@@ -1,83 +1,58 @@
-"""Módulo de Remitos Electrónicos Cárnicos.
+"""Composición del módulo de Remitos Electrónicos Cárnicos.
 
-Encapsula la inyección de dependencias del módulo: crea los DAOs,
-servicios y el controlador (router).
-
-El módulo **no** importa los DAOs/servicios concretos del catálogo
-genérico de mercaderías: recibe sus contratos por inyección
-(:class:`MercaderiaDAOProtocol` y :class:`MercaderiaServiceProtocol`),
-de modo que la composición con el módulo genérico la resuelve el
-orquestador de la aplicación.
-
-Uso::
-
-    from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
-
-    modulo = RemitosCarnicosModulo(db_dao, mercaderia_dao, mercaderia_service)
-    app.include_router(modulo.router)
+Clase que inyecta las dependencias (DAOs, servicios) y registra el
+router en la aplicación FastAPI.
 """
 
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import FastAPI
 
-from core import DatabaseDAO
-
-from .operador.dao import OperadorDAO
-from .operador.servicio import OperadorService
-from .remito.dao import RemitoCarnicoDAO
-from .remito.servicio import MercaderiaDAOProtocol, RemitoCarnicoService
-from .controlador import MercaderiaServiceProtocol, crear_router
+from core.contracts import MercaderiaDAO as MercaderiaDAOProtocol
+from core.contracts import PersonaDAO as PersonaDAOProtocol
+from core.mercaderia.servicio import MercaderiaService
+from core.persona.servicio import PersonaService
+from modulos.remitos_carnicos.controlador import crear_router
+from modulos.remitos_carnicos.operador.dao import OperadorDAO
+from modulos.remitos_carnicos.operador.servicio import OperadorService
+from modulos.remitos_carnicos.remito.dao import RemitoCarnicoDAO
+from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoService
 
 
 class RemitosCarnicosModulo:
     """Módulo de Remitos Electrónicos Cárnicos.
 
-    Encapsula:
-    - Los DAOs por entidad (operador, remito)
-    - Los servicios de negocio
-    - El controlador (router)
-
-    Args:
-        db_dao: DAO de base de datos (SQLite o PostgreSQL).
-        mercaderia_dao: Contrato de consulta de mercaderías (catálogo
-            genérico). Se inyecta desde el orquestador de la aplicación.
-        mercaderia_service: Contrato del servicio de mercaderías.
+    Responsabilidad única: componer el módulo (DAOs + servicios + router)
+    y registrar sus endpoints en la aplicación.
     """
 
     def __init__(
         self,
-        db_dao: DatabaseDAO,
-        mercaderia_dao: Optional[MercaderiaDAOProtocol] = None,
-        mercaderia_service: Optional[MercaderiaServiceProtocol] = None,
+        db_dao,
+        persona_dao: PersonaDAOProtocol | None = None,
+        persona_service: PersonaService | None = None,
+        mercaderia_dao: MercaderiaDAOProtocol | None = None,
+        mercaderia_service: MercaderiaService | None = None,
     ) -> None:
-        # DAOs por entidad
-        self.operador_dao = OperadorDAO(db_dao.obtener_sesion)
-        self.remito_dao = RemitoCarnicoDAO(db_dao.obtener_sesion)
-        self.mercaderia_dao = mercaderia_dao
+        self._db_dao = db_dao
+        self._persona_dao = persona_dao
+        self._persona_service = persona_service
+        self._mercaderia_dao = mercaderia_dao
+        self._mercaderia_service = mercaderia_service
 
-        # Servicios de negocio
-        self.operador_service = OperadorService(self.operador_dao)
-        self.mercaderia_service = mercaderia_service
-        self.remito_service = RemitoCarnicoService(
-            remito_dao=self.remito_dao,
-            operador_dao=self.operador_dao,
-            mercaderia_dao=self.mercaderia_dao,
-        )
+        # DAOs del módulo
+        self._operador_dao = OperadorDAO(db_dao.obtener_sesion)
+        self._remito_dao = RemitoCarnicoDAO(db_dao.obtener_sesion)
 
-        # Controlador (router del módulo)
-        self.router = crear_router(
-            operador_service=self.operador_service,
-            mercaderia_service=self.mercaderia_service,
-            remito_service=self.remito_service,
+        # Servicios del módulo
+        self._operador_service = OperadorService(self._operador_dao)
+        self._remito_service = RemitoCarnicoService(
+            self._remito_dao,
+            self._operador_dao,
+            self._mercaderia_dao,
         )
 
     def registrar(self, app: FastAPI) -> None:
-        """Registra el router del módulo en la aplicación.
-
-        Args:
-            app: Instancia de :class:`FastAPI`.
-        """
-        app.include_router(self.router)
+        """Registra el router del módulo en la aplicación."""
+        router = crear_router(self._remito_service)
+        app.include_router(router)

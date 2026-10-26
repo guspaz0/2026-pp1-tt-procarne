@@ -1,4 +1,4 @@
-"""Enumeraciones del Módulo III — Fiscalización (ROCCA)."""
+"""Enumeraciones del Módulo III — Fiscalización."""
 
 from __future__ import annotations
 
@@ -6,13 +6,12 @@ from enum import Enum
 
 
 class TipoInspeccion(str, Enum):
-    """Tipo de inspección realizada."""
+    """Tipo de inspección."""
 
-    RUTINA = "RUTINA"
     PROGRAMADA = "PROGRAMADA"
-    DENUNCIA = "DENUNCIA"
-    CONTROLES_ESPECIALES = "CONTROLES_ESPECIALES"
-    AUDITORIA = "AUDITORIA"
+    INESPERADA = "INESPERADA"
+    REINSPECCION = "REINSPECCION"
+    QUEJA = "QUEJA"
 
 
 class ResultadoInspeccion(str, Enum):
@@ -24,13 +23,12 @@ class ResultadoInspeccion(str, Enum):
 
 
 class TipoActa(str, Enum):
-    """Tipo de acta levantada."""
+    """Tipo de acta."""
 
-    CONSTATAcion = "CONSTATACION"
-    ADVERTENCIA = "ADVERTENCIA"
+    INSPECCION = "INSPECCION"
     DECOMISO = "DECOMISO"
-    CIERRE = "CIERRE"
-    OTRO = "OTRO"
+    INFRACCION = "INFRACCION"
+    SANCION = "SANCION"
 
 
 class EstadoActa(str, Enum):
@@ -42,15 +40,12 @@ class EstadoActa(str, Enum):
 
 
 class TipoInfraccion(str, Enum):
-    """Tipo de infracción detectada."""
+    """Tipo de infracción."""
 
-    DOCUMENTACION = "DOCUMENTACION"
-    TRAZABILIDAD = "TRAZABILIDAD"
-    HIGIENE = "HIGIENE"
-    TEMPERATURA = "TEMPERATURA"
-    PESAJE = "PESAJE"
-    ROTULACION = "ROTULACION"
-    TRANSPORTE = "TRANSPORTE"
+    FALTA_DE_HABILITACION = "FALTA_DE_HABILITACION"
+    INCUMPLIMIENTO_NORMAS = "INCUMPLIMIENTO_NORMAS"
+    FALTA_DE_TRAZABILIDAD = "FALTA_DE_TRACABILIDAD"
+    COMERCIALIZACION_ILICITA = "COMERCIALIZACION_ILICITA"
     OTRO = "OTRO"
 
 
@@ -63,11 +58,10 @@ class GravedadInfraccion(str, Enum):
 
 
 class TipoSancion(str, Enum):
-    """Tipo de sanción aplicada."""
+    """Tipo de sanción."""
 
     AMONESTACION = "AMONESTACION"
     MULTA = "MULTA"
-    DECOMISO = "DECOMISO"
     SUSPENSION = "SUSPENSION"
     CIERRE = "CIERRE"
 
@@ -77,14 +71,16 @@ class EstadoSancion(str, Enum):
 
     PENDIENTE = "PENDIENTE"
     NOTIFICADA = "NOTIFICADA"
-    CUMPLIDA = "CUMPLIDA"
-    ANULADA = "ANULADA"
+    PAGADA = "PAGADA"
+    APELADA = "APELADA"
+    CANCELADA = "CANCELADA"
 
 
 class EstadoDecomiso(str, Enum):
     """Estado del decomiso."""
 
-    EN_CURSADO = "EN_CURSADO"
-    DESTINADO = "DESTINADO"
-    DISTRIBUIDO = "DISTRIBUIDO"
-    DESTRUIDO = "DESTRUIDO"
+    PENDIENTE = "PENDIENTE"
+    CONFIRMADO = "CONFIRMADO"
+    DESTRUCCION = "DESTRUCCION"
+    DONACION = "DONACION"
+    REINTEGRACION = "REINTEGRACION"

@@ -1,91 +1,91 @@
-"""ORM y DAO de la persona (física o jurídica)."""
+"""DAO y modelo ORM de la persona.
+
+El modelo ORM (``Persona``) hereda de ``Base`` y se registra en
+``Base.metadata`` para que Alembic y ``create_all`` lo detecten.
+"""
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import String, CheckConstraint, select
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from configs.db import Base
 
 
 class Persona(Base):
-    """Persona física o jurídica del registro.
-
-    - ``tipo``: PF (física) o PJ (jurídica)
-    - ``tipo_documento``: DNI o CUIT
-    - ``identificador``: 8 dígitos (DNI) o 11 dígitos (CUIT)
-    - ``nombre`` + ``apellido``: obligatorios para PF
-    - ``razon_social``: obligatorio para PJ (se infiere de apellido+nombre para PF)
-    """
+    """Modelo ORM de persona (física o jurídica)."""
 
     __tablename__ = "personas"
-    __table_args__ = (
-        CheckConstraint(
-            "(tipo_documento = 'DNI' AND LENGTH(identificador) = 8) OR "
-            "(tipo_documento = 'CUIT' AND LENGTH(identificador) = 11)",
-            name="chk_identificador_longitud",
-        ),
-        CheckConstraint(
-            "tipo IN ('PF', 'PJ')", name="chk_tipo_persona"
-        ),
-        CheckConstraint(
-            "tipo_documento IN ('DNI', 'CUIT')", name="chk_tipo_documento"
-        ),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    tipo: Mapped[str] = mapped_column(String(2), nullable=False)
-    tipo_documento: Mapped[str] = mapped_column(String(4), nullable=False)
-    identificador: Mapped[str] = mapped_column(String(13), unique=True, index=True, nullable=False)
-    nombre: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
-    apellido: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
-    razon_social: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False)  # FISICA / JURIDICA
+    tipo_documento: Mapped[str] = mapped_column(String(10), nullable=False)  # DNI / CUIT
+    identificador: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
     domicilio: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    telefono: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
-    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-
-    @property
-    def nombre_completo(self) -> str:
-        """Nombre completo (PF) o razón social (PJ)."""
-        if self.tipo == "PJ":
-            return self.razon_social or ""
-        partes = [p for p in [self.nombre, self.apellido] if p]
-        return " ".join(partes)
+    creado_en: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
     def __repr__(self) -> str:
-        return f"<Persona tipo={self.tipo} doc={self.tipo_documento} id={self.identificador}>"
+        return f"<Persona id={self.id} {self.tipo} {self.identificador}>"
 
 
 class PersonaDAO:
-    """Data Access Object de la persona."""
+    """DAO de personas.
+
+    Encapsula las operaciones de acceso a datos sobre la tabla
+    ``personas``.
+    """
 
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
 
-    def obtener_por_identificador(self, identificador: str) -> Optional[Persona]:
+    def crear(self, tipo: str, tipo_documento: str, identificador: str,
+              nombre: str, domicilio: str | None = None) -> Persona:
+        """Crea y persiste una persona nueva."""
         with self._session_factory() as session:
-            stmt = select(Persona).where(Persona.identificador == identificador)
-            return session.execute(stmt).scalar_one_or_none()
+            persona = Persona(
+                tipo=tipo,
+                tipo_documento=tipo_documento,
+                identificador=identificador,
+                nombre=nombre,
+                domicilio=domicilio,
+            )
+            session.add(persona)
+            session.commit()
+            session.refresh(persona)
+            return persona
 
-    def obtener_por_id(self, persona_id: int) -> Optional[Persona]:
+    def obtener_por_id(self, persona_id: int) -> Persona | None:
+        """Devuelve la persona con el id dado, o ``None``."""
         with self._session_factory() as session:
             return session.get(Persona, persona_id)
 
-    def listar(self, limite: int = 200, offset: int = 0) -> list[Persona]:
+    def obtener_por_documento(self, tipo: str, identificador: str) -> Persona | None:
+        """Devuelve la persona con el documento dado, o ``None``."""
         with self._session_factory() as session:
-            stmt = (
-                select(Persona)
-                .order_by(Persona.nombre)
-                .limit(limite)
-                .offset(offset)
+            return (
+                session.query(Persona)
+                .filter_by(tipo_documento=tipo, identificador=identificador)
+                .first()
             )
-            return list(session.execute(stmt).scalars().all())
 
-    def guardar(self, persona: Persona) -> Persona:
+    def listar(self) -> list[Persona]:
+        """Devuelve todas las personas."""
         with self._session_factory() as session:
-            session.add(persona)
+            return list(session.query(Persona).all())
+
+    def actualizar_domicilio(self, persona_id: int, domicilio: str) -> Persona | None:
+        """Actualiza el domicilio de una persona."""
+        with self._session_factory() as session:
+            persona = session.get(Persona, persona_id)
+            if persona is None:
+                return None
+            persona.domicilio = domicilio
             session.commit()
             session.refresh(persona)
             return persona

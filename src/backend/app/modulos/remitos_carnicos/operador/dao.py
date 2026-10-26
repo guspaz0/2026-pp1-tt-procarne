@@ -1,158 +1,63 @@
-"""ORM y DAO del operador de la cadena cárnica.
-
-El Operador se refiere a una PersonaJuridica en la tabla ``personas``.
-Solo almacena los campos específicos del operador (domicilio_fiscal,
-categoria, situacion) y las relaciones con categorías/actividades.
-"""
+"""DAO y modelo ORM del operador de la cadena cárnica."""
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import String, Table, Column, ForeignKey, Integer, select
-from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core import PersonaRef
 from configs.db import Base
-from core.persona.dao import Persona  # ORM concreta (solo aquí)
-
-# Tabla intermedia operador <-> actividad (many-to-many)
-operador_actividades = Table(
-    "operador_actividades",
-    Base.metadata,
-    Column("operador_id", Integer, ForeignKey("operadores.id"), primary_key=True),
-    Column("actividad_id", Integer, ForeignKey("actividades.id"), primary_key=True),
-)
 
 
 class Operador(Base):
-    """Operador de la cadena cárnica (padrón AFIP).
-
-    Se refiere a una PersonaJuridica en ``personas``. Los campos comunes
-    (cuit, razon_social, domicilio, telefono, email) se obtienen de la persona.
-    """
+    """Modelo ORM de operador de la cadena cárnica."""
 
     __tablename__ = "operadores"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     persona_id: Mapped[int] = mapped_column(
-        ForeignKey("personas.id"), unique=True, index=True, nullable=False
+        ForeignKey("personas.id"), nullable=False, unique=True, index=True
     )
-    domicilio_fiscal: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-
-    # Relaciones
-    persona: Mapped["Persona"] = relationship("Persona", lazy="joined")
-    categorias: Mapped[list["CategoriaOperador"]] = relationship(
-        "CategoriaOperador", back_populates="operador", cascade="all, delete-orphan"
+    creado_en: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc), nullable=False
     )
-    actividades: Mapped[list["Actividad"]] = relationship(
-        "Actividad",
-        secondary=operador_actividades,
-        back_populates="operadores",
-    )
-
-    @property
-    def cuit(self) -> str:
-        """El CUIT es el identificador de la persona jurídica."""
-        return self.persona.identificador
-
-    @property
-    def razon_social(self) -> str:
-        """La razón social de la persona jurídica."""
-        return self.persona.razon_social or self.persona.nombre_completo
-
-    @property
-    def domicilio(self) -> Optional[str]:
-        return self.persona.domicilio
-
-    @property
-    def telefono(self) -> Optional[str]:
-        return self.persona.telefono
-
-    @property
-    def email(self) -> Optional[str]:
-        return self.persona.email
 
     def __repr__(self) -> str:
-        return f"<Operador persona_id={self.persona_id} cuit={self.cuit!r}>"
-
-
-def _eager_options():
-    """Opciones de carga eager (se resuelven en tiempo de consulta)."""
-    from modulos.remitos_carnicos.operador.categoria import Actividad
-    return [
-        selectinload(Operador.persona),
-        selectinload(Operador.categorias),
-        selectinload(Operador.actividades).selectinload(Actividad.categorias_afip),
-    ]
+        return f"<Operador id={self.id} persona_id={self.persona_id}>"
 
 
 class OperadorDAO:
-    """Data Access Object del operador."""
+    """DAO de operadores de la cadena cárnica."""
 
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
 
-    def obtener_por_cuit(self, cuit: str) -> Optional[Operador]:
+    def crear(self, persona_id: int) -> Operador:
+        """Crea y persiste un operador nuevo."""
         with self._session_factory() as session:
-            stmt = (
-                select(Operador)
-                .join(Operador.persona)
-                .where(Operador.persona.has(identificador=cuit, tipo="PJ"))
-                .options(*_eager_options())
-            )
-            return session.execute(stmt).unique().scalar_one_or_none()
-
-    def obtener_por_id(self, operador_id: int) -> Optional[Operador]:
-        with self._session_factory() as session:
-            return session.get(Operador, operador_id, options=_eager_options())
-
-    def listar(self, limite: int = 100, offset: int = 0) -> list[Operador]:
-        with self._session_factory() as session:
-            stmt = select(Operador).options(*_eager_options()).limit(limite).offset(offset)
-            return list(session.execute(stmt).unique().scalars().all())
-
-    def listar_por_actividad(self, actividad_id: int, limite: int = 100, offset: int = 0) -> list[Operador]:
-        with self._session_factory() as session:
-            stmt = (
-                select(Operador)
-                .join(Operador.actividades)
-                .where(Operador.actividades.any(id=actividad_id))
-                .options(*_eager_options())
-                .limit(limite)
-                .offset(offset)
-            )
-            return list(session.execute(stmt).unique().scalars().all())
-
-    def guardar(self, operador: Operador, persona: Optional[PersonaRef] = None) -> Operador:
-        with self._session_factory() as session:
-            if persona is not None:
-                # La referencia de identidad se materializa como ORM de persona.
-                persona_orm = Persona(
-                    tipo=persona.tipo,
-                    tipo_documento=persona.tipo_documento,
-                    identificador=persona.identificador,
-                    nombre=persona.nombre,
-                    apellido=persona.apellido,
-                    razon_social=persona.razon_social,
-                    domicilio=persona.domicilio,
-                    telefono=persona.telefono,
-                    email=persona.email,
-                )
-                session.add(persona_orm)
-                session.commit()
-                session.refresh(persona_orm)
-                operador.persona_id = persona_orm.id
+            operador = Operador(persona_id=persona_id)
             session.add(operador)
             session.commit()
-            operador_id = operador.id
-        # Recargar con relaciones eager
-        return self.obtener_por_id(operador_id)
+            session.refresh(operador)
+            return operador
 
-    def actualizar(self, operador: Operador) -> Operador:
+    def obtener_por_id(self, operador_id: int) -> Operador | None:
+        """Devuelve el operador con el id dado, o ``None``."""
         with self._session_factory() as session:
-            session.merge(operador)
-            session.commit()
-            operador_id = operador.id
-        # Recargar con relaciones eager
-        return self.obtener_por_id(operador_id)
+            return session.get(Operador, operador_id)
+
+    def obtener_por_persona(self, persona_id: int) -> Operador | None:
+        """Devuelve el operador asociado a una persona, o ``None``."""
+        with self._session_factory() as session:
+            return (
+                session.query(Operador)
+                .filter_by(persona_id=persona_id)
+                .first()
+            )
+
+    def listar(self) -> list[Operador]:
+        """Devuelve todos los operadores."""
+        with self._session_factory() as session:
+            return list(session.query(Operador).all())

@@ -1,7 +1,8 @@
 """Submódulo de la mercadería (catálogo genérico de productos)."""
 
+from .dao import Mercaderia as MercaderiaORM
+from .dao import MercaderiaDAO
 from .entidad import Mercaderia
-from .dao import Mercaderia as MercaderiaORM, MercaderiaDAO
 from .schema import MercaderiaIn, MercaderiaOut
 from .servicio import MercaderiaError, MercaderiaService
 

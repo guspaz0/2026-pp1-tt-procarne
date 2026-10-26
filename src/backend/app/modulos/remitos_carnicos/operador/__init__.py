@@ -1,7 +1,5 @@
 """Módulo del operador de la cadena cárnica."""
 
-from .entidad import Operador, ParticipanteRemito, Titular, Depositario, Destinatario, Transportista
-from .dao import Operador as OperadorORM, OperadorDAO
 from .categoria import (
     Actividad,
     ActividadDAO,
@@ -10,6 +8,9 @@ from .categoria import (
     CategoriaOperador,
     CategoriaOperadorDAO,
 )
+from .dao import Operador as OperadorORM
+from .dao import OperadorDAO
+from .entidad import Destinatario, Depositario, Operador, ParticipanteRemito, Titular, Transportista
 from .schema import OperadorIn, OperadorOut
 from .servicio import OperadorError, OperadorService
 

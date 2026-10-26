@@ -1,4 +1,4 @@
-"""Enumeraciones del módulo genérico."""
+"""Enumeraciones compartidas por todos los módulos de ROCCA."""
 
 from __future__ import annotations
 
@@ -6,11 +6,7 @@ from enum import Enum
 
 
 class TipoPersona(str, Enum):
-    """Tipo de persona del registro.
+    """Tipo de persona en el registro."""
 
-    - PF: Persona Física
-    - PJ: Persona Jurídica
-    """
-
-    PF = "PF"
-    PJ = "PJ"
+    FISICA = "FISICA"
+    JURIDICA = "JURIDICA"

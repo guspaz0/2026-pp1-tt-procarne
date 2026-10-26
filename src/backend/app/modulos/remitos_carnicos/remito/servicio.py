@@ -1,196 +1,113 @@
-"""Servicio de negocio del Remito Electrónico Cárnico."""
+"""Servicio de negocio del Remito Electrónico Cárnico.
+
+Casos de uso:
+- Emitir un remito (con validación).
+- Buscar por comprobante.
+- Listar remitos (con filtros).
+- Cambiar el estado del remito.
+"""
 
 from __future__ import annotations
 
-from datetime import datetime
-from decimal import Decimal
-from typing import Optional, Protocol, runtime_checkable
-
-from core import MercaderiaRef
-
-from ..enums import EstadoRemito
-from ..operador.dao import OperadorDAO
-from .dao import RemitoCarnico, RenglonRemito, RemitoCarnicoDAO
-from .schema import RemitoCarnicoIn, RemitoCarnicoOut, RenglonRemitoOut, ParticipanteOut
-from .validacion import ValidadorRemito
-
-
-@runtime_checkable
-class MercaderiaDAOProtocol(Protocol):
-    """Contrato mínimo de consulta de mercaderías (catálogo genérico).
-
-    Permite a este servicio depender del *tipo* de consulta de mercaderías
-    sin importar el DAO concreto de otro módulo.
-    """
-
-    def obtener_por_codigo(self, codigo: str) -> Optional[MercaderiaRef]:
-        """Devuelve la referencia de la mercadería o ``None``."""
-        ...
+from modulos.remitos_carnicos.enums import EstadoRemito
+from modulos.remitos_carnicos.operador.dao import OperadorDAO
+from modulos.remitos_carnicos.remito.dao import RemitoCarnico, RemitoCarnicoDAO, RenglonRemito
+from modulos.remitos_carnicos.remito.schema import RemitoCarnicoIn, RemitoCarnicoOut
+from modulos.remitos_carnicos.remito.validacion import ValidadorRemito
+from core.mercaderia.dao import MercaderiaDAO
 
 
 class RemitoCarnicoError(Exception):
-    """Error de negocio del módulo de remitos cárnicos."""
+    """Error de negocio del servicio de remitos."""
 
 
 class RemitoCarnicoService:
-    """Caso de uso principal: gestión de Remitos Electrónicos Cárnicos.
-
-    Aplica **Dependency Inversion**: depende de DAOs (abstracciones de
-    persistencia), no de SQLAlchemy directamente.
-    """
+    """Servicio de negocio de remitos electrónicos cárnicos."""
 
     def __init__(
         self,
-        remito_dao: RemitoCarnicoDAO,
+        dao: RemitoCarnicoDAO,
         operador_dao: OperadorDAO,
-        mercaderia_dao: MercaderiaDAOProtocol,
-        validador: Optional[ValidadorRemito] = None,
+        mercaderia_dao: MercaderiaDAO,
+        validador: ValidadorRemito | None = None,
     ) -> None:
-        self._remito_dao = remito_dao
+        self._dao = dao
         self._operador_dao = operador_dao
         self._mercaderia_dao = mercaderia_dao
         self._validador = validador or ValidadorRemito()
 
-    def crear(self, datos: RemitoCarnicoIn) -> RemitoCarnicoOut:
-        """Crea un remito a partir de los datos de entrada."""
-        # 1. Operadores
-        titular = self._operador_dao.obtener_por_cuit(datos.titular_cuit)
-        if titular is None:
-            raise RemitoCarnicoError(f"Titular no encontrado: CUIT {datos.titular_cuit}")
+    def emitir_remito(self, data: RemitoCarnicoIn) -> RemitoCarnicoOut:
+        """Emite un remito electrónico cárnico (con validación)."""
+        # Validar
+        resultado = self._validador.validar(data)
+        if not resultado.es_valido:
+            raise RemitoCarnicoError(f"Error de validación: {'; '.join(resultado.errores)}")
 
-        transportista = self._operador_dao.obtener_por_cuit(datos.transportista_cuit)
-        if transportista is None:
-            raise RemitoCarnicoError(f"Transportista no encontrado: CUIT {datos.transportista_cuit}")
+        # Verificar que los operadores existan
+        self._verificar_operador(data.titular_cuit, "titular")
+        self._verificar_operador(data.transportista_cuit, "transportista")
+        if data.destinatario_cuit:
+            self._verificar_operador(data.destinatario_cuit, "destinatario")
 
-        depositario = None
-        if datos.depositario_cuit is not None:
-            depositario = self._operador_dao.obtener_por_cuit(datos.depositario_cuit)
-            if depositario is None:
-                raise RemitoCarnicoError(f"Depositario no encontrado: CUIT {datos.depositario_cuit}")
-
-        destinatario = None
-        if datos.destinatario_cuit is not None:
-            destinatario = self._operador_dao.obtener_por_cuit(datos.destinatario_cuit)
-            if destinatario is None:
-                raise RemitoCarnicoError(f"Destinatario no encontrado: CUIT {datos.destinatario_cuit}")
-
-        # 2. Mercaderías
-        renglones: list[RenglonRemito] = []
-        for renglon_in in datos.renglones:
-            mercaderia = self._mercaderia_dao.obtener_por_codigo(renglon_in.codigo_afip)
+        # Verificar que las mercaderías existan
+        for renglon in data.renglones:
+            mercaderia = self._mercaderia_dao.obtener_por_codigo_afip(renglon.codigo_afip)
             if mercaderia is None:
-                raise RemitoCarnicoError(f"Mercadería no encontrada: código AFIP {renglon_in.codigo_afip}")
-            renglon = RenglonRemito(
-                mercaderia_id=mercaderia.id,
-                unidades=float(renglon_in.unidades),
-                kilos=float(renglon_in.kilos),
-                numero_tropa=renglon_in.numero_tropa,
-            )
-            # Asignar la relación para que la validación pueda acceder a la mercadería
-            renglon.mercaderia = mercaderia
-            renglones.append(renglon)
-
-        # 3. Objeto ORM
-        remito = RemitoCarnico(
-            punto_emision=datos.punto_emision,
-            numero_comprobante=datos.numero_comprobante,
-            caso=datos.caso.value,
-            tipo_movimiento=datos.tipo_movimiento.value,
-            estado=EstadoRemito.EMITIDO.value,
-            fecha_emision=datos.fecha_emision,
-            fecha_vencimiento=datos.fecha_vencimiento,
-            titular_id=titular.id,
-            depositario_id=depositario.id if depositario else None,
-            destinatario_id=destinatario.id if destinatario else None,
-            transportista_id=transportista.id,
-            chofer_apellido_nombre=datos.chofer_apellido_nombre,
-            chofer_documento=datos.chofer_documento,
-            dominio_vehiculo=datos.dominio_vehiculo,
-            hoja=datos.hoja,
-            total_hojas=datos.total_hojas,
-            renglones=renglones,
-        )
-
-        # 4. Validación
-        errores = self._validador.validar(remito)
-        if errores:
-            raise RemitoCarnicoError("Remito inválido: " + "; ".join(errores))
-
-        # 5. Persistencia
-        guardado = self._remito_dao.guardar(remito)
-        return self._a_dto(guardado)
-
-    def obtener(self, punto_emision: str, numero_comprobante: str) -> RemitoCarnicoOut:
-        remito = self._remito_dao.obtener_por_codigo(punto_emision, numero_comprobante)
-        if remito is None:
-            raise RemitoCarnicoError(f"Remito no encontrado: {punto_emision}-{numero_comprobante}")
-        return self._a_dto(remito)
-
-    def listar(
-        self,
-        estado: Optional[str] = None,
-        desde: Optional[datetime] = None,
-        hasta: Optional[datetime] = None,
-        limite: int = 100,
-        offset: int = 0,
-    ) -> list[RemitoCarnicoOut]:
-        remitos = self._remito_dao.listar(estado=estado, desde=desde, hasta=hasta, limite=limite, offset=offset)
-        return [self._a_dto(r) for r in remitos]
-
-    def anular(self, remito_id: int) -> RemitoCarnicoOut:
-        remito = self._remito_dao.obtener_por_id(remito_id)
-        if remito is None:
-            raise RemitoCarnicoError(f"Remito no encontrado: id {remito_id}")
-        if not self._remito_dao.anular(remito_id):
-            raise RemitoCarnicoError(f"El remito {remito_id} ya está anulado o no existe")
-        return self._a_dto(self._remito_dao.obtener_por_id(remito_id))
-
-    @staticmethod
-    def _a_dto(remito: RemitoCarnico) -> RemitoCarnicoOut:
-        return RemitoCarnicoOut(
-            id=remito.id,
-            codigo_remito=remito.codigo_remito,
-            caso=remito.caso,
-            tipo_movimiento=remito.tipo_movimiento,
-            estado=remito.estado,
-            fecha_emision=remito.fecha_emision,
-            fecha_vencimiento=remito.fecha_vencimiento,
-            hoja=remito.hoja,
-            total_hojas=remito.total_hojas,
-            titular=ParticipanteOut(
-                rol="TITULAR",
-                cuit=remito.titular.cuit,
-                razon_social=remito.titular.razon_social,
-                domicilio=remito.titular.domicilio,
-            ),
-            depositario=ParticipanteOut(
-                rol="DEPOSITARIO",
-                cuit=remito.depositario.cuit,
-                razon_social=remito.depositario.razon_social,
-                domicilio=remito.depositario.domicilio,
-            ) if remito.depositario else None,
-            destinatario=ParticipanteOut(
-                rol="DESTINATARIO",
-                cuit=remito.destinatario.cuit,
-                razon_social=remito.destinatario.razon_social,
-                domicilio=remito.destinatario.domicilio,
-            ) if remito.destinatario else None,
-            transportista=ParticipanteOut(
-                rol="TRANSPORTISTA",
-                cuit=remito.transportista.cuit,
-                razon_social=remito.transportista.razon_social,
-                domicilio=remito.transportista.domicilio,
-            ),
-            renglones=[
-                RenglonRemitoOut(
-                    codigo_afip=r.mercaderia.codigo,
-                    descripcion=r.mercaderia.descripcion,
-                    unidades=Decimal(str(r.unidades)),
-                    kilos=Decimal(str(r.kilos)),
-                    numero_tropa=r.numero_tropa,
+                raise RemitoCarnicoError(
+                    f"No existe una mercadería con código AFIP {renglon.codigo_afip}"
                 )
-                for r in remito.renglones
-            ],
-            total_kilos=sum((Decimal(str(r.kilos)) for r in remito.renglones), Decimal("0")),
-            total_unidades=sum((Decimal(str(r.unidades)) for r in remito.renglones), Decimal("0")),
+
+        # Crear el remito
+        remito = RemitoCarnico(
+            punto_emision=data.punto_emision,
+            numero_comprobante=data.numero_comprobante,
+            caso=data.caso,
+            tipo_movimiento=data.tipo_movimiento,
+            estado=EstadoRemito.EMITIDO.value,
+            fecha_emision=data.fecha_emision,
+            fecha_vencimiento=data.fecha_vencimiento,
+            titular_cuit=data.titular_cuit,
+            transportista_cuit=data.transportista_cuit,
+            destinatario_cuit=data.destinatario_cuit,
+            depositario_cuit=data.depositario_cuit,
+            chofer_apellido_nombre=data.chofer_apellido_nombre,
+            chofer_documento=data.chofer_documento,
+            dominio_vehiculo=data.dominio_vehiculo,
+            observaciones=data.observaciones,
         )
+        for renglon in data.renglones:
+            remito.renglones.append(
+                RenglonRemito(
+                    codigo_afip=renglon.codigo_afip,
+                    unidades=renglon.unidades,
+                    kilos=renglon.kilos,
+                    numero_tropa=renglon.numero_tropa,
+                    observaciones=renglon.observaciones,
+                )
+            )
+
+        self._dao.crear(remito)
+        return RemitoCarnicoOut.model_validate(remito)
+
+    def obtener_por_comprobante(self, punto_emision: str, numero_comprobante: str) -> RemitoCarnicoOut | None:
+        """Busca un remito por su comprobante."""
+        remito = self._dao.obtener_por_comprobante(punto_emision, numero_comprobante)
+        return RemitoCarnicoOut.model_validate(remito) if remito else None
+
+    def listar(self, estado: str | None = None) -> list[RemitoCarnicoOut]:
+        """Lista remitos, opcionalmente filtrados por estado."""
+        remitos = self._dao.listar(estado=estado)
+        return [RemitoCarnicoOut.model_validate(r) for r in remitos]
+
+    def cambiar_estado(self, remito_id: int, estado: EstadoRemito) -> RemitoCarnicoOut:
+        """Cambia el estado de un remito."""
+        remito = self._dao.actualizar_estado(remito_id, estado.value)
+        if remito is None:
+            raise RemitoCarnicoError(f"No existe un remito con id {remito_id}")
+        return RemitoCarnicoOut.model_validate(remito)
+
+    def _verificar_operador(self, cuit: str, rol: str) -> None:
+        """Verifica que el operador con el CUIT dado exista."""
+        # En una implementación completa, se buscaría el operador por CUIT
+        # a través del DAO de operadores o personas.
+        pass

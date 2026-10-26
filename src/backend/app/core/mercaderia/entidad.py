@@ -1,29 +1,30 @@
-"""Entidad de mercadería del módulo genérico.
+"""Entidad de dominio: Mercadería (catálogo genérico).
 
-Define :class:`Mercaderia`, entidad concreta de dominio del catálogo
-genérico de productos.
+Representa un producto del catálogo (código AFIP, descripción,
+unidad de medida) con banderas de trazabilidad.
 """
 
 from __future__ import annotations
 
-from typing import Optional
-
-from ..base import Entidad
+from core.base import Entidad
 
 
 class Mercaderia(Entidad):
-    """Mercadería del catálogo genérico de productos.
+    """Mercadería del catálogo genérico.
 
-    Representa un producto/ítem transportable identificado por un código
-    de catálogo, con su descripción, unidad de medida y si exige datos de
-    trazabilidad.
+    Campos:
+        codigo: código AFIP del producto.
+        descripcion: descripción del producto.
+        unidad_medida: unidad de medida (KG, UN, etc.).
+        requiere_trazabilidad: si la mercadería requiere trazabilidad.
+        requiere_numero_tropa: si requiere número de tropa.
     """
 
     def __init__(
         self,
         codigo: str,
         descripcion: str,
-        unidad_medida: Optional[str] = None,
+        unidad_medida: str | None = None,
         requiere_trazabilidad: bool = False,
         requiere_numero_tropa: bool = False,
     ) -> None:
@@ -31,18 +32,8 @@ class Mercaderia(Entidad):
         self.codigo = codigo
         self.descripcion = descripcion
         self.unidad_medida = unidad_medida
-        self._requiere_trazabilidad = requiere_trazabilidad
-        self._requiere_numero_tropa = requiere_numero_tropa
-
-    @property
-    def requiere_trazabilidad(self) -> bool:
-        """Indica si la mercadería exige datos de trazabilidad."""
-        return self._requiere_trazabilidad
-
-    @property
-    def requiere_numero_tropa(self) -> bool:
-        """Indica si la mercadería exige el N° de tropa."""
-        return self._requiere_numero_tropa
+        self.requiere_trazabilidad = requiere_trazabilidad
+        self.requiere_numero_tropa = requiere_numero_tropa
 
     def to_dict(self) -> dict:
         return {

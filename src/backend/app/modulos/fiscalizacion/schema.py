@@ -1,311 +1,154 @@
-"""Schemas (DTOs) del Módulo III — Fiscalización (ROCCA)."""
+"""Schemas (DTOs) del Módulo III — Fiscalización."""
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-
-from .enums import (
-    EstadoActa,
-    EstadoDecomiso,
-    EstadoSancion,
-    GravedadInfraccion,
-    ResultadoInspeccion,
-    TipoActa,
-    TipoInfraccion,
-    TipoInspeccion,
-    TipoSancion,
-)
-
-
-# ---------------------------------------------------------------------------
-# Entradas anidadas
-# ---------------------------------------------------------------------------
-
-
-class ActaIn(BaseModel):
-    """Acta levantada durante la inspección."""
-
-    tipo: TipoActa
-    numero: Optional[str] = None
-    descripcion: Optional[str] = None
-    estado: EstadoActa = EstadoActa.BORRADOR
-
-
-class DecomisoIn(BaseModel):
-    """Decomiso de mercadería."""
-
-    producto: str = Field(min_length=1, max_length=255)
-    cantidad: float = Field(gt=0)
-    unidad: str = "KG"
-    motivo: Optional[str] = None
-    destino: Optional[str] = None
-    estado: EstadoDecomiso = EstadoDecomiso.EN_CURSADO
-
-
-class InfraccionIn(BaseModel):
-    """Infracción detectada."""
-
-    tipo: TipoInfraccion
-    gravedad: GravedadInfraccion = GravedadInfraccion.LEVE
-    descripcion: Optional[str] = None
-    sanciones: list["SancionIn"] = Field(default_factory=list)
-
-
-class SancionIn(BaseModel):
-    """Sanción aplicada por infracción."""
-
-    tipo: TipoSancion
-    monto: Optional[float] = Field(default=None, gt=0)
-    descripcion: Optional[str] = None
-    estado: EstadoSancion = EstadoSancion.PENDIENTE
-
-
-InfraccionIn.model_rebuild()
-
-
-# ---------------------------------------------------------------------------
-# Inspección
-# ---------------------------------------------------------------------------
+from pydantic import BaseModel, Field
 
 
 class InspeccionIn(BaseModel):
-    """Datos de entrada para registrar una inspección."""
+    """DTO de entrada para crear una inspección."""
 
-    inspector: str = Field(min_length=1, max_length=120)
-    operador_cuit: Optional[str] = Field(default=None, max_length=13)
-    tipo: TipoInspeccion = TipoInspeccion.RUTINA
-    resultado: ResultadoInspeccion = ResultadoInspeccion.CONFORME
-    latitud: Optional[float] = Field(default=None, ge=-90, le=90)
-    longitud: Optional[float] = Field(default=None, ge=-180, le=180)
-    observaciones: Optional[str] = None
-    actas: list[ActaIn] = Field(default_factory=list)
-    decomisos: list[DecomisoIn] = Field(default_factory=list)
-    infracciones: list[InfraccionIn] = Field(default_factory=list)
-
-    @model_validator(mode="after")
-    def _validar_cuit(self) -> "InspeccionIn":
-        if self.operador_cuit is not None:
-            if not self.operador_cuit.isdigit() or len(self.operador_cuit) != 11:
-                raise ValueError("El CUIT del operador debe tener 11 dígitos")
-        return self
-
-    @model_validator(mode="after")
-    def _validar_resultado_conformidad(self) -> "InspeccionIn":
-        if self.resultado is ResultadoInspeccion.NO_CONFORME and not self.infracciones:
-            raise ValueError(
-                "Una inspección NO_CONFORME debe incluir al menos una infracción"
-            )
-        return self
+    tipo: str = Field(..., description="Tipo de inspección (PROGRAMADA, INESPERADA, etc.)")
+    operador_cuit: str = Field(..., description="CUIT del operador inspeccionado")
+    fecha: datetime = Field(..., description="Fecha de la inspección")
+    inspector: str = Field(..., description="Nombre del inspector")
+    observaciones: Optional[str] = Field(None, description="Observaciones")
 
 
 class InspeccionOut(BaseModel):
-    """DTO de salida de la inspección."""
-
-    model_config = ConfigDict(from_attributes=True)
+    """DTO de salida de una inspección."""
 
     id: int
-    inspector: str
-    operador_cuit: Optional[str] = None
+    tipo: str
+    operador_cuit: str
     fecha: datetime
-    latitud: Optional[float] = None
-    longitud: Optional[float] = None
-    tipo: TipoInspeccion
-    resultado: ResultadoInspeccion
-    observaciones: Optional[str] = None
-    enviada: bool
-    actas: list["ActaOut"] = Field(default_factory=list)
-    decomisos: list["DecomisoOut"] = Field(default_factory=list)
-    infracciones: list["InfraccionOut"] = Field(default_factory=list)
+    inspector: str
+    resultado: Optional[str]
+    observaciones: Optional[str]
+    creado_en: datetime
 
-    @classmethod
-    def from_orm(cls, inspeccion) -> "InspeccionOut":
-        return cls(
-            id=inspeccion.id,
-            inspector=inspeccion.inspector,
-            operador_cuit=inspeccion.operador_cuit,
-            fecha=inspeccion.fecha,
-            latitud=inspeccion.latitud,
-            longitud=inspeccion.longitud,
-            tipo=TipoInspeccion(inspeccion.tipo),
-            resultado=ResultadoInspeccion(inspeccion.resultado),
-            observaciones=inspeccion.observaciones,
-            enviada=inspeccion.enviada,
-            actas=[ActaOut.from_orm(a) for a in inspeccion.actas],
-            decomisos=[DecomisoOut.from_orm(d) for d in inspeccion.decomisos],
-            infracciones=[InfraccionOut.from_orm(i) for i in inspeccion.infracciones],
-        )
+    model_config = {"from_attributes": True}
 
 
-# ---------------------------------------------------------------------------
-# Acta
-# ---------------------------------------------------------------------------
+class ActaIn(BaseModel):
+    """DTO de entrada para crear un acta."""
+
+    inspeccion_id: int = Field(..., description="ID de la inspección")
+    tipo: str = Field(..., description="Tipo de acta (INSPECCION, DECOMISO, etc.)")
+    numero: str = Field(..., description="Número de acta")
+    fecha: datetime = Field(..., description="Fecha del acta")
+    contenido: Optional[str] = Field(None, description="Contenido del acta")
 
 
 class ActaOut(BaseModel):
-    """DTO de salida del acta."""
-
-    model_config = ConfigDict(from_attributes=True)
+    """DTO de salida de un acta."""
 
     id: int
     inspeccion_id: int
-    tipo: TipoActa
-    numero: Optional[str] = None
-    descripcion: Optional[str] = None
-    estado: EstadoActa
-    fecha_firma: Optional[datetime] = None
+    tipo: str
+    numero: str
+    fecha: datetime
+    estado: str
+    contenido: Optional[str]
+    firmado_por: Optional[str]
+    fecha_firma: Optional[datetime]
 
-    @classmethod
-    def from_orm(cls, acta) -> "ActaOut":
-        return cls(
-            id=acta.id,
-            inspeccion_id=acta.inspeccion_id,
-            tipo=TipoActa(acta.tipo),
-            numero=acta.numero,
-            descripcion=acta.descripcion,
-            estado=EstadoActa(acta.estado),
-            fecha_firma=acta.fecha_firma,
-        )
+    model_config = {"from_attributes": True}
 
 
-# ---------------------------------------------------------------------------
-# Decomiso
-# ---------------------------------------------------------------------------
+class InfraccionIn(BaseModel):
+    """DTO de entrada para crear una infracción."""
 
-
-class DecomisoOut(BaseModel):
-    """DTO de salida del decomiso."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    inspeccion_id: int
-    producto: str
-    cantidad: float
-    unidad: str
-    motivo: Optional[str] = None
-    destino: Optional[str] = None
-    estado: EstadoDecomiso
-
-    @classmethod
-    def from_orm(cls, decomiso) -> "DecomisoOut":
-        return cls(
-            id=decomiso.id,
-            inspeccion_id=decomiso.inspeccion_id,
-            producto=decomiso.producto,
-            cantidad=decomiso.cantidad,
-            unidad=decomiso.unidad,
-            motivo=decomiso.motivo,
-            destino=decomiso.destino,
-            estado=EstadoDecomiso(decomiso.estado),
-        )
-
-
-# ---------------------------------------------------------------------------
-# Infracción
-# ---------------------------------------------------------------------------
+    inspeccion_id: int = Field(..., description="ID de la inspección")
+    operador_cuit: str = Field(..., description="CUIT del operador infractor")
+    tipo: str = Field(..., description="Tipo de infracción")
+    gravedad: str = Field(..., description="Gravedad (LEVE, GRAVE, MUY_GRAVE)")
+    descripcion: str = Field(..., description="Descripción de la infracción")
 
 
 class InfraccionOut(BaseModel):
-    """DTO de salida de la infracción."""
-
-    model_config = ConfigDict(from_attributes=True)
+    """DTO de salida de una infracción."""
 
     id: int
     inspeccion_id: int
-    operador_cuit: Optional[str] = None
-    tipo: TipoInfraccion
-    gravedad: GravedadInfraccion
-    descripcion: Optional[str] = None
-    fecha: date
-    sanciones: list["SancionOut"] = Field(default_factory=list)
+    operador_cuit: str
+    tipo: str
+    gravedad: str
+    descripcion: str
+    creado_en: datetime
 
-    @classmethod
-    def from_orm(cls, infraccion) -> "InfraccionOut":
-        return cls(
-            id=infraccion.id,
-            inspeccion_id=infraccion.inspeccion_id,
-            operador_cuit=infraccion.operador_cuit,
-            tipo=TipoInfraccion(infraccion.tipo),
-            gravedad=GravedadInfraccion(infraccion.gravedad),
-            descripcion=infraccion.descripcion,
-            fecha=infraccion.fecha,
-            sanciones=[SancionOut.from_orm(s) for s in infraccion.sanciones],
-        )
+    model_config = {"from_attributes": True}
 
 
-# ---------------------------------------------------------------------------
-# Sanción
-# ---------------------------------------------------------------------------
+class SancionIn(BaseModel):
+    """DTO de entrada para crear una sanción."""
+
+    infraccion_id: int = Field(..., description="ID de la infracción")
+    operador_cuit: str = Field(..., description="CUIT del operador sancionado")
+    tipo: str = Field(..., description="Tipo de sanción (AMONESTACION, MULTA, etc.)")
+    monto: Optional[Decimal] = Field(None, description="Monto de la multa")
+    observaciones: Optional[str] = Field(None, description="Observaciones")
 
 
 class SancionOut(BaseModel):
-    """DTO de salida de la sanción."""
-
-    model_config = ConfigDict(from_attributes=True)
+    """DTO de salida de una sanción."""
 
     id: int
     infraccion_id: int
-    operador_cuit: Optional[str] = None
-    tipo: TipoSancion
-    monto: Optional[float] = None
-    descripcion: Optional[str] = None
-    estado: EstadoSancion
-    fecha_aplicacion: date
-    fecha_cumplimiento: Optional[date] = None
+    operador_cuit: str
+    tipo: str
+    monto: Optional[Decimal]
+    estado: str
+    fecha_notificacion: Optional[datetime]
+    fecha_pago: Optional[datetime]
+    observaciones: Optional[str]
+    creado_en: datetime
 
-    @classmethod
-    def from_orm(cls, sancion) -> "SancionOut":
-        return cls(
-            id=sancion.id,
-            infraccion_id=sancion.infraccion_id,
-            operador_cuit=sancion.operador_cuit,
-            tipo=TipoSancion(sancion.tipo),
-            monto=sancion.monto,
-            descripcion=sancion.descripcion,
-            estado=EstadoSancion(sancion.estado),
-            fecha_aplicacion=sancion.fecha_aplicacion,
-            fecha_cumplimiento=sancion.fecha_cumplimiento,
-        )
+    model_config = {"from_attributes": True}
 
 
-# ---------------------------------------------------------------------------
-# Reincidencia
-# ---------------------------------------------------------------------------
+class DecomisoIn(BaseModel):
+    """DTO de entrada para crear un decomiso."""
+
+    inspeccion_id: int = Field(..., description="ID de la inspección")
+    mercaderia: str = Field(..., description="Descripción de la mercadería")
+    cantidad: Decimal = Field(..., description="Cantidad")
+    peso_kg: Decimal = Field(..., description="Peso en kilos")
+    motivo: Optional[str] = Field(None, description="Motivo del decomiso")
 
 
-class ReincidenciaOut(BaseModel):
-    """DTO de salida de la reincidencia."""
-
-    model_config = ConfigDict(from_attributes=True)
+class DecomisoOut(BaseModel):
+    """DTO de salida de un decomiso."""
 
     id: int
-    operador_cuit: str
-    cantidad: int
-    ultima_fecha: date
-    observaciones: Optional[str] = None
+    inspeccion_id: int
+    mercaderia: str
+    cantidad: Decimal
+    peso_kg: Decimal
+    estado: str
+    motivo: Optional[str]
+    creado_en: datetime
 
-    @classmethod
-    def from_orm(cls, rec) -> "ReincidenciaOut":
-        return cls(
-            id=rec.id,
-            operador_cuit=rec.operador_cuit,
-            cantidad=rec.cantidad,
-            ultima_fecha=rec.ultima_fecha,
-            observaciones=rec.observaciones,
-        )
+    model_config = {"from_attributes": True}
 
 
 class ReincidenciaIn(BaseModel):
-    """Datos de entrada para registrar una reincidencia."""
+    """DTO de entrada para registrar una reincidencia."""
 
-    operador_cuit: str = Field(min_length=11, max_length=11)
-    observaciones: Optional[str] = None
+    operador_cuit: str = Field(..., description="CUIT del operador")
 
-    @model_validator(mode="after")
-    def _validar_cuit(self) -> "ReincidenciaIn":
-        if not self.operador_cuit.isdigit():
-            raise ValueError("El CUIT debe tener 11 dígitos")
-        return self
+
+class ReincidenciaOut(BaseModel):
+    """DTO de salida de una reincidencia."""
+
+    id: int
+    operador_cuit: str
+    cantidad_infracciones: int
+    ultima_fecha: datetime
+    creado_en: datetime
+
+    model_config = {"from_attributes": True}

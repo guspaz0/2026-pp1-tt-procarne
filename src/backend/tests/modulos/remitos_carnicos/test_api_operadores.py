@@ -1,21 +1,27 @@
-"""Tests de la API REST de operadores."""
+"""Tests de la API REST del módulo de Remitos Electrónicos Cárnicos."""
 
 from __future__ import annotations
 
+from datetime import datetime
+from decimal import Decimal
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import insert
 
-from modulos.remitos_carnicos.operador.dao import Operador, operador_actividades
-from modulos.remitos_carnicos.operador.categoria import Actividad, CategoriaOperador
+from tests.modulos.remitos_carnicos.conftest import crear_operador_test
 
 
 @pytest.fixture()
 def api_client(db_engine):
     """Cliente HTTP con la BD en memoria y seed mínimo."""
     from fastapi import FastAPI
-    from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
     from configs.dao import SQLiteDAO
+    from core.mercaderia.dao import MercaderiaDAO
+    from core.mercaderia.servicio import MercaderiaService
+    from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
+    from modulos.remitos_carnicos.operador.dao import OperadorDAO
+    from modulos.remitos_carnicos.remito.dao import RemitoCarnicoDAO
+    from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoService
     from sqlalchemy.orm import sessionmaker
 
     app = FastAPI(title="ROCCA Test")
@@ -23,101 +29,125 @@ def api_client(db_engine):
     dao = SQLiteDAO("sqlite://")
     dao._engine = db_engine
     dao._session_factory = sessionmaker(
-        autocommit=False, autoflush=False, bind=db_engine
+        autocommit=False, autoflush=False, expire_on_commit=False, bind=db_engine
     )
 
-    modulo = RemitosCarnicosModulo(dao)
-    modulo.registrar(app)
+    # Seed mínimo
+    with dao.obtener_sesion() as session:
+        crear_operador_test(session, "30111111111", "TITULAR S.A.")
+        crear_operador_test(session, "30222222222", "TRANSPORTES XYZ")
+        crear_operador_test(session, "30333333333", "DESTINATARIO S.R.L.")
+        from core.mercaderia.dao import Mercaderia
+        m1 = Mercaderia(
+            codigo="1101",
+            descripcion="Media res con hueso",
+            requiere_trazabilidad=True,
+            requiere_numero_tropa=True,
+        )
+        session.add(m1)
+        session.commit()
+
+    # Componer el módulo
+    operador_dao = OperadorDAO(dao.obtener_sesion)
+    mercaderia_dao = MercaderiaDAO(dao.obtener_sesion)
+    remito_dao = RemitoCarnicoDAO(dao.obtener_sesion)
+    remito_service = RemitoCarnicoService(remito_dao, operador_dao, mercaderia_dao)
+
+    from modulos.remitos_carnicos.controlador import crear_router
+    router = crear_router(remito_service)
+    app.include_router(router)
 
     @app.get("/api/health")
     def health():
         return {"status": "ok"}
 
-    # Seed mínimo
-    from tests.modulos.remitos_carnicos.conftest import crear_operador_test
-
-    with dao.obtener_sesion() as session:
-        bov = Actividad(id=1, nombre="Bovino/Bubalino")
-        por = Actividad(id=2, nombre="Porcino")
-        session.add_all([bov, por])
-        session.commit()
-
-        op = crear_operador_test(session, "20123456789", "API TEST S.A.")
-
-        session.execute(
-            insert(operador_actividades).values(operador_id=op.id, actividad_id=1)
-        )
-        cat = CategoriaOperador(
-            operador_id=op.id,
-            actividad_id=1,
-            categoria_id=1,
-            situacion_id=1,  # ACTIVO
-            desde_fecha="01/01/2024",
-        )
-        session.add(cat)
-        session.commit()
-
     return TestClient(app)
 
 
-class TestAPIOperadores:
-    """Tests de los endpoints /api/operadores."""
+def _datos_remito_api(**overrides):
+    """Construye un dict de RemitoCarnicoIn válido para la API."""
+    base = {
+        "punto_emision": "0001",
+        "numero_comprobante": "0000000001",
+        "caso": "01",
+        "tipo_movimiento": "ENVIO_NORMAL",
+        "fecha_emision": "2025-06-01T10:00:00",
+        "fecha_vencimiento": "2025-06-02T10:00:00",
+        "titular_cuit": "30111111111",
+        "transportista_cuit": "30222222222",
+        "destinatario_cuit": "30333333333",
+        "chofer_apellido_nombre": "Juan Pérez",
+        "chofer_documento": "12345678",
+        "dominio_vehiculo": "ABC123",
+        "renglones": [
+            {"codigo_afip": "1101", "unidades": "100", "kilos": "500.5", "numero_tropa": "T-001"},
+        ],
+    }
+    base.update(overrides)
+    return base
+
+
+class TestAPIRemitosCarnicos:
+    """Tests de los endpoints /api/remitos-carnicos."""
 
     def test_health(self, api_client):
         r = api_client.get("/api/health")
         assert r.status_code == 200
         assert r.json() == {"status": "ok"}
 
-    def test_listar_operadores(self, api_client):
-        r = api_client.get("/api/operadores")
+    def test_listar_vacio(self, api_client):
+        r = api_client.get("/api/remitos-carnicos")
         assert r.status_code == 200
-        data = r.json()
-        assert len(data) == 1
-        assert data[0]["cuit"] == "20123456789"
+        assert r.json() == []
 
-    def test_listar_operadores_con_filtros(self, api_client):
-        r = api_client.get("/api/operadores", params={"limite": 10, "offset": 0})
+    def test_emitir_remito(self, api_client):
+        data = _datos_remito_api()
+        r = api_client.post("/api/remitos-carnicos", json=data)
+        assert r.status_code == 201
+        body = r.json()
+        assert body["punto_emision"] == "0001"
+        assert body["estado"] == "EMITIDO"
+        assert len(body["renglones"]) == 1
+
+    def test_emitir_remito_punto_emision_invalido(self, api_client):
+        data = _datos_remito_api(punto_emision="12")
+        r = api_client.post("/api/remitos-carnicos", json=data)
+        assert r.status_code == 400
+
+    def test_emitir_remito_sin_renglones(self, api_client):
+        data = _datos_remito_api(renglones=[])
+        r = api_client.post("/api/remitos-carnicos", json=data)
+        assert r.status_code == 400
+
+    def test_listar_despues_de_emitir(self, api_client):
+        data = _datos_remito_api()
+        api_client.post("/api/remitos-carnicos", json=data)
+
+        r = api_client.get("/api/remitos-carnicos")
         assert r.status_code == 200
         assert len(r.json()) == 1
 
-    def test_obtener_operador(self, api_client):
-        r = api_client.get("/api/operadores/20123456789")
-        assert r.status_code == 200
-        data = r.json()
-        assert data["cuit"] == "20123456789"
-        assert data["razon_social"] == "API TEST S.A."
-        assert len(data["actividades"]) == 1
+    def test_obtener_remito(self, api_client):
+        data = _datos_remito_api()
+        r_emitir = api_client.post("/api/remitos-carnicos", json=data)
+        remito_id = r_emitir.json()["id"]
 
-    def test_obtener_operador_no_existe(self, api_client):
-        r = api_client.get("/api/operadores/99999999999")
+        r = api_client.get(f"/api/remitos-carnicos/{remito_id}")
+        assert r.status_code == 200
+        assert r.json()["id"] == remito_id
+
+    def test_obtener_remito_no_existente(self, api_client):
+        r = api_client.get("/api/remitos-carnicos/999")
         assert r.status_code == 404
 
-    def test_crear_operador(self, api_client):
-        r = api_client.post(
-            "/api/operadores",
-            json={
-                "cuit": "30333333333",
-                "razon_social": "NUEVO OPERADOR S.A.",
-                "situacion_id": 1,
-            },
-        )
-        assert r.status_code == 201
-        data = r.json()
-        assert data["cuit"] == "30333333333"
-        assert data["razon_social"] == "NUEVO OPERADOR S.A."
+    def test_cambiar_estado(self, api_client):
+        data = _datos_remito_api()
+        r_emitir = api_client.post("/api/remitos-carnicos", json=data)
+        remito_id = r_emitir.json()["id"]
 
-    def test_crear_operador_duplicado(self, api_client):
-        r = api_client.post(
-            "/api/operadores",
-            json={"cuit": "20123456789", "razon_social": "DUPLICADO"},
+        r = api_client.patch(
+            f"/api/remitos-carnicos/{remito_id}/estado",
+            params={"estado": "ENTREGADO"},
         )
-        assert r.status_code == 409
-
-    def test_operador_incluye_actividades(self, api_client):
-        r = api_client.get("/api/operadores/20123456789")
-        data = r.json()
-        assert "actividades" in data
-        act = data["actividades"][0]
-        assert act["nombre"] == "Bovino/Bubalino"
-        assert len(act["categorias"]) == 1
-        assert act["categorias"][0]["categoria_id"] == 1
+        assert r.status_code == 200
+        assert r.json()["estado"] == "ENTREGADO"

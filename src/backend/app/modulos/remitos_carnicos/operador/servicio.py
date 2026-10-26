@@ -1,57 +1,36 @@
-"""Servicio de negocio del operador."""
+"""Servicio de negocio del operador de la cadena cárnica."""
 
 from __future__ import annotations
 
-from typing import Optional
-
-from core import PersonaRef
-from .dao import Operador, OperadorDAO
-from .schema import OperadorIn, OperadorOut
+from modulos.remitos_carnicos.operador.dao import Operador, OperadorDAO
+from modulos.remitos_carnicos.operador.schema import OperadorIn, OperadorOut
 
 
 class OperadorError(Exception):
-    """Error de negocio del módulo de operadores."""
+    """Error de negocio del servicio de operadores."""
 
 
 class OperadorService:
-    """Caso de uso: gestión de operadores de la cadena cárnica."""
+    """Servicio de negocio de operadores de la cadena cárnica."""
 
     def __init__(self, dao: OperadorDAO) -> None:
         self._dao = dao
 
-    def crear(self, datos: OperadorIn) -> OperadorOut:
-        existente = self._dao.obtener_por_cuit(datos.cuit)
+    def crear_operador(self, data: OperadorIn) -> OperadorOut:
+        """Crea un operador y devuelve su representación de salida."""
+        existente = self._dao.obtener_por_persona(data.persona_id)
         if existente is not None:
-            raise OperadorError(f"Operador ya existe: CUIT {datos.cuit}")
+            raise OperadorError(
+                f"Ya existe un operador para la persona {data.persona_id}"
+            )
+        operador = self._dao.crear(persona_id=data.persona_id)
+        return OperadorOut.model_validate(operador)
 
-        # Crear persona jurídica (referencia de identidad; la persistencia
-        # la resuelve el DAO del operador, que conoce la ORM concreta).
-        persona = PersonaRef(
-            tipo="PJ",
-            tipo_documento="CUIT",
-            identificador=datos.cuit,
-            razon_social=datos.razon_social,
-            domicilio=datos.domicilio,
-            telefono=datos.telefono,
-            email=datos.email,
-        )
-        
-        # Crear operador referenciando a la persona (el id se asigna al
-        # guardar; el DAO lo resuelve con el id real de la persona).
-        operador = Operador(
-            persona_id=0,
-            domicilio_fiscal=datos.domicilio_fiscal,
-        )
-        
-        guardado = self._dao.guardar(operador, persona)
-        return OperadorOut.from_orm(guardado)
+    def obtener_por_id(self, operador_id: int) -> OperadorOut | None:
+        """Busca un operador por su id."""
+        operador = self._dao.obtener_por_id(operador_id)
+        return OperadorOut.model_validate(operador) if operador else None
 
-    def obtener(self, cuit: str) -> OperadorOut:
-        operador = self._dao.obtener_por_cuit(cuit)
-        if operador is None:
-            raise OperadorError(f"Operador no encontrado: CUIT {cuit}")
-        return OperadorOut.from_orm(operador)
-
-    def listar(self, limite: int = 100, offset: int = 0) -> list[OperadorOut]:
-        operadores = self._dao.listar(limite=limite, offset=offset)
-        return [OperadorOut.from_orm(o) for o in operadores]
+    def listar(self) -> list[OperadorOut]:
+        """Lista todos los operadores."""
+        return [OperadorOut.model_validate(op) for op in self._dao.listar()]

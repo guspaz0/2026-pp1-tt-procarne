@@ -1,140 +1,72 @@
-"""Servicio de negocio del Módulo II — Trazabilidad Comercial (ROCCA)."""
+"""Servicio de negocio del Módulo II — Trazabilidad Comercial.
+
+Casos de uso:
+- Registrar un ingreso de mercadería.
+- Buscar por número de remito o DTE.
+- Listar registros (con filtros).
+- Confirmar o anular un registro.
+"""
 
 from __future__ import annotations
 
-from datetime import date
-from typing import Optional
-
-from .dao import RegistroTrazabilidad, RegistroTrazabilidadDAO
-from .enums import Especie, EstadoTrazabilidad, TipoDestino, TipoIngreso
-from .schema import RegistroTrazabilidadIn, RegistroTrazabilidadOut
+from modulos.trazabilidad_comercial.dao import RegistroTrazabilidad, RegistroTrazabilidadDAO
+from modulos.trazabilidad_comercial.enums import EstadoTrazabilidad
+from modulos.trazabilidad_comercial.schema import RegistroTrazabilidadIn, RegistroTrazabilidadOut
 
 
 class TrazabilidadComercialError(Exception):
-    """Error de negocio del Módulo de Trazabilidad Comercial."""
+    """Error de negocio del servicio de trazabilidad comercial."""
 
 
 class TrazabilidadComercialService:
-    """Caso de uso: registro de trazabilidad comercial de carnes."""
+    """Servicio de negocio de trazabilidad comercial."""
 
     def __init__(self, dao: RegistroTrazabilidadDAO) -> None:
         self._dao = dao
 
-    # ------------------------------------------------------------------
-    # Operaciones
-    # ------------------------------------------------------------------
-
-    def registrar(self, datos: RegistroTrazabilidadIn) -> RegistroTrazabilidadOut:
-        """Registra un nuevo movimiento de trazabilidad comercial."""
-        # Validar duplicados por DTE o remito
-        if datos.numero_dte:
-            existente = self._dao.obtener_por_dte(datos.numero_dte)
-            if existente is not None:
-                raise TrazabilidadComercialError(
-                    f"Ya existe un registro con DTE {datos.numero_dte} (id={existente.id})"
-                )
-        if datos.numero_remito:
-            existente = self._dao.obtener_por_remito(datos.numero_remito)
-            if existente is not None:
-                raise TrazabilidadComercialError(
-                    f"Ya existe un registro con remito {datos.numero_remito} (id={existente.id})"
-                )
-
+    def registrar_ingreso(self, data: RegistroTrazabilidadIn) -> RegistroTrazabilidadOut:
+        """Registra un ingreso de mercadería."""
         registro = RegistroTrazabilidad(
-            tipo_ingreso=datos.tipo_ingreso.value,
-            origen_provincia=datos.origen_provincia,
-            origen_localidad=datos.origen_localidad,
-            establecimiento_faena=datos.establecimiento_faena,
-            numero_dte=datos.numero_dte,
-            numero_remito=datos.numero_remito,
-            cantidad_kg=datos.cantidad_kg,
-            especie=datos.especie.value,
-            destino_tipo=datos.destino_tipo.value if datos.destino_tipo else None,
-            destino_cuit=datos.destino_cuit,
-            destino_razon_social=datos.destino_razon_social,
-            estado=EstadoTrazabilidad.REGISTRADO.value,
-            fecha_ingreso=datos.fecha_ingreso or date.today(),
-            observaciones=datos.observaciones,
+            tipo_ingreso=data.tipo_ingreso,
+            especie=data.especie,
+            cantidad=data.cantidad,
+            peso_kg=data.peso_kg,
+            origen_cuit=data.origen_cuit,
+            destino_cuit=data.destino_cuit,
+            tipo_destino=data.tipo_destino,
+            estado=EstadoTrazabilidad.PENDIENTE.value,
+            fecha_ingreso=data.fecha_ingreso,
+            numero_remito=data.numero_remito,
+            numero_dte=data.numero_dte,
+            observaciones=data.observaciones,
         )
+        self._dao.crear(registro)
+        return RegistroTrazabilidadOut.model_validate(registro)
 
-        guardado = self._dao.guardar(registro)
-        return RegistroTrazabilidadOut.from_orm(guardado)
-
-    def obtener(self, registro_id: int) -> RegistroTrazabilidadOut:
+    def obtener_por_id(self, registro_id: int) -> RegistroTrazabilidadOut | None:
+        """Busca un registro por su id."""
         registro = self._dao.obtener_por_id(registro_id)
-        if registro is None:
-            raise TrazabilidadComercialError(
-                f"Registro de trazabilidad no encontrado: id={registro_id}"
-            )
-        return RegistroTrazabilidadOut.from_orm(registro)
+        return RegistroTrazabilidadOut.model_validate(registro) if registro else None
 
-    def listar(
-        self,
-        tipo_ingreso: Optional[TipoIngreso] = None,
-        especie: Optional[Especie] = None,
-        estado: Optional[EstadoTrazabilidad] = None,
-        origen_provincia: Optional[str] = None,
-        destino_cuit: Optional[str] = None,
-        desde: Optional[date] = None,
-        hasta: Optional[date] = None,
-        limite: int = 100,
-        offset: int = 0,
-    ) -> list[RegistroTrazabilidadOut]:
+    def listar(self, estado: str | None = None, especie: str | None = None,
+               origen_cuit: str | None = None, destino_cuit: str | None = None) -> list[RegistroTrazabilidadOut]:
+        """Lista registros, opcionalmente filtrados."""
         registros = self._dao.listar(
-            tipo_ingreso=tipo_ingreso.value if tipo_ingreso else None,
-            especie=especie.value if especie else None,
-            estado=estado.value if estado else None,
-            origen_provincia=origen_provincia,
-            destino_cuit=destino_cuit,
-            desde=desde,
-            hasta=hasta,
-            limite=limite,
-            offset=offset,
+            estado=estado, especie=especie,
+            origen_cuit=origen_cuit, destino_cuit=destino_cuit,
         )
-        return [RegistroTrazabilidadOut.from_orm(r) for r in registros]
+        return [RegistroTrazabilidadOut.model_validate(r) for r in registros]
 
-    def validar(self, registro_id: int) -> RegistroTrazabilidadOut:
-        """Marca el registro como VALIDADO (confirmación de recepción)."""
-        registro = self._dao.obtener_por_id(registro_id)
+    def confirmar(self, registro_id: int) -> RegistroTrazabilidadOut:
+        """Confirma un registro de trazabilidad."""
+        registro = self._dao.actualizar_estado(registro_id, EstadoTrazabilidad.CONFIRMADO.value)
         if registro is None:
-            raise TrazabilidadComercialError(
-                f"Registro de trazabilidad no encontrado: id={registro_id}"
-            )
-        if registro.estado != EstadoTrazabilidad.REGISTRADO.value:
-            raise TrazabilidadComercialError(
-                f"El registro {registro_id} no está en estado REGISTRADO "
-                f"(estado actual: {registro.estado})"
-            )
-        registro.estado = EstadoTrazabilidad.VALIDADO.value
-        actualizado = self._dao.actualizar(registro)
-        return RegistroTrazabilidadOut.from_orm(actualizado)
+            raise TrazabilidadComercialError(f"No existe un registro con id {registro_id}")
+        return RegistroTrazabilidadOut.model_validate(registro)
 
-    def rechazar(self, registro_id: int, motivo: Optional[str] = None) -> RegistroTrazabilidadOut:
-        """Marca el registro como RECHAZADO."""
-        registro = self._dao.obtener_por_id(registro_id)
+    def anular(self, registro_id: int) -> RegistroTrazabilidadOut:
+        """Anula un registro de trazabilidad."""
+        registro = self._dao.actualizar_estado(registro_id, EstadoTrazabilidad.ANULADO.value)
         if registro is None:
-            raise TrazabilidadComercialError(
-                f"Registro de trazabilidad no encontrado: id={registro_id}"
-            )
-        if registro.estado != EstadoTrazabilidad.REGISTRADO.value:
-            raise TrazabilidadComercialError(
-                f"El registro {registro_id} no está en estado REGISTRADO "
-                f"(estado actual: {registro.estado})"
-            )
-        registro.estado = EstadoTrazabilidad.RECHAZADO.value
-        if motivo:
-            registro.observaciones = (
-                f"{registro.observaciones}\nRechazo: {motivo}".strip()
-                if registro.observaciones
-                else f"Rechazo: {motivo}"
-            )
-        actualizado = self._dao.actualizar(registro)
-        return RegistroTrazabilidadOut.from_orm(actualizado)
-
-    def eliminar(self, registro_id: int) -> None:
-        """Elimina un registro de trazabilidad."""
-        eliminado = self._dao.eliminar(registro_id)
-        if not eliminado:
-            raise TrazabilidadComercialError(
-                f"Registro de trazabilidad no encontrado: id={registro_id}"
-            )
+            raise TrazabilidadComercialError(f"No existe un registro con id {registro_id}")
+        return RegistroTrazabilidadOut.model_validate(registro)

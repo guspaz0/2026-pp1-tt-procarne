@@ -1,9 +1,11 @@
-"""ROCCA — backend.
+"""Paquete de aplicación ROCCA.
 
-Al importar el paquete ``app`` se añade el propio directorio a
-``sys.path`` para que los módulos internos (``configs``, ``modulos``)
-puedan importarse como top-level, tal como están escritos en el código.
+Añade el propio directorio a ``sys.path`` para que los subpaquetes
+``configs`` y ``modulos`` sean importables como top-level (``import configs.db``),
+tanto desde ``main.py`` como desde los tests y Alembic.
 """
+
+from __future__ import annotations
 
 import sys
 from pathlib import Path

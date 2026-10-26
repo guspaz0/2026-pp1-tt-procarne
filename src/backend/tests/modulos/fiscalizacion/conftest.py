@@ -8,14 +8,14 @@ import pytest
 from tests.fixtures import db_engine, db_session_factory, db_dao  # noqa: F401
 
 # Importar los modelos del módulo para que Base.metadata los conozca
-from modulos.fiscalizacion.dao import (
+from modulos.fiscalizacion.dao import (  # noqa: F401
     Acta,
     Decomiso,
     Infraccion,
     Inspeccion,
     Reincidencia,
     Sancion,
-)  # noqa: F401
+)
 
 
 @pytest.fixture()

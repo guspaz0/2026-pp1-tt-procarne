@@ -1,15 +1,22 @@
-"""Configuración de la aplicación: base de datos y DAO."""
+"""Configuración compartida de ROCCA (base de datos y DAOs)."""
 
-from .db import Base, DATABASE_URL, get_db, init_db
-from .dao import DatabaseDAO, SQLiteDAO, PostgreSQLDAO, crear_dao
+from .dao import (
+    DATABASE_URL,
+    DatabaseDAO,
+    PostgreSQLDAO,
+    SQLiteDAO,
+    crear_dao,
+)
+from .db import Base, crear_engine, crear_session_factory, sesion_de
 
 __all__ = [
-    "Base",
     "DATABASE_URL",
-    "get_db",
-    "init_db",
+    "Base",
     "DatabaseDAO",
-    "SQLiteDAO",
     "PostgreSQLDAO",
+    "SQLiteDAO",
     "crear_dao",
+    "crear_engine",
+    "crear_session_factory",
+    "sesion_de",
 ]

@@ -1,7 +1,8 @@
 """Submódulo de la persona (física o jurídica)."""
 
+from .dao import Persona as PersonaORM
+from .dao import PersonaDAO
 from .entidad import Persona, PersonaFisica, PersonaJuridica
-from .dao import Persona as PersonaORM, PersonaDAO
 from .schema import PersonaIn, PersonaOut
 from .servicio import PersonaError, PersonaService
 

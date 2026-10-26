@@ -1,11 +1,17 @@
-"""Servicio de negocio del Módulo III — Fiscalización (ROCCA)."""
+"""Servicio de negocio del Módulo III — Fiscalización.
+
+Casos de uso:
+- Registrar una inspección.
+- Crear actas, infracciones, sanciones y decomisos.
+- Firmar actas.
+- Registrar reincidencias.
+"""
 
 from __future__ import annotations
 
-from datetime import date, datetime
-from typing import Optional
+from datetime import datetime, timezone
 
-from .dao import (
+from modulos.fiscalizacion.dao import (
     Acta,
     Decomiso,
     FiscalizacionDAO,
@@ -14,32 +20,33 @@ from .dao import (
     Reincidencia,
     Sancion,
 )
-from .enums import (
+from modulos.fiscalizacion.enums import (
     EstadoActa,
+    EstadoDecomiso,
     EstadoSancion,
-    GravedadInfraccion,
-    ResultadoInspeccion,
-    TipoActa,
-    TipoInfraccion,
-    TipoSancion,
 )
-from .schema import (
+from modulos.fiscalizacion.schema import (
     ActaIn,
+    ActaOut,
     DecomisoIn,
+    DecomisoOut,
     InspeccionIn,
     InspeccionOut,
+    InfraccionIn,
+    InfraccionOut,
     ReincidenciaIn,
     ReincidenciaOut,
+    SancionIn,
+    SancionOut,
 )
 
 
 class FiscalizacionError(Exception):
-    """Error de negocio del Módulo de Fiscalización."""
+    """Error de negocio del servicio de fiscalización."""
 
 
 class FiscalizacionService:
-    """Caso de uso: gestión de inspecciones, actas, decomisos,
-    infracciones, sanciones y reincidencias."""
+    """Servicio de negocio de fiscalización."""
 
     def __init__(self, dao: FiscalizacionDAO) -> None:
         self._dao = dao
@@ -48,198 +55,135 @@ class FiscalizacionService:
     # Inspecciones
     # ------------------------------------------------------------------
 
-    def registrar_inspeccion(self, datos: InspeccionIn) -> InspeccionOut:
-        """Registra una nueva inspección con sus actas, decomisos e infracciones."""
+    def registrar_inspeccion(self, data: InspeccionIn) -> InspeccionOut:
+        """Registra una inspección."""
         inspeccion = Inspeccion(
-            inspector=datos.inspector,
-            operador_cuit=datos.operador_cuit,
-            tipo=datos.tipo.value,
-            resultado=datos.resultado.value,
-            latitud=datos.latitud,
-            longitud=datos.longitud,
-            observaciones=datos.observaciones,
+            tipo=data.tipo,
+            operador_cuit=data.operador_cuit,
+            fecha=data.fecha,
+            inspector=data.inspector,
+            observaciones=data.observaciones,
         )
+        self._dao.crear_inspeccion(inspeccion)
+        return InspeccionOut.model_validate(inspeccion)
 
-        guardada = self._dao.guardar_inspeccion(inspeccion)
-
-        # Actas
-        for acta_in in datos.actas:
-            acta = Acta(
-                inspeccion_id=guardada.id,
-                tipo=acta_in.tipo.value,
-                numero=acta_in.numero,
-                descripcion=acta_in.descripcion,
-                estado=acta_in.estado.value,
-                fecha_firma=datetime.utcnow() if acta_in.estado is EstadoActa.FIRMADA else None,
-            )
-            self._dao.guardar_acta(acta)
-
-        # Decomisos
-        for decomiso_in in datos.decomisos:
-            decomiso = Decomiso(
-                inspeccion_id=guardada.id,
-                producto=decomiso_in.producto,
-                cantidad=decomiso_in.cantidad,
-                unidad=decomiso_in.unidad,
-                motivo=decomiso_in.motivo,
-                destino=decomiso_in.destino,
-                estado=decomiso_in.estado.value,
-            )
-            self._dao.guardar_decomiso(decomiso)
-
-        # Infracciones (con sanciones anidadas)
-        for infraccion_in in datos.infracciones:
-            infraccion = Infraccion(
-                inspeccion_id=guardada.id,
-                operador_cuit=datos.operador_cuit,
-                tipo=infraccion_in.tipo.value,
-                gravedad=infraccion_in.gravedad.value,
-                descripcion=infraccion_in.descripcion,
-            )
-            guardada_inf = self._dao.guardar_infraccion(infraccion)
-
-            for sancion_in in infraccion_in.sanciones:
-                sancion = Sancion(
-                    infraccion_id=guardada_inf.id,
-                    operador_cuit=datos.operador_cuit,
-                    tipo=sancion_in.tipo.value,
-                    monto=sancion_in.monto,
-                    descripcion=sancion_in.descripcion,
-                    estado=sancion_in.estado.value,
-                )
-                self._dao.guardar_sancion(sancion)
-
-            # Registrar reincidencia si la gravedad es GRAVE o MUY_GRAVE
-            if datos.operador_cuit and infraccion_in.gravedad in (
-                GravedadInfraccion.GRAVE,
-                GravedadInfraccion.MUY_GRAVE,
-            ):
-                self._dao.incrementar_reincidencia(
-                    datos.operador_cuit,
-                    observaciones=f"Infracción {infraccion_in.tipo.value} "
-                    f"({infraccion_in.gravedad.value}) el {date.today().isoformat()}",
-                )
-
-        return InspeccionOut.from_orm(self._dao.obtener_inspeccion(guardada.id))
-
-    def obtener_inspeccion(self, inspeccion_id: int) -> InspeccionOut:
+    def obtener_inspeccion(self, inspeccion_id: int) -> InspeccionOut | None:
+        """Busca una inspección por su id."""
         inspeccion = self._dao.obtener_inspeccion(inspeccion_id)
-        if inspeccion is None:
-            raise FiscalizacionError(f"Inspección no encontrada: id={inspeccion_id}")
-        return InspeccionOut.from_orm(inspeccion)
+        return InspeccionOut.model_validate(inspeccion) if inspeccion else None
 
-    def listar_inspecciones(
-        self,
-        operador_cuit: Optional[str] = None,
-        resultado: Optional[ResultadoInspeccion] = None,
-        desde: Optional[date] = None,
-        hasta: Optional[date] = None,
-        limite: int = 100,
-        offset: int = 0,
-    ) -> list[InspeccionOut]:
-        inspecciones = self._dao.listar_inspecciones(
-            operador_cuit=operador_cuit,
-            resultado=resultado.value if resultado else None,
-            desde=desde,
-            hasta=hasta,
-            limite=limite,
-            offset=offset,
-        )
-        return [InspeccionOut.from_orm(i) for i in inspecciones]
-
-    def marcar_enviada(self, inspeccion_id: int) -> InspeccionOut:
-        """Marca la inspección como enviada (sincronizada)."""
-        inspeccion = self._dao.obtener_inspeccion(inspeccion_id)
-        if inspeccion is None:
-            raise FiscalizacionError(f"Inspección no encontrada: id={inspeccion_id}")
-        inspeccion.enviada = True
-        actualizada = self._dao.actualizar_inspeccion(inspeccion)
-        return InspeccionOut.from_orm(actualizada)
-
-    def eliminar_inspeccion(self, inspeccion_id: int) -> None:
-        eliminada = self._dao.eliminar_inspeccion(inspeccion_id)
-        if not eliminada:
-            raise FiscalizacionError(f"Inspección no encontrada: id={inspeccion_id}")
+    def listar_inspecciones(self, operador_cuit: str | None = None) -> list[InspeccionOut]:
+        """Lista inspecciones, opcionalmente filtradas por operador."""
+        inspecciones = self._dao.listar_inspecciones(operador_cuit=operador_cuit)
+        return [InspeccionOut.model_validate(i) for i in inspecciones]
 
     # ------------------------------------------------------------------
     # Actas
     # ------------------------------------------------------------------
 
-    def firmar_acta(self, acta_id: int) -> None:
-        """Firma un acta."""
-        from .dao import Acta as ActaORM
+    def crear_acta(self, data: ActaIn) -> ActaOut:
+        """Crea un acta."""
+        acta = Acta(
+            inspeccion_id=data.inspeccion_id,
+            tipo=data.tipo,
+            numero=data.numero,
+            fecha=data.fecha,
+            contenido=data.contenido,
+        )
+        self._dao.crear_acta(acta)
+        return ActaOut.model_validate(acta)
 
-        with self._dao._session_factory() as session:
-            acta = session.get(ActaORM, acta_id)
-            if acta is None:
-                raise FiscalizacionError(f"Acta no encontrada: id={acta_id}")
-            if acta.estado != EstadoActa.BORRADOR.value:
-                raise FiscalizacionError(
-                    f"El acta {acta_id} no está en estado BORRADOR (estado: {acta.estado})"
-                )
-            acta.estado = EstadoActa.FIRMADA.value
-            acta.fecha_firma = datetime.utcnow()
-            session.commit()
+    def firmar_acta(self, acta_id: int, firmado_por: str) -> ActaOut:
+        """Firma un acta."""
+        acta = self._dao.obtener_acta(acta_id)
+        if acta is None:
+            raise FiscalizacionError(f"No existe un acta con id {acta_id}")
+        acta.estado = EstadoActa.FIRMADA.value
+        acta.firmado_por = firmado_por
+        acta.fecha_firma = datetime.now(timezone.utc)
+        self._dao.actualizar_acta(acta)
+        return ActaOut.model_validate(acta)
+
+    def listar_actas(self, inspeccion_id: int | None = None) -> list[ActaOut]:
+        """Lista actas, opcionalmente filtradas por inspección."""
+        actas = self._dao.listar_actas(inspeccion_id=inspeccion_id)
+        return [ActaOut.model_validate(a) for a in actas]
 
     # ------------------------------------------------------------------
     # Infracciones
     # ------------------------------------------------------------------
 
-    def listar_infracciones(
-        self,
-        operador_cuit: Optional[str] = None,
-        gravedad: Optional[GravedadInfraccion] = None,
-        limite: int = 100,
-        offset: int = 0,
-    ) -> list:
-        infracciones = self._dao.listar_infracciones(
-            operador_cuit=operador_cuit,
-            gravedad=gravedad.value if gravedad else None,
-            limite=limite,
-            offset=offset,
+    def registrar_infraccion(self, data: InfraccionIn) -> InfraccionOut:
+        """Registra una infracción."""
+        infraccion = Infraccion(
+            inspeccion_id=data.inspeccion_id,
+            operador_cuit=data.operador_cuit,
+            tipo=data.tipo,
+            gravedad=data.gravedad,
+            descripcion=data.descripcion,
         )
-        from .schema import InfraccionOut
+        self._dao.crear_infraccion(infraccion)
+        # Actualizar reincidencia
+        self._dao.actualizar_reincidencia(data.operador_cuit)
+        return InfraccionOut.model_validate(infraccion)
 
-        return [InfraccionOut.from_orm(i) for i in infracciones]
+    def listar_infracciones(self, operador_cuit: str | None = None) -> list[InfraccionOut]:
+        """Lista infracciones, opcionalmente filtradas por operador."""
+        infracciones = self._dao.listar_infracciones(operador_cuit=operador_cuit)
+        return [InfraccionOut.model_validate(i) for i in infracciones]
 
     # ------------------------------------------------------------------
     # Sanciones
     # ------------------------------------------------------------------
 
-    def actualizar_estado_sancion(self, sancion_id: int, estado: EstadoSancion) -> None:
-        """Actualiza el estado de una sanción."""
-        with self._dao._session_factory() as session:
-            from .dao import Sancion as SancionORM
+    def aplicar_sancion(self, data: SancionIn) -> SancionOut:
+        """Aplica una sanción."""
+        sancion = Sancion(
+            infraccion_id=data.infraccion_id,
+            operador_cuit=data.operador_cuit,
+            tipo=data.tipo,
+            monto=data.monto,
+            observaciones=data.observaciones,
+        )
+        self._dao.crear_sancion(sancion)
+        return SancionOut.model_validate(sancion)
 
-            sancion = session.get(SancionORM, sancion_id)
-            if sancion is None:
-                raise FiscalizacionError(f"Sanción no encontrada: id={sancion_id}")
-            sancion.estado = estado.value
-            if estado is EstadoSancion.CUMPLIDA:
-                sancion.fecha_cumplimiento = date.today()
-            session.commit()
+    def notificar_sancion(self, sancion_id: int) -> SancionOut:
+        """Notifica una sanción."""
+        sancion = self._dao.obtener_sancion(sancion_id)
+        if sancion is None:
+            raise FiscalizacionError(f"No existe una sanción con id {sancion_id}")
+        sancion.estado = EstadoSancion.NOTIFICADA.value
+        sancion.fecha_notificacion = datetime.now(timezone.utc)
+        self._dao.actualizar_sancion(sancion)
+        return SancionOut.model_validate(sancion)
+
+    def listar_sanciones(self, operador_cuit: str | None = None) -> list[SancionOut]:
+        """Lista sanciones, opcionalmente filtradas por operador."""
+        sanciones = self._dao.listar_sanciones(operador_cuit=operador_cuit)
+        return [SancionOut.model_validate(s) for s in sanciones]
+
+    # ------------------------------------------------------------------
+    # Decomisos
+    # ------------------------------------------------------------------
+
+    def registrar_decomiso(self, data: DecomisoIn) -> DecomisoOut:
+        """Registra un decomiso."""
+        decomiso = Decomiso(
+            inspeccion_id=data.inspeccion_id,
+            mercaderia=data.mercaderia,
+            cantidad=data.cantidad,
+            peso_kg=data.peso_kg,
+            motivo=data.motivo,
+        )
+        self._dao.crear_decomiso(decomiso)
+        return DecomisoOut.model_validate(decomiso)
 
     # ------------------------------------------------------------------
     # Reincidencias
     # ------------------------------------------------------------------
 
-    def registrar_reincidencia(self, datos: ReincidenciaIn) -> ReincidenciaOut:
-        """Registra (o incrementa) una reincidencia para un operador."""
-        rec = self._dao.incrementar_reincidencia(
-            datos.operador_cuit, datos.observaciones
-        )
-        return ReincidenciaOut.from_orm(rec)
-
-    def obtener_reincidencia(self, operador_cuit: str) -> ReincidenciaOut:
-        rec = self._dao.obtener_reincidencia(operador_cuit)
-        if rec is None:
-            raise FiscalizacionError(
-                f"No hay reincidencias registradas para CUIT {operador_cuit}"
-            )
-        return ReincidenciaOut.from_orm(rec)
-
-    def listar_reincidencias(
-        self, limite: int = 100, offset: int = 0
-    ) -> list[ReincidenciaOut]:
-        recs = self._dao.listar_reincidencias(limite=limite, offset=offset)
-        return [ReincidenciaOut.from_orm(r) for r in recs]
+    def obtener_reincidencia(self, operador_cuit: str) -> ReincidenciaOut | None:
+        """Obtiene la reincidencia de un operador."""
+        reincidencia = self._dao.obtener_reincidencia(operador_cuit)
+        return ReincidenciaOut.model_validate(reincidencia) if reincidencia else None

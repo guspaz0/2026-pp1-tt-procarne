@@ -21,25 +21,24 @@ Estructura::
     ├── operador/        # Operador: entidad, DAO, schema, servicio
     ├── remito/          # Remito: DAO, schema, validación, servicio
     # (la mercadería vive en core/mercaderia)
-    └── renglon/         # (RenglonRemito está en remito/dao.py)
 """
 
 from .enums import CasoRemito, EstadoRemito, TipoMovimiento, UnidadMedida
 from .operador import (
     Operador,
     OperadorDAO,
+    OperadorError,
     OperadorIn,
     OperadorOut,
     OperadorService,
-    OperadorError,
 )
 from .remito import (
     RemitoCarnico,
     RemitoCarnicoDAO,
+    RemitoCarnicoError,
     RemitoCarnicoIn,
     RemitoCarnicoOut,
     RemitoCarnicoService,
-    RemitoCarnicoError,
     ValidadorRemito,
 )
 from .controlador import crear_router

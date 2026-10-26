@@ -1,4 +1,4 @@
-"""Enumeraciones del Módulo I — Registro Provincial de Operadores (ROCCA)."""
+"""Enumeraciones del Módulo I — Registro Provincial de Operadores."""
 
 from __future__ import annotations
 
@@ -6,29 +6,18 @@ from enum import Enum
 
 
 class TipoOperador(str, Enum):
-    """Tipos de operadores alcanzados por el ROCCA.
+    """Tipo de operador de la cadena cárnica."""
 
-    Corresponde al listado de "Operadores Alcanzados" del requerimiento
-    oficial: todos los actores que intervienen en la cadena comercial
-    de carnes de la provincia.
-    """
-
+    PRODUCTOR = "PRODUCTOR"
     FRIGORIFICO = "FRIGORIFICO"
-    MATADERO = "MATADERO"
-    MATARIFE_ABASTECEDOR = "MATARIFE_ABASTECEDOR"
-    ABASTECEDOR = "ABASTECEDOR"
-    DISTRIBUIDOR = "DISTRIBUIDOR"
-    TRANSPORTISTA = "TRANSPORTISTA"
     CARNICERIA = "CARNICERIA"
-    SUPERMERCADO = "SUPERMERCADO"
-    CAMARA_FRIGORIFICA = "CAMARA_FRIGORIFICA"
-    ELABORADOR_CHACINADOS = "ELABORADOR_CHACINADOS"
-    DESPOSTADERO = "DESPOSTADERO"
-    OTRO = "OTRO"
+    COMERCIALIZADOR = "COMERCIALIZADOR"
+    TRANSPORTE = "TRANSPORTE"
+    DEPOSITO = "DEPOSITO"
 
 
 class EstadoRegistral(str, Enum):
-    """Estado registral del operador en el ROCCA."""
+    """Estado registral del operador."""
 
     ACTIVO = "ACTIVO"
     SUSPENDIDO = "SUSPENDIDO"
@@ -36,14 +25,14 @@ class EstadoRegistral(str, Enum):
 
 
 class TipoInscripcion(str, Enum):
-    """Ámbito de la inscripción del operador."""
+    """Tipo de inscripción en el registro."""
 
-    NACIONAL = "NACIONAL"
-    PROVINCIAL = "PROVINCIAL"
+    PRINCIPAL = "PRINCIPAL"
+    SECUNDARIA = "SECUNDARIA"
 
 
 class TipoDomicilio(str, Enum):
-    """Tipo de domicilio operativo del operador."""
+    """Tipo de domicilio del operador."""
 
-    PRINCIPAL = "PRINCIPAL"
-    SECUNDARIO = "SECUNDARIO"
+    FISCAL = "FISCAL"
+    OPERATIVO = "OPERATIVO"

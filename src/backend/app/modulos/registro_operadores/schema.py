@@ -2,170 +2,102 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-
-from .enums import EstadoRegistral, TipoDomicilio, TipoInscripcion, TipoOperador
-
-
-# ---------------------------------------------------------------------------
-# Entradas (anidadas)
-# ---------------------------------------------------------------------------
-
-
-class HabilitacionIn(BaseModel):
-    """Datos de una habilitación del operador."""
-
-    tipo: str = Field(description="Tipo de habilitación (ej. 'Sanitaria', 'Comercial')")
-    numero: Optional[str] = None
-    autoridad: Optional[str] = Field(
-        default=None, description="Autoridad que la emite (ej. 'ProCarne Fiscalización')"
-    )
-    fecha_emision: Optional[date] = None
-    fecha_vencimiento: Optional[date] = None
-    estado: str = "VIGENTE"
-
-
-class InscripcionIn(BaseModel):
-    """Datos de una inscripción nacional o provincial."""
-
-    tipo: TipoInscripcion
-    organismo: str = Field(description="Ej. 'RFOCB', 'ARCA', 'SIGSA', 'DGAyG'")
-    numero: Optional[str] = None
-    fecha_inscripcion: Optional[date] = None
-    estado: str = "ACTIVA"
-
-
-class DomicilioOperativoIn(BaseModel):
-    """Datos de un domicilio operativo."""
-
-    tipo: TipoDomicilio = TipoDomicilio.PRINCIPAL
-    calle: str
-    numero: Optional[str] = None
-    localidad: Optional[str] = None
-    departamento: Optional[str] = None
-    provincia: Optional[str] = "Santiago del Estero"
-    codigo_postal: Optional[str] = None
-    activo: bool = True
-
-
-# ---------------------------------------------------------------------------
-# Entrada principal
-# ---------------------------------------------------------------------------
+from pydantic import BaseModel, Field
 
 
 class ROCCAOperadorIn(BaseModel):
-    """Datos de entrada para registrar un operador en el ROCCA."""
+    """DTO de entrada para crear un operador."""
 
-    cuit: str = Field(description="CUIT de 11 dígitos")
-    razon_social: str
-    tipo: TipoOperador
-    domicilio: Optional[str] = None
-    telefono: Optional[str] = None
-    email: Optional[str] = None
-    estado_registral: EstadoRegistral = EstadoRegistral.ACTIVO
-    observaciones: Optional[str] = None
-    habilitaciones: list[HabilitacionIn] = []
-    inscripciones: list[InscripcionIn] = []
-    domicilios: list[DomicilioOperativoIn] = []
-
-    @model_validator(mode="after")
-    def _validar_cuit(self) -> "ROCCAOperadorIn":
-        if not self.cuit.isdigit() or len(self.cuit) != 11:
-            raise ValueError("El CUIT debe tener 11 dígitos")
-        return self
-
-    @model_validator(mode="after")
-    def _validar_domicilios(self) -> "ROCCAOperadorIn":
-        principales = [
-            d for d in self.domicilios if d.tipo is TipoDomicilio.PRINCIPAL and d.activo
-        ]
-        if len(principales) > 1:
-            raise ValueError("Solo se admite un domicilio operativo principal activo")
-        return self
-
-
-# ---------------------------------------------------------------------------
-# Salidas
-# ---------------------------------------------------------------------------
-
-
-class HabilitacionOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    tipo: str
-    numero: Optional[str] = None
-    autoridad: Optional[str] = None
-    fecha_emision: Optional[date] = None
-    fecha_vencimiento: Optional[date] = None
-    estado: str
-
-
-class InscripcionOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    tipo: TipoInscripcion
-    organismo: str
-    numero: Optional[str] = None
-    fecha_inscripcion: Optional[date] = None
-    estado: str
-
-
-class DomicilioOperativoOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    tipo: TipoDomicilio
-    calle: str
-    numero: Optional[str] = None
-    localidad: Optional[str] = None
-    departamento: Optional[str] = None
-    provincia: Optional[str] = None
-    codigo_postal: Optional[str] = None
-    activo: bool
+    cuit: str = Field(..., description="CUIT del operador (13 dígitos)")
+    razon_social: str = Field(..., description="Razón social")
+    tipo: str = Field(..., description="Tipo de operador (PRODUCTOR, FRIGORIFICO, etc.)")
+    domicilio: Optional[str] = Field(None, description="Domicilio")
+    domicilio_fiscal: Optional[str] = Field(None, description="Domicilio fiscal")
+    telefono: Optional[str] = Field(None, description="Teléfono")
+    email: Optional[str] = Field(None, description="Email")
 
 
 class ROCCAOperadorOut(BaseModel):
-    """DTO de salida del operador del Registro Provincial."""
+    """DTO de salida de un operador."""
 
     id: int
     cuit: str
     razon_social: str
-    tipo: TipoOperador
-    estado_registral: EstadoRegistral
-    fecha_inscripcion: date
-    domicilio: Optional[str] = None
-    telefono: Optional[str] = None
-    email: Optional[str] = None
-    observaciones: Optional[str] = None
-    habilitaciones: list[HabilitacionOut] = []
-    inscripciones: list[InscripcionOut] = []
-    domicilios: list[DomicilioOperativoOut] = []
+    domicilio: Optional[str]
+    domicilio_fiscal: Optional[str]
+    telefono: Optional[str]
+    email: Optional[str]
+    tipo: str
+    estado_registral: str
+    alta_fecha: Optional[datetime]
+    baja_fecha: Optional[datetime]
+    creado_en: datetime
 
-    @classmethod
-    def from_orm(cls, operador) -> "ROCCAOperadorOut":
-        return cls(
-            id=operador.id,
-            cuit=operador.cuit,
-            razon_social=operador.razon_social,
-            tipo=TipoOperador(operador.tipo),
-            estado_registral=EstadoRegistral(operador.estado_registral),
-            fecha_inscripcion=operador.fecha_inscripcion,
-            domicilio=operador.domicilio,
-            telefono=operador.telefono,
-            email=operador.email,
-            observaciones=operador.observaciones,
-            habilitaciones=[
-                HabilitacionOut.model_validate(h) for h in operador.habilitaciones
-            ],
-            inscripciones=[
-                InscripcionOut.model_validate(i) for i in operador.inscripciones
-            ],
-            domicilios=[
-                DomicilioOperativoOut.model_validate(d) for d in operador.domicilios
-            ],
-        )
+    model_config = {"from_attributes": True}
+
+
+class HabilitacionIn(BaseModel):
+    """DTO de entrada para crear una habilitación."""
+
+    actividad: str = Field(..., description="Actividad habilitada")
+    fecha_vencimiento: Optional[datetime] = Field(None, description="Fecha de vencimiento")
+
+
+class HabilitacionOut(BaseModel):
+    """DTO de salida de una habilitación."""
+
+    id: int
+    operador_id: int
+    actividad: str
+    estado: str
+    fecha_habilitacion: Optional[datetime]
+    fecha_vencimiento: Optional[datetime]
+
+    model_config = {"from_attributes": True}
+
+
+class InscripcionIn(BaseModel):
+    """DTO de entrada para crear una inscripción."""
+
+    tipo: str = Field("PRINCIPAL", description="Tipo de inscripción (PRINCIPAL, SECUNDARIA)")
+    numero_inscripcion: Optional[str] = Field(None, description="Número de inscripción")
+
+
+class InscripcionOut(BaseModel):
+    """DTO de salida de una inscripción."""
+
+    id: int
+    operador_id: int
+    tipo: str
+    fecha_inscripcion: Optional[datetime]
+    numero_inscripcion: Optional[str]
+
+    model_config = {"from_attributes": True}
+
+
+class DomicilioOperativoIn(BaseModel):
+    """DTO de entrada para crear un domicilio operativo."""
+
+    direccion: str = Field(..., description="Dirección")
+    localidad: Optional[str] = Field(None, description="Localidad")
+    provincia: Optional[str] = Field(None, description="Provincia")
+    codigo_postal: Optional[str] = Field(None, description="Código postal")
+    es_principal: bool = Field(False, description="¿Es el domicilio principal?")
+
+
+class DomicilioOperativoOut(BaseModel):
+    """DTO de salida de un domicilio operativo."""
+
+    id: int
+    operador_id: int
+    tipo: str
+    direccion: str
+    localidad: Optional[str]
+    provincia: Optional[str]
+    codigo_postal: Optional[str]
+    es_principal: bool
+
+    model_config = {"from_attributes": True}

@@ -1,4 +1,4 @@
-"""Enumeraciones del Módulo II — Trazabilidad Comercial (ROCCA)."""
+"""Enumeraciones del Módulo II — Trazabilidad Comercial."""
 
 from __future__ import annotations
 
@@ -6,33 +6,31 @@ from enum import Enum
 
 
 class TipoIngreso(str, Enum):
-    """Tipo de ingreso de carne a la provincia."""
+    """Tipo de ingreso de mercadería."""
 
-    INGRESO_EXTRAPROVINCIAL = "INGRESO_EXTRAPROVINCIAL"
-    FAENA_PROVINCIAL = "FAENA_PROVINCIAL"
+    PRODUCCION_PROPIA = "PRODUCCION_PROPIA"
+    COMPRA = "COMPRA"
+    CONSIGNACION = "CONSIGNACION"
+    DEVOLUCION = "DEVOLUCION"
+    TRASLADO = "TRASLADO"
 
 
 class Especie(str, Enum):
-    """Especies de la cadena cárnica."""
+    """Especie animal."""
 
     BOVINO = "BOVINO"
-    OVINO = "OVINO"
     PORCINO = "PORCINO"
-    CAMELIDO = "CAMELIDO"
-    OTRO = "OTRO"
+    OVINO = "OVINO"
+    CAPRINO = "CAPRINO"
+    EQUINO = "EQUINO"
 
 
 class TipoDestino(str, Enum):
-    """Destino comercial de la mercadería."""
+    """Tipo de destino de la mercadería."""
 
-    CARNICERIA = "CARNICERIA"
-    SUPERMERCADO = "SUPERMERCADO"
-    DISTRIBUIDOR = "DISTRIBUIDOR"
     FRIGORIFICO = "FRIGORIFICO"
-    MATADERO = "MATADERO"
-    DESPOSTADERO = "DESPOSTADERO"
-    CAMARA_FRIGORIFICA = "CAMARA_FRIGORIFICA"
-    ELABORADOR_CHACINADOS = "ELABORADOR_CHACINADOS"
+    CARNICERIA = "CARNICERIA"
+    COMERCIALIZADOR = "COMERCIALIZADOR"
     EXPORTACION = "EXPORTACION"
     OTRO = "OTRO"
 
@@ -40,6 +38,6 @@ class TipoDestino(str, Enum):
 class EstadoTrazabilidad(str, Enum):
     """Estado del registro de trazabilidad."""
 
-    REGISTRADO = "REGISTRADO"
-    VALIDADO = "VALIDADO"
-    RECHAZADO = "RECHAZADO"
+    PENDIENTE = "PENDIENTE"
+    CONFIRMADO = "CONFIRMADO"
+    ANULADO = "ANULADO"

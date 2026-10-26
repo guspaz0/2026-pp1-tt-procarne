@@ -1,101 +1,63 @@
-"""Núcleo del dominio: contratos (tipos) compartidos entre módulos.
+"""Contratos (interfaces) para inyección de dependencias entre módulos.
 
-Este paquete contiene **solo tipos**: interfaces abstractas y protocolos
-que los módulos de negocio dependen. No importa nada de ``configs`` ni de
-otros módulos, por lo que cualquier módulo puede depender de ``core`` sin
-crear acoplamientos circulares.
-
-- :class:`DatabaseDAO` — interfaz de persistencia (Dependency Inversion).
-- :class:`PersonaRef` / :class:`MercaderiaRef` — referencias de identidad
-  que permiten a un módulo consultar datos de otro módulo sin importar su
-  ORM (solo el tipo).
-- :class:`PersonaDAO` (Protocolo) — contrato mínimo de consulta de personas.
+Definidos como ``Protocol`` (typing) para que los módulos genéricos
+puedan depender de abstracciones, no de implementaciones concretas.
 """
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Optional, Protocol, runtime_checkable
-
-from sqlalchemy.orm import Session
-
-__all__ = [
-    "DatabaseDAO",
-    "PersonaRef",
-    "MercaderiaRef",
-    "PersonaDAO",
-]
+from typing import Protocol, runtime_checkable
 
 
-class DatabaseDAO(ABC):
-    """Interfaz abstracta de acceso a la base de datos.
+@runtime_checkable
+class DatabaseDAO(Protocol):
+    """Interfaz mínima que debe cumplir un DAO de base de datos."""
 
-    Cada implementación concreta encapsula la configuración del motor
-    y la sesión para un motor específico (SQLite, PostgreSQL, ...).
-    """
+    def obtener_sesion(self):
+        """Devuelve un contexto manager que produce una sesión."""
+        ...
 
-    @abstractmethod
-    def __init__(self, url: str) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
     def crear_tablas(self) -> None:
-        """Crea todas las tablas definidas en :class:`Base`."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def obtener_sesion(self) -> Session:
-        """Devuelve una nueva sesión transaccional."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def cerrar(self) -> None:
-        """Cierra el motor de base de datos."""
-        raise NotImplementedError
-
-
-@dataclass(frozen=True)
-class PersonaRef:
-    """Referencia de identidad a una persona (física o jurídica).
-
-    Permite a un módulo crear o referenciar una persona de otro módulo
-    sin importar su clase ORM: solo se necesita el identificador (DNI o
-    CUIT) y el tipo.
-    """
-
-    tipo: str
-    tipo_documento: str
-    identificador: str
-    nombre: Optional[str] = None
-    apellido: Optional[str] = None
-    razon_social: Optional[str] = None
-    domicilio: Optional[str] = None
-    telefono: Optional[str] = None
-    email: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class MercaderiaRef:
-    """Referencia de identidad a una mercadería del catálogo genérico."""
-
-    id: int
-    codigo: str
-    descripcion: str
+        """Crea todas las tablas definidas en ``Base.metadata``."""
+        ...
 
 
 @runtime_checkable
 class PersonaDAO(Protocol):
-    """Contrato mínimo de consulta de personas.
+    """Interfaz mínima para acceso a personas (físicas o jurídicas)."""
 
-    Cualquier DAO de persona (el genérico ``core.persona``)
-    lo satisface de forma estructural, sin necesidad de heredarlo.
-    """
-
-    def obtener_por_identificador(self, identificador: str) -> Optional[PersonaRef]:
-        """Devuelve la referencia de la persona o ``None``."""
+    def obtener_por_id(self, persona_id: int):
+        """Devuelve la persona con el id dado, o ``None``."""
         ...
 
-    def obtener_por_id(self, persona_id: int) -> Optional[PersonaRef]:
-        """Devuelve la referencia de la persona por id o ``None``."""
+    def obtener_por_documento(self, tipo: str, identificador: str):
+        """Devuelve la persona con el documento dado, o ``None``."""
         ...
+
+
+@runtime_checkable
+class MercaderiaDAO(Protocol):
+    """Interfaz mínima para acceso al catálogo de mercaderías."""
+
+    def obtener_por_codigo_afip(self, codigo: str):
+        """Devuelve la mercadería con el código AFIP dado, o ``None``."""
+        ...
+
+
+class PersonaRef:
+    """Referencia inmutable a una persona (para transferir entre módulos)."""
+
+    def __init__(self, id: int, tipo: str, identificador: str, nombre: str) -> None:
+        self.id = id
+        self.tipo = tipo
+        self.identificador = identificador
+        self.nombre = nombre
+
+
+class MercaderiaRef:
+    """Referencia inmutable a una mercadería (para transferir entre módulos)."""
+
+    def __init__(self, id: int, codigo: str, descripcion: str) -> None:
+        self.id = id
+        self.codigo = codigo
+        self.descripcion = descripcion

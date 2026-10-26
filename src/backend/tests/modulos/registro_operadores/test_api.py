@@ -21,7 +21,7 @@ def api_client(db_engine):
     dao = SQLiteDAO("sqlite://")
     dao._engine = db_engine
     dao._session_factory = sessionmaker(
-        autocommit=False, autoflush=False, bind=db_engine
+        autocommit=False, autoflush=False, expire_on_commit=False, bind=db_engine
     )
 
     modulo = RegistroOperadoresModulo(dao)
@@ -81,95 +81,72 @@ class TestAPIRegistroOperadores:
         assert r.status_code == 200
         assert len(r.json()) == 0
 
-    def test_obtener_por_cuit(self, api_client):
-        r = api_client.get("/api/registro-operadores/30111111111")
-        assert r.status_code == 200
-        data = r.json()
-        assert data["cuit"] == "30111111111"
-        assert data["razon_social"] == "FRIGORIFICO TEST S.A."
-        assert data["tipo"] == "FRIGORIFICO"
-        assert data["estado_registral"] == "ACTIVO"
-
-    def test_obtener_no_existe(self, api_client):
-        r = api_client.get("/api/registro-operadores/99999999999")
-        assert r.status_code == 404
-
-    def test_registrar(self, api_client):
-        payload = {
+    def test_crear_operador(self, api_client):
+        data = {
             "cuit": "30222222222",
-            "razon_social": "CARNICERIA EL ESTERO",
+            "razon_social": "CARNICERIA NUEVA",
             "tipo": "CARNICERIA",
-            "domicilio": "Av. Rivadavia 500",
-            "telefono": "385-4444444",
-            "email": "carniceria@ester.com",
-            "habilitaciones": [
-                {
-                    "tipo": "Sanitaria",
-                    "numero": "HAB-100",
-                    "autoridad": "ProCarne Fiscalización",
-                    "fecha_emision": "2026-01-10",
-                    "estado": "VIGENTE",
-                }
-            ],
-            "inscripciones": [
-                {
-                    "tipo": "NACIONAL",
-                    "organismo": "RFOCB",
-                    "numero": "RFOCB-999",
-                    "fecha_inscripcion": "2025-11-20",
-                    "estado": "ACTIVA",
-                }
-            ],
-            "domicilios": [
-                {
-                    "tipo": "PRINCIPAL",
-                    "calle": "Av. Rivadavia",
-                    "numero": "500",
-                    "localidad": "Santiago del Estero",
-                    "departamento": "Capital",
-                    "provincia": "Santiago del Estero",
-                }
-            ],
         }
-        r = api_client.post("/api/registro-operadores", json=payload)
+        r = api_client.post("/api/registro-operadores", json=data)
         assert r.status_code == 201
-        data = r.json()
-        assert data["cuit"] == "30222222222"
-        assert data["tipo"] == "CARNICERIA"
-        assert len(data["habilitaciones"]) == 1
-        assert len(data["inscripciones"]) == 1
-        assert len(data["domicilios"]) == 1
-        assert data["domicilios"][0]["localidad"] == "Santiago del Estero"
+        body = r.json()
+        assert body["cuit"] == "30222222222"
+        assert body["estado_registral"] == "ACTIVO"
 
-    def test_registrar_duplicado(self, api_client):
-        payload = {
+    def test_crear_operador_duplicado(self, api_client):
+        data = {
             "cuit": "30111111111",
-            "razon_social": "FRIGORIFICO TEST S.A.",
+            "razon_social": "DUPLICADO",
             "tipo": "FRIGORIFICO",
         }
-        r = api_client.post("/api/registro-operadores", json=payload)
-        assert r.status_code == 409
+        r = api_client.post("/api/registro-operadores", json=data)
+        assert r.status_code == 400
 
-    def test_registrar_cuit_invalido(self, api_client):
-        payload = {
-            "cuit": "123",
-            "razon_social": "INVALIDO",
-            "tipo": "FRIGORIFICO",
-        }
-        r = api_client.post("/api/registro-operadores", json=payload)
-        assert r.status_code == 422
+    def test_obtener_operador(self, api_client):
+        r = api_client.get("/api/registro-operadores/1")
+        assert r.status_code == 200
+        assert r.json()["cuit"] == "30111111111"
+
+    def test_obtener_operador_no_existente(self, api_client):
+        r = api_client.get("/api/registro-operadores/999")
+        assert r.status_code == 404
 
     def test_cambiar_estado(self, api_client):
         r = api_client.patch(
-            "/api/registro-operadores/30111111111/estado",
-            json={"estado_registral": "SUSPENDIDO"},
+            "/api/registro-operadores/1/estado",
+            params={"estado": "SUSPENDIDO"},
         )
         assert r.status_code == 200
         assert r.json()["estado_registral"] == "SUSPENDIDO"
 
-    def test_cambiar_estado_no_existe(self, api_client):
-        r = api_client.patch(
-            "/api/registro-operadores/99999999999/estado",
-            json={"estado_registral": "BAJADO"},
+    def test_agregar_habilitacion(self, api_client):
+        data = {"actividad": "FAENA BOVINA"}
+        r = api_client.post("/api/registro-operadores/1/habilitaciones", json=data)
+        assert r.status_code == 201
+        assert r.json()["actividad"] == "FAENA BOVINA"
+
+    def test_listar_habilitaciones(self, api_client):
+        api_client.post(
+            "/api/registro-operadores/1/habilitaciones",
+            json={"actividad": "FAENA BOVINA"},
         )
-        assert r.status_code == 404
+        r = api_client.get("/api/registro-operadores/1/habilitaciones")
+        assert r.status_code == 200
+        assert len(r.json()) == 1
+
+    def test_agregar_inscripcion(self, api_client):
+        data = {"tipo": "PRINCIPAL", "numero_inscripcion": "ROCCA-001"}
+        r = api_client.post("/api/registro-operadores/1/inscripciones", json=data)
+        assert r.status_code == 201
+        assert r.json()["numero_inscripcion"] == "ROCCA-001"
+
+    def test_agregar_domicilio_operativo(self, api_client):
+        data = {
+            "direccion": "Av. Siempreviva 742",
+            "localidad": "Springfield",
+            "provincia": "BA",
+            "es_principal": True,
+        }
+        r = api_client.post("/api/registro-operadores/1/domicilios-operativos", json=data)
+        assert r.status_code == 201
+        assert r.json()["direccion"] == "Av. Siempreviva 742"

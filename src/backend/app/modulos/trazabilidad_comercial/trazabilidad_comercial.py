@@ -1,48 +1,31 @@
-"""Módulo II — Trazabilidad Comercial (ROCCA).
+"""Composición del Módulo II — Trazabilidad Comercial.
 
-Encapsula la inyección de dependencias del módulo: crea el DAO,
-el servicio y el controlador (router).
-
-Uso::
-
-    from modulos.trazabilidad_comercial.trazabilidad_comercial import TrazabilidadComercialModulo
-
-    modulo = TrazabilidadComercialModulo(db_dao)
-    modulo.registrar(app)
+Clase que inyecta las dependencias (DAO, servicio) y registra el
+router en la aplicación FastAPI.
 """
 
 from __future__ import annotations
 
 from fastapi import FastAPI
 
-from core import DatabaseDAO
-
-from .controlador import crear_router
-from .dao import RegistroTrazabilidadDAO
-from .servicio import TrazabilidadComercialService
+from modulos.trazabilidad_comercial.controlador import crear_router
+from modulos.trazabilidad_comercial.dao import RegistroTrazabilidadDAO
+from modulos.trazabilidad_comercial.servicio import TrazabilidadComercialService
 
 
 class TrazabilidadComercialModulo:
-    """Módulo II: Trazabilidad Comercial.
+    """Módulo II — Trazabilidad Comercial.
 
-    Encapsula:
-    - El DAO del registro de trazabilidad
-    - El servicio de negocio
-    - El controlador (router)
-
-    Args:
-        db_dao: DAO de base de datos (SQLite o PostgreSQL).
+    Responsabilidad única: componer el módulo (DAO + servicio + router)
+    y registrar sus endpoints en la aplicación.
     """
 
-    def __init__(self, db_dao: DatabaseDAO) -> None:
-        self.trazabilidad_dao = RegistroTrazabilidadDAO(db_dao.obtener_sesion)
-        self.trazabilidad_service = TrazabilidadComercialService(self.trazabilidad_dao)
-        self.router = crear_router(trazabilidad_service=self.trazabilidad_service)
+    def __init__(self, db_dao) -> None:
+        self._db_dao = db_dao
+        self._dao = RegistroTrazabilidadDAO(db_dao.obtener_sesion)
+        self._servicio = TrazabilidadComercialService(self._dao)
 
     def registrar(self, app: FastAPI) -> None:
-        """Registra el router del módulo en la aplicación.
-
-        Args:
-            app: Instancia de :class:`FastAPI`.
-        """
-        app.include_router(self.router)
+        """Registra el router del módulo en la aplicación."""
+        router = crear_router(self._servicio)
+        app.include_router(router)

@@ -1,164 +1,107 @@
-"""Tests del módulo de operadores."""
+"""Tests del submódulo de operador (cadena cárnica)."""
 
 from __future__ import annotations
 
 import pytest
 
+from modulos.remitos_carnicos.operador.dao import Operador, OperadorDAO
+from modulos.remitos_carnicos.operador.schema import OperadorIn, OperadorOut
+from modulos.remitos_carnicos.operador.servicio import OperadorError, OperadorService
+from core.persona.dao import Persona
+
+
+@pytest.fixture()
+def operador_service(operador_dao):
+    return OperadorService(operador_dao)
+
+
+@pytest.fixture()
+def seed_persona(session_factory):
+    """Crea una persona jurídica de prueba y devuelve su id."""
+    with session_factory() as session:
+        persona = Persona(
+            tipo="JURIDICA",
+            tipo_documento="CUIT",
+            identificador="30111111111",
+            nombre="OPERADOR TEST S.A.",
+        )
+        session.add(persona)
+        session.commit()
+        session.refresh(persona)
+        return persona.id
+
 
 class TestOperadorDAO:
     """Tests del DAO de operadores."""
 
-    def test_crear_operador(self, operador_dao, session_factory):
-        from tests.modulos.remitos_carnicos.conftest import crear_operador_test
+    def test_crear(self, operador_dao, seed_persona):
+        op = operador_dao.crear(persona_id=seed_persona)
+        assert op.id is not None
+        assert op.persona_id == seed_persona
 
+    def test_obtener_por_id(self, operador_dao, seed_persona):
+        op = operador_dao.crear(persona_id=seed_persona)
+        obtenido = operador_dao.obtener_por_id(op.id)
+        assert obtenido is not None
+        assert obtenido.id == op.id
+
+    def test_obtener_por_persona(self, operador_dao, seed_persona):
+        op = operador_dao.crear(persona_id=seed_persona)
+        obtenido = operador_dao.obtener_por_persona(seed_persona)
+        assert obtenido is not None
+        assert obtenido.id == op.id
+
+    def test_listar(self, operador_dao, session_factory):
+        # Crear dos personas
         with session_factory() as session:
-            op = crear_operador_test(session, "30111111111", "PRUEBA CREADA S.A.")
-            op_id = op.id
-
-        guardado = operador_dao.obtener_por_id(op_id)
-
-        assert guardado.id is not None
-        assert guardado.cuit == "30111111111"
-        assert guardado.razon_social == "PRUEBA CREADA S.A."
-
-    def test_obtener_por_cuit(self, operador_dao, seed_operador):
-        op = operador_dao.obtener_por_cuit("20123456789")
-        assert op is not None
-        assert op.razon_social == "TEST OPERADOR S.A."
-
-    def test_obtener_por_cuit_no_existe(self, operador_dao):
-        op = operador_dao.obtener_por_cuit("99999999999")
-        assert op is None
-
-    def test_obtener_por_id(self, operador_dao, seed_operador):
-        op = operador_dao.obtener_por_id(seed_operador["id"])
-        assert op is not None
-        assert op.cuit == "20123456789"
-
-    def test_listar(self, operador_dao, seed_operador):
-        ops = operador_dao.listar(limite=10)
-        assert len(ops) == 1
-        assert ops[0].cuit == "20123456789"
-
-    def test_listar_por_actividad(self, operador_dao, seed_operador):
-        ops = operador_dao.listar_por_actividad(actividad_id=1)
-        assert len(ops) == 1
-        assert ops[0].cuit == "20123456789"
-
-    def test_listar_por_actividad_sin_resultados(self, operador_dao, seed_operador):
-        ops = operador_dao.listar_por_actividad(actividad_id=2)
-        assert len(ops) == 0
-
-    def test_operador_tiene_categorias(self, operador_dao, seed_operador):
-        op = operador_dao.obtener_por_cuit("20123456789")
-        assert op is not None
-        assert len(op.categorias) == 2
-        cat_ids = {c.categoria_id for c in op.categorias}
-        assert 1 in cat_ids  # B1 = Productor/criador
-        assert 4 in cat_ids  # B4 = Invernador
-
-    def test_operador_tiene_actividades(self, operador_dao, seed_operador):
-        op = operador_dao.obtener_por_cuit("20123456789")
-        assert op is not None
-        assert len(op.actividades) == 1
-        assert op.actividades[0].nombre == "Bovino/Bubalino"
-
-    def test_actualizar_operador(self, operador_dao, seed_operador, session_factory):
-        from core.persona.dao import Persona
-
-        op = operador_dao.obtener_por_cuit("20123456789")
-        
-        # Actualizar el email en la persona
-        with session_factory() as session:
-            persona = session.get(Persona, op.persona.id)
-            persona.email = "nuevo@test.com"
+            p1 = Persona(tipo="JURIDICA", tipo_documento="CUIT", identificador="30111111111", nombre="OP1")
+            p2 = Persona(tipo="JURIDICA", tipo_documento="CUIT", identificador="30222222222", nombre="OP2")
+            session.add_all([p1, p2])
             session.commit()
+            session.refresh(p1)
+            session.refresh(p2)
 
-        actualizado = operador_dao.obtener_por_cuit("20123456789")
-        assert actualizado.email == "nuevo@test.com"
+        operador_dao.crear(persona_id=p1.id)
+        operador_dao.crear(persona_id=p2.id)
+
+        operadores = operador_dao.listar()
+        assert len(operadores) == 2
 
 
 class TestOperadorService:
     """Tests del servicio de operadores."""
 
-    def test_crear(self, operador_dao):
-        from modulos.remitos_carnicos.operador.servicio import OperadorService
-        from modulos.remitos_carnicos.operador.schema import OperadorIn
+    def test_crear_operador(self, operador_service, seed_persona):
+        data = OperadorIn(persona_id=seed_persona)
+        resultado = operador_service.crear_operador(data)
+        assert resultado.id is not None
+        assert resultado.persona_id == seed_persona
 
-        svc = OperadorService(operador_dao)
-        datos = OperadorIn(
-            cuit="30222222222",
-            razon_social="SERVICIO TEST S.R.L.",
-        )
-        resultado = svc.crear(datos)
-        assert resultado.cuit == "30222222222"
-        assert resultado.razon_social == "SERVICIO TEST S.R.L."
+    def test_crear_operador_duplicado(self, operador_service, seed_persona):
+        data = OperadorIn(persona_id=seed_persona)
+        operador_service.crear_operador(data)
+        with pytest.raises(OperadorError):
+            operador_service.crear_operador(data)
 
-    def test_crear_duplicado(self, operador_dao, seed_operador):
-        from modulos.remitos_carnicos.operador.servicio import OperadorService, OperadorError
-        from modulos.remitos_carnicos.operador.schema import OperadorIn
+    def test_obtener_por_id(self, operador_service, seed_persona):
+        data = OperadorIn(persona_id=seed_persona)
+        creado = operador_service.crear_operador(data)
+        obtenido = operador_service.obtener_por_id(creado.id)
+        assert obtenido is not None
+        assert obtenido.id == creado.id
 
-        svc = OperadorService(operador_dao)
-        datos = OperadorIn(cuit="20123456789", razon_social="DUPLICADO")
-        with pytest.raises(OperadorError, match="ya existe"):
-            svc.crear(datos)
+    def test_listar(self, operador_service, session_factory):
+        # Crear dos personas
+        with session_factory() as session:
+            p1 = Persona(tipo="JURIDICA", tipo_documento="CUIT", identificador="30111111111", nombre="OP1")
+            p2 = Persona(tipo="JURIDICA", tipo_documento="CUIT", identificador="30222222222", nombre="OP2")
+            session.add_all([p1, p2])
+            session.commit()
+            session.refresh(p1)
+            session.refresh(p2)
 
-    def test_obtener(self, operador_dao, seed_operador):
-        from modulos.remitos_carnicos.operador.servicio import OperadorService
+        operador_service.crear_operador(OperadorIn(persona_id=p1.id))
+        operador_service.crear_operador(OperadorIn(persona_id=p2.id))
 
-        svc = OperadorService(operador_dao)
-        resultado = svc.obtener("20123456789")
-        assert resultado.cuit == "20123456789"
-        assert len(resultado.actividades) == 1
-
-    def test_obtener_no_existe(self, operador_dao):
-        from modulos.remitos_carnicos.operador.servicio import OperadorService, OperadorError
-
-        svc = OperadorService(operador_dao)
-        with pytest.raises(OperadorError, match="no encontrado"):
-            svc.obtener("00000000000")
-
-    def test_listar(self, operador_dao, seed_operador):
-        from modulos.remitos_carnicos.operador.servicio import OperadorService
-
-        svc = OperadorService(operador_dao)
-        resultados = svc.listar()
-        assert len(resultados) == 1
-
-
-class TestOperadorSchema:
-    """Tests de serialización del DTO."""
-
-    def test_operador_out_incluye_actividades(self, operador_dao, seed_operador):
-        from modulos.remitos_carnicos.operador.schema import OperadorOut
-
-        op = operador_dao.obtener_por_cuit("20123456789")
-        dto = OperadorOut.from_orm(op)
-
-        assert dto.cuit == "20123456789"
-        assert len(dto.actividades) == 1
-        act = dto.actividades[0]
-        assert act.nombre == "Bovino/Bubalino"
-        assert len(act.categorias) == 2
-
-    def test_operador_out_categorias_por_actividad(self, operador_dao, seed_operador):
-        from modulos.remitos_carnicos.operador.schema import OperadorOut
-
-        op = operador_dao.obtener_por_cuit("20123456789")
-        dto = OperadorOut.from_orm(op)
-
-        act = dto.actividades[0]
-        cat_ids = {c.categoria_id for c in act.categorias}
-        assert cat_ids == {1, 4}  # B1, B4
-
-    def test_operador_out_json(self, operador_dao, seed_operador):
-        from modulos.remitos_carnicos.operador.schema import OperadorOut
-        import json
-
-        op = operador_dao.obtener_por_cuit("20123456789")
-        dto = OperadorOut.from_orm(op)
-        data = json.loads(dto.model_dump_json())
-
-        assert data["cuit"] == "20123456789"
-        assert "actividades" in data
-        assert data["actividades"][0]["id"] == 1
+        operadores = operador_service.listar()
+        assert len(operadores) == 2

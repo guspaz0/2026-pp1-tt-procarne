@@ -1,132 +1,89 @@
-"""Entidades de persona del módulo genérico.
+"""Entidad de dominio: Persona (física o jurídica).
 
-Define :class:`Persona` (clase abstracta) y sus subclases concretas:
-
-- :class:`PersonaFisica` — identificada por DNI, puede tener CUIT
-  (por ejemplo, monotributistas)
-- :class:`PersonaJuridica` — identificada únicamente por CUIT
+Representa a una persona en el sistema, con sus datos identificatorios
+(documento, nombre/razón social) y domicilio.
 """
 
 from __future__ import annotations
 
-from typing import Optional
-
-from ..base import Entidad
-from ..enums import TipoPersona
+from core.base import Entidad
+from core.enums import TipoPersona
 
 
 class Persona(Entidad):
-    """Clase abstracta de una persona (física o jurídica).
+    """Persona física o jurídica.
 
-    Es la entidad base de cualquier actor del sistema que no sea un
-    operador de la cadena cárnica (por ejemplo, usuarios del sistema o
-    terceros de otros módulos).
+    Campos:
+        tipo: ``FISICA`` o ``JURIDICA``.
+        tipo_documento: tipo de documento (DNI, CUIT, etc.).
+        identificador: número de documento.
+        nombre: nombre (persona física) o razón social (persona jurídica).
+        domicilio: domicilio (opcional).
     """
-
-    @property
-    def tipo(self) -> TipoPersona:
-        """Tipo de persona (física o jurídica)."""
-        raise NotImplementedError
-
-    @property
-    def identificador(self) -> str:
-        """Documento que identifica a la persona (DNI o CUIT)."""
-        raise NotImplementedError
 
     def __init__(
         self,
+        tipo: TipoPersona | str,
+        tipo_documento: str,
+        identificador: str,
         nombre: str,
-        domicilio: Optional[str] = None,
-        telefono: Optional[str] = None,
-        email: Optional[str] = None,
+        domicilio: str | None = None,
     ) -> None:
         super().__init__()
+        self.tipo = tipo
+        self.tipo_documento = tipo_documento
+        self.identificador = identificador
         self.nombre = nombre
         self.domicilio = domicilio
-        self.telefono = telefono
-        self.email = email
 
     def to_dict(self) -> dict:
         return {
             "id": self.id,
-            "tipo": self.tipo.value,
+            "tipo": self.tipo,
+            "tipo_documento": self.tipo_documento,
             "identificador": self.identificador,
             "nombre": self.nombre,
             "domicilio": self.domicilio,
-            "telefono": self.telefono,
-            "email": self.email,
         }
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} id={self.id} nombre={self.nombre!r}>"
 
 
 class PersonaFisica(Persona):
-    """Persona física, identificada por su DNI.
-
-    Puede además tener un CUIT (por ejemplo, monotributistas o
-    responsables inscriptos en AFIP).
-    """
-
-    tipo = TipoPersona.PF
-    tipo_documento = "DNI"
+    """Persona física (nombre y apellido, documento)."""
 
     def __init__(
         self,
-        dni: str,
-        nombre: str,
         apellido: str,
-        domicilio: Optional[str] = None,
-        telefono: Optional[str] = None,
-        email: Optional[str] = None,
+        nombre: str,
+        tipo_documento: str = "DNI",
+        identificador: str = "",
+        domicilio: str | None = None,
     ) -> None:
-        super().__init__(f"{nombre} {apellido}", domicilio, telefono, email)
-        self.dni = dni
-        self.nombre_p = nombre
+        super().__init__(
+            tipo=TipoPersona.FISICA,
+            tipo_documento=tipo_documento,
+            identificador=identificador,
+            nombre=f"{apellido}, {nombre}",
+            domicilio=domicilio,
+        )
         self.apellido = apellido
-
-    @property
-    def identificador(self) -> str:
-        return self.dni
-
-    @property
-    def razon_social(self) -> str:
-        """Se infiere de apellido + nombre."""
-        return f"{self.apellido} {self.nombre_p}"
-
-    def to_dict(self) -> dict:
-        base = super().to_dict()
-        base["dni"] = self.dni
-        base["nombre"] = self.nombre_p
-        base["apellido"] = self.apellido
-        base["razon_social"] = self.razon_social
-        return base
+        self.nombre_pila = nombre
 
 
 class PersonaJuridica(Persona):
-    """Persona jurídica, identificada únicamente por su CUIT."""
-
-    tipo = TipoPersona.PJ
-    tipo_documento = "CUIT"
+    """Persona jurídica (razón social, CUIT)."""
 
     def __init__(
         self,
-        cuit: str,
         razon_social: str,
-        domicilio: Optional[str] = None,
-        telefono: Optional[str] = None,
-        email: Optional[str] = None,
+        cuit: str,
+        domicilio: str | None = None,
     ) -> None:
-        super().__init__(razon_social, domicilio, telefono, email)
-        self.cuit = cuit
+        super().__init__(
+            tipo=TipoPersona.JURIDICA,
+            tipo_documento="CUIT",
+            identificador=cuit,
+            nombre=razon_social,
+            domicilio=domicilio,
+        )
         self.razon_social = razon_social
-
-    @property
-    def identificador(self) -> str:
-        return self.cuit
-
-    def to_dict(self) -> dict:
-        base = super().to_dict()
-        base["cuit"] = self.cuit
-        base["razon_social"] = self.razon_social
-        return base
+        self.cuit = cuit

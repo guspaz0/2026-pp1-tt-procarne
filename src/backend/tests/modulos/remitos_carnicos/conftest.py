@@ -10,7 +10,6 @@ Las fixtures de configuración de BD se reutilizan desde
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import insert
 
 # Reutilizar fixtures de configuración compartidas
 from tests.fixtures import db_engine, db_session_factory, db_dao  # noqa: F401
@@ -18,7 +17,7 @@ from tests.fixtures import db_engine, db_session_factory, db_dao  # noqa: F401
 # Importar todos los modelos para que Base.metadata los conozca
 from core.persona.dao import Persona
 from core.mercaderia.dao import Mercaderia, MercaderiaDAO
-from modulos.remitos_carnicos.operador.dao import Operador, OperadorDAO, operador_actividades
+from modulos.remitos_carnicos.operador.dao import Operador, OperadorDAO
 from modulos.remitos_carnicos.operador.categoria import (
     Actividad,
     ActividadDAO,
@@ -93,10 +92,10 @@ def remito_dao(session_factory):
 def _crear_persona_juridica(session, cuit: str, nombre: str) -> Persona:
     """Crea una persona jurídica y la devuelve."""
     persona = Persona(
-        tipo="PJ",
+        tipo="JURIDICA",
         tipo_documento="CUIT",
         identificador=cuit,
-        razon_social=nombre,
+        nombre=nombre,
     )
     session.add(persona)
     session.commit()
@@ -122,128 +121,78 @@ def crear_operador_test(session, cuit: str, razon_social: str) -> Operador:
 
 
 def obtener_operador_id_por_cuit(session, cuit: str) -> int:
-    """Obtiene el id del operador a partir del CUIT (helper para tests)."""
-    from sqlalchemy import select
-    from core.persona.dao import Persona
-
-    stmt = (
-        select(Operador.id)
-        .join(Operador.persona)
-        .where(Persona.identificador == cuit)
+    """Devuelve el id del operador con el CUIT dado."""
+    persona = (
+        session.query(Persona)
+        .filter_by(tipo_documento="CUIT", identificador=cuit)
+        .first()
     )
-    return session.execute(stmt).scalar_one()
-
-
-@pytest.fixture()
-def seed_actividades(session_factory):
-    """Carga actividades y categorías AFIP de referencia."""
-    with session_factory() as session:
-        bov = Actividad(id=1, nombre="Bovino/Bubalino")
-        por = Actividad(id=2, nombre="Porcino")
-        session.add_all([bov, por])
-        session.commit()
-
-        cats_bov = [
-            CategoriaAfip(actividad_id=1, codigo="B1", descripcion="Productor/criador"),
-            CategoriaAfip(actividad_id=1, codigo="B2", descripcion="Matarifes abastecedores y carniceros"),
-            CategoriaAfip(actividad_id=1, codigo="B3", descripcion="Feed lots"),
-            CategoriaAfip(actividad_id=1, codigo="B4", descripcion="Invernador"),
-        ]
-        cats_por = [
-            CategoriaAfip(actividad_id=2, codigo="P1", descripcion="Productores/Criadores Comerciales"),
-            CategoriaAfip(actividad_id=2, codigo="P2", descripcion="Invernadores"),
-        ]
-        session.add_all(cats_bov + cats_por)
-        session.commit()
-
-    return {"bovino": 1, "porcino": 2}
-
-
-@pytest.fixture()
-def seed_operador(session_factory, seed_actividades):
-    """Crea un operador de prueba con categorías."""
-    with session_factory() as session:
-        persona = _crear_persona_juridica(session, "20123456789", "TEST OPERADOR S.A.")
-        op = _crear_operador(session, persona.id)
-        op_id = op.id
-
-    # Agregar a actividad Bovino
-    with session_factory() as session:
-        session.execute(
-            insert(operador_actividades).values(operador_id=op_id, actividad_id=1)
-        )
-        session.commit()
-
-    # Agregar categorías (categoria_id referencia a categorias_afip)
-    # B1 = Productor/criador (id=1), B4 = Invernador (id=4)
-    cat1 = CategoriaOperador(
-        operador_id=op_id,
-        actividad_id=1,
-        categoria_id=1,
-        situacion_id=1,  # ACTIVO
-        desde_fecha="01/01/2024",
+    if persona is None:
+        raise ValueError(f"No existe persona con CUIT {cuit}")
+    op = (
+        session.query(Operador)
+        .filter_by(persona_id=persona.id)
+        .first()
     )
-    cat2 = CategoriaOperador(
-        operador_id=op_id,
-        actividad_id=1,
-        categoria_id=4,
-        situacion_id=1,  # ACTIVO
-        desde_fecha="15/06/2023",
-    )
-    with session_factory() as session:
-        session.add_all([cat1, cat2])
-        session.commit()
-
-    return {"cuit": "20123456789", "id": op_id}
+    if op is None:
+        raise ValueError(f"No existe operador para persona {persona.id}")
+    return op.id
 
 
 @pytest.fixture()
 def seed_operadores(session_factory):
-    """Crea operadores de prueba: titular, transportista, depositario, destinatario."""
+    """Crea tres operadores de prueba (titular, transportista, destinatario)."""
     with session_factory() as session:
-        p_titular = _crear_persona_juridica(session, "20111111111", "TITULAR TEST S.A.")
-        p_transportista = _crear_persona_juridica(session, "20222222222", "TRANSPORTISTA TEST")
-        p_depositario = _crear_persona_juridica(session, "20333333333", "DEPOSITARIO TEST")
-        p_destinatario = _crear_persona_juridica(session, "20444444444", "DESTINATARIO TEST")
-
-        op_titular = _crear_operador(session, p_titular.id)
-        op_transportista = _crear_operador(session, p_transportista.id)
-        op_depositario = _crear_operador(session, p_depositario.id)
-        op_destinatario = _crear_operador(session, p_destinatario.id)
-
+        titular = crear_operador_test(session, "30111111111", "TITULAR S.A.")
+        transportista = crear_operador_test(session, "30222222222", "TRANSPORTES XYZ")
+        destinatario = crear_operador_test(session, "30333333333", "DESTINATARIO S.R.L.")
     return {
-        "titular": "20111111111",
-        "transportista": "20222222222",
-        "depositario": "20333333333",
-        "destinatario": "20444444444",
+        "titular": "30111111111",
+        "transportista": "30222222222",
+        "destinatario": "30333333333",
     }
 
 
 @pytest.fixture()
 def seed_mercaderias(session_factory):
-    """Crea mercaderías de prueba (catálogo genérico)."""
-    mercs = [
-        Mercaderia(
+    """Crea mercaderías de prueba."""
+    with session_factory() as session:
+        m1 = Mercaderia(
             codigo="1101",
-            descripcion="Carne de bovino fresca",
+            descripcion="Media res con hueso",
             requiere_trazabilidad=True,
             requiere_numero_tropa=True,
-        ),
-        Mercaderia(
-            codigo="1102",
-            descripcion="Carne de bovino congelada",
+        )
+        m2 = Mercaderia(
+            codigo="2101",
+            descripcion="Asado a 10 costillas",
             requiere_trazabilidad=True,
             requiere_numero_tropa=False,
-        ),
-        Mercaderia(
-            codigo="2101",
-            descripcion="Carne de porcino fresca",
-            requiere_trazabilidad=True,
-            requiere_numero_tropa=True,
-        ),
-    ]
-    with session_factory() as session:
-        for m in mercs:
-            session.add(m)
+        )
+        session.add_all([m1, m2])
         session.commit()
-    return [m.codigo for m in mercs]
+    return ["1101", "2101"]
+
+
+@pytest.fixture()
+def seed_categorias(session_factory):
+    """Crea actividades y categorías AFIP de prueba."""
+    with session_factory() as session:
+        actividad = Actividad(nombre="Bovino/Bubalino")
+        session.add(actividad)
+        session.commit()
+        session.refresh(actividad)
+
+        cat1 = CategoriaAfip(
+            actividad_id=actividad.id,
+            codigo="B1",
+            descripcion="Productor/criador",
+        )
+        cat2 = CategoriaAfip(
+            actividad_id=actividad.id,
+            codigo="B6",
+            descripcion="Establecimientos faenadores y/o frigorífico",
+        )
+        session.add_all([cat1, cat2])
+        session.commit()
+    return {"actividad_id": actividad.id, "B1": cat1.id, "B6": cat2.id}

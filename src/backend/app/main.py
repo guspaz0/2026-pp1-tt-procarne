@@ -1,17 +1,23 @@
-"""ROCCA — backend.
+"""Punto de entrada de la aplicación ROCCA.
 
-Punto de entrada: instancia la aplicación y expone la instancia de
-:class:`FastAPI` para uvicorn.
+Ejecuta el servidor Uvicorn con la aplicación FastAPI compuesta por
+todos los módulos.
 
 Uso::
 
-    uvicorn app.main:app --reload
+    python main.py
 """
 
-from .app import RoccaApp, crear_app
+import uvicorn
 
-# Instancia única de la aplicación (se crea al importar este módulo)
-_rocca = RoccaApp()
-app = _rocca.app
+from app.app import crear_app
 
-__all__ = ["app", "RoccaApp", "crear_app"]
+app = crear_app()
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )

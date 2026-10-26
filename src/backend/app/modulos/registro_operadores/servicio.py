@@ -1,135 +1,176 @@
-"""Servicio de negocio del Módulo I — Registro Provincial de Operadores."""
+"""Servicio de negocio del Módulo I — Registro Provincial de Operadores.
+
+Casos de uso:
+- Dar de alta un operador.
+- Buscar por CUIT.
+- Listar operadores (con filtros).
+- Cambiar el estado registral.
+- Agregar habilitaciones, inscripciones y domicilios operativos.
+"""
 
 from __future__ import annotations
 
-from datetime import date
-from typing import Optional
+from datetime import datetime, timezone
 
-from core import PersonaRef
-
-from .dao import ROCCAOperador, ROCCAOperadorDAO
-from .enums import EstadoRegistral, TipoOperador
-from .schema import (
+from modulos.registro_operadores.dao import (
+    DomicilioOperativo,
+    Habilitacion,
+    Inscripcion,
+    ROCCAOperador,
+    ROCCAOperadorDAO,
+)
+from modulos.registro_operadores.enums import EstadoRegistral
+from modulos.registro_operadores.schema import (
     DomicilioOperativoIn,
+    DomicilioOperativoOut,
     HabilitacionIn,
+    HabilitacionOut,
     InscripcionIn,
+    InscripcionOut,
     ROCCAOperadorIn,
     ROCCAOperadorOut,
 )
-from .dao import DomicilioOperativo, Habilitacion, Inscripcion
 
 
 class ROCCAOperadorError(Exception):
-    """Error de negocio del Registro Provincial de Operadores."""
+    """Error de negocio del servicio de operadores."""
 
 
 class ROCCAOperadorService:
-    """Caso de uso: registro provincial de operadores de la cadena cárnica."""
+    """Servicio de negocio de operadores de la cadena cárnica."""
 
     def __init__(self, dao: ROCCAOperadorDAO) -> None:
         self._dao = dao
 
     # ------------------------------------------------------------------
-    # Operaciones
+    # Operadores
     # ------------------------------------------------------------------
 
-    def registrar(self, datos: ROCCAOperadorIn) -> ROCCAOperadorOut:
-        """Registra un nuevo operador en el ROCCA."""
-        existente = self._dao.obtener_por_cuit(datos.cuit)
+    def crear_operador(self, data: ROCCAOperadorIn) -> ROCCAOperadorOut:
+        """Da de alta un operador y devuelve su representación de salida."""
+        existente = self._dao.obtener_por_cuit(data.cuit)
         if existente is not None:
-            raise ROCCAOperadorError(
-                f"Operador ya inscripto en el ROCCA: CUIT {datos.cuit}"
+            raise ROCCAOperadorError(f"Ya existe un operador con CUIT {data.cuit}")
+        operador = self._dao.crear(
+            cuit=data.cuit,
+            razon_social=data.razon_social,
+            tipo=data.tipo,
+            domicilio=data.domicilio,
+            domicilio_fiscal=data.domicilio_fiscal,
+            telefono=data.telefono,
+            email=data.email,
+        )
+        return ROCCAOperadorOut.model_validate(operador)
+
+    def obtener_por_cuit(self, cuit: str) -> ROCCAOperadorOut | None:
+        """Busca un operador por su CUIT."""
+        operador = self._dao.obtener_por_cuit(cuit)
+        return ROCCAOperadorOut.model_validate(operador) if operador else None
+
+    def listar(self, tipo: str | None = None,
+               estado_registral: str | None = None) -> list[ROCCAOperadorOut]:
+        """Lista operadores, opcionalmente filtrados por tipo y estado."""
+        operadores = self._dao.listar(tipo=tipo, estado_registral=estado_registral)
+        return [ROCCAOperadorOut.model_validate(op) for op in operadores]
+
+    def cambiar_estado(self, operador_id: int, estado: EstadoRegistral) -> ROCCAOperadorOut:
+        """Cambia el estado registral de un operador."""
+        operador = self._dao.actualizar_estado(operador_id, estado)
+        if operador is None:
+            raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+        return ROCCAOperadorOut.model_validate(operador)
+
+    # ------------------------------------------------------------------
+    # Habilitaciones
+    # ------------------------------------------------------------------
+
+    def agregar_habilitacion(self, operador_id: int, data: HabilitacionIn) -> HabilitacionOut:
+        """Agrega una habilitación a un operador."""
+        with self._dao._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+            habilitacion = Habilitacion(
+                operador_id=operador_id,
+                actividad=data.actividad,
+                fecha_habilitacion=datetime.now(timezone.utc),
+                fecha_vencimiento=data.fecha_vencimiento,
             )
+            session.add(habilitacion)
+            session.commit()
+            session.refresh(habilitacion)
+            return HabilitacionOut.model_validate(habilitacion)
 
-        # Referencia de identidad; el DAO materializa la ORM concreta.
-        persona = PersonaRef(
-            tipo="PJ",
-            tipo_documento="CUIT",
-            identificador=datos.cuit,
-            razon_social=datos.razon_social,
-            domicilio=datos.domicilio,
-            telefono=datos.telefono,
-            email=datos.email,
-        )
-
-        operador = ROCCAOperador(
-            persona_id=0,  # se asigna al guardar
-            tipo=datos.tipo.value,
-            estado_registral=datos.estado_registral.value,
-            fecha_inscripcion=date.today(),
-            observaciones=datos.observaciones,
-            habilitaciones=[self._crear_habilitacion(h) for h in datos.habilitaciones],
-            inscripciones=[self._crear_inscripcion(i) for i in datos.inscripciones],
-            domicilios=[self._crear_domicilio(d) for d in datos.domicilios],
-        )
-
-        guardado = self._dao.guardar(operador, persona)
-        return ROCCAOperadorOut.from_orm(guardado)
-
-    def obtener(self, cuit: str) -> ROCCAOperadorOut:
-        operador = self._dao.obtener_por_cuit(cuit)
-        if operador is None:
-            raise ROCCAOperadorError(f"Operador no encontrado: CUIT {cuit}")
-        return ROCCAOperadorOut.from_orm(operador)
-
-    def listar(
-        self,
-        tipo: Optional[TipoOperador] = None,
-        estado_registral: Optional[EstadoRegistral] = None,
-        limite: int = 100,
-        offset: int = 0,
-    ) -> list[ROCCAOperadorOut]:
-        operadores = self._dao.listar(
-            tipo=tipo.value if tipo else None,
-            estado_registral=estado_registral.value if estado_registral else None,
-            limite=limite,
-            offset=offset,
-        )
-        return [ROCCAOperadorOut.from_orm(o) for o in operadores]
-
-    def cambiar_estado(self, cuit: str, nuevo_estado: EstadoRegistral) -> ROCCAOperadorOut:
-        """Cambia el estado registral del operador (ACTIVO/SUSPENDIDO/BAJADO)."""
-        operador = self._dao.obtener_por_cuit(cuit)
-        if operador is None:
-            raise ROCCAOperadorError(f"Operador no encontrado: CUIT {cuit}")
-        operador.estado_registral = nuevo_estado.value
-        actualizado = self._dao.actualizar(operador)
-        return ROCCAOperadorOut.from_orm(actualizado)
+    def listar_habilitaciones(self, operador_id: int) -> list[HabilitacionOut]:
+        """Lista las habilitaciones de un operador."""
+        with self._dao._session_factory() as session:
+            habilitaciones = (
+                session.query(Habilitacion)
+                .filter_by(operador_id=operador_id)
+                .all()
+            )
+            return [HabilitacionOut.model_validate(h) for h in habilitaciones]
 
     # ------------------------------------------------------------------
-    # Helpers
+    # Inscripciones
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _crear_habilitacion(h: HabilitacionIn) -> Habilitacion:
-        return Habilitacion(
-            tipo=h.tipo,
-            numero=h.numero,
-            autoridad=h.autoridad,
-            fecha_emision=h.fecha_emision,
-            fecha_vencimiento=h.fecha_vencimiento,
-            estado=h.estado,
-        )
+    def agregar_inscripcion(self, operador_id: int, data: InscripcionIn) -> InscripcionOut:
+        """Agrega una inscripción a un operador."""
+        with self._dao._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+            inscripcion = Inscripcion(
+                operador_id=operador_id,
+                tipo=data.tipo,
+                fecha_inscripcion=datetime.now(timezone.utc),
+                numero_inscripcion=data.numero_inscripcion,
+            )
+            session.add(inscripcion)
+            session.commit()
+            session.refresh(inscripcion)
+            return InscripcionOut.model_validate(inscripcion)
 
-    @staticmethod
-    def _crear_inscripcion(i: InscripcionIn) -> Inscripcion:
-        return Inscripcion(
-            tipo=i.tipo.value,
-            organismo=i.organismo,
-            numero=i.numero,
-            fecha_inscripcion=i.fecha_inscripcion,
-            estado=i.estado,
-        )
+    def listar_inscripciones(self, operador_id: int) -> list[InscripcionOut]:
+        """Lista las inscripciones de un operador."""
+        with self._dao._session_factory() as session:
+            inscripciones = (
+                session.query(Inscripcion)
+                .filter_by(operador_id=operador_id)
+                .all()
+            )
+            return [InscripcionOut.model_validate(i) for i in inscripciones]
 
-    @staticmethod
-    def _crear_domicilio(d: DomicilioOperativoIn) -> DomicilioOperativo:
-        return DomicilioOperativo(
-            tipo=d.tipo.value,
-            calle=d.calle,
-            numero=d.numero,
-            localidad=d.localidad,
-            departamento=d.departamento,
-            provincia=d.provincia,
-            codigo_postal=d.codigo_postal,
-            activo=d.activo,
-        )
+    # ------------------------------------------------------------------
+    # Domicilios operativos
+    # ------------------------------------------------------------------
+
+    def agregar_domicilio_operativo(self, operador_id: int, data: DomicilioOperativoIn) -> DomicilioOperativoOut:
+        """Agrega un domicilio operativo a un operador."""
+        with self._dao._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+            domicilio = DomicilioOperativo(
+                operador_id=operador_id,
+                direccion=data.direccion,
+                localidad=data.localidad,
+                provincia=data.provincia,
+                codigo_postal=data.codigo_postal,
+                es_principal=data.es_principal,
+            )
+            session.add(domicilio)
+            session.commit()
+            session.refresh(domicilio)
+            return DomicilioOperativoOut.model_validate(domicilio)
+
+    def listar_domicilios_operativos(self, operador_id: int) -> list[DomicilioOperativoOut]:
+        """Lista los domicilios operativos de un operador."""
+        with self._dao._session_factory() as session:
+            domicilios = (
+                session.query(DomicilioOperativo)
+                .filter_by(operador_id=operador_id)
+                .all()
+            )
+            return [DomicilioOperativoOut.model_validate(d) for d in domicilios]

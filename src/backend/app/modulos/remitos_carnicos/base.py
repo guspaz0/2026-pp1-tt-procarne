@@ -1,8 +1,4 @@
-"""Clase base abstracta para todas las entidades de dominio.
-
-Proporciona un identificador único y un método de serialización a
-diccionario. Las subclases concretas definen sus campos específicos.
-"""
+"""Clase base abstracta para todas las entidades de dominio del módulo REC."""
 
 from __future__ import annotations
 
@@ -11,7 +7,7 @@ from uuid import uuid4
 
 
 class Entidad(ABC):
-    """Clase base abstracta para todas las entidades del dominio."""
+    """Clase base abstracta para todas las entidades del dominio REC."""
 
     def __init__(self) -> None:
         self.id: str = uuid4().hex

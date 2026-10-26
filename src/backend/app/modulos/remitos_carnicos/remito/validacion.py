@@ -1,151 +1,142 @@
-"""Validación de reglas de negocio de Remitos Electrónicos Cárnicos.
+"""Validación de remitos electrónicos cárnicos.
 
-Aplica **Open/Closed**: cada regla es una subclase de :class:`ReglaValidacion`.
-Para agregar una nueva regla se crea una subclase sin modificar el validador.
+Las reglas de validación son extensibles mediante subclases de
+:class:`ReglaValidacion`.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from dataclasses import dataclass, field
 
-if TYPE_CHECKING:
-    from .dao import RemitoCarnico
+from modulos.remitos_carnicos.remito.schema import RemitoCarnicoIn
 
 
 @dataclass
 class ResultadoValidacion:
-    """Resultado de la validación de una regla."""
+    """Resultado de la validación de un remito."""
 
-    valido: bool
-    mensaje: str = ""
+    es_valido: bool
+    errores: list[str] = field(default_factory=list)
 
-    @classmethod
-    def ok(cls) -> "ResultadoValidacion":
-        return cls(valido=True)
-
-    @classmethod
-    def error(cls, mensaje: str) -> "ResultadoValidacion":
-        return cls(valido=False, mensaje=mensaje)
+    def agregar_error(self, mensaje: str) -> None:
+        """Agrega un error de validación."""
+        self.errores.append(mensaje)
+        self.es_valido = False
 
 
 class ReglaValidacion(ABC):
-    """Clase abstracta de una regla de validación de remito."""
+    """Clase base abstracta para reglas de validación de remitos."""
 
     @abstractmethod
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
+    def validar(self, remito: RemitoCarnicoIn) -> None:
+        """Valida el remito y agrega errores al resultado."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def nombre(self) -> str:
+        """Nombre de la regla."""
         raise NotImplementedError
 
 
-class ReglaRequiereDepositario(ReglaValidacion):
-    """Casos que requieren un depositario (sector C)."""
+class ReglaPuntoEmision(ReglaValidacion):
+    """Valida que el punto de emisión tenga 4 dígitos."""
 
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
-        from ..enums import CasoRemito
+    @property
+    def nombre(self) -> str:
+        return "Punto de emisión"
 
-        caso = CasoRemito(remito.caso)
-        if caso.tiene_depositario and remito.depositario_id is None:
-            return ResultadoValidacion.error(f"El caso {caso.value} requiere un depositario")
-        return ResultadoValidacion.ok()
+    def validar(self, remito: RemitoCarnicoIn) -> None:
+        resultado = self._resultado
+        if len(remito.punto_emision) != 4 or not remito.punto_emision.isdigit():
+            resultado.agregar_error("El punto de emisión debe tener 4 dígitos")
 
+    def __init__(self) -> None:
+        self._resultado: ResultadoValidacion | None = None
 
-class ReglaNoAdmiteDepositario(ReglaValidacion):
-    """Casos que no admiten depositario."""
-
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
-        from ..enums import CasoRemito
-
-        caso = CasoRemito(remito.caso)
-        if not caso.tiene_depositario and remito.depositario_id is not None:
-            return ResultadoValidacion.error(f"El caso {caso.value} no admite depositario")
-        return ResultadoValidacion.ok()
+    def ejecutar(self, remito: RemitoCarnicoIn, resultado: ResultadoValidacion) -> None:
+        self._resultado = resultado
+        self.validar(remito)
 
 
-class ReglaRequiereDestinatario(ReglaValidacion):
-    """Casos que requieren un destinatario (sector D)."""
+class ReglaNumeroComprobante(ReglaValidacion):
+    """Valida que el número de comprobante tenga 10 dígitos."""
 
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
-        from ..enums import CasoRemito
+    @property
+    def nombre(self) -> str:
+        return "Número de comprobante"
 
-        caso = CasoRemito(remito.caso)
-        if caso.tiene_destinatario and remito.destinatario_id is None:
-            return ResultadoValidacion.error(f"El caso {caso.value} requiere un destinatario")
-        return ResultadoValidacion.ok()
+    def validar(self, remito: RemitoCarnicoIn) -> None:
+        resultado = self._resultado
+        if len(remito.numero_comprobante) != 10 or not remito.numero_comprobante.isdigit():
+            resultado.agregar_error("El número de comprobante debe tener 10 dígitos")
 
+    def __init__(self) -> None:
+        self._resultado: ResultadoValidacion | None = None
 
-class ReglaNoAdmiteDestinatario(ReglaValidacion):
-    """Casos que no admiten destinatario (reparto y entrega en planta)."""
-
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
-        from ..enums import CasoRemito
-
-        caso = CasoRemito(remito.caso)
-        if not caso.tiene_destinatario and remito.destinatario_id is not None:
-            return ResultadoValidacion.error(f"El caso {caso.value} no admite destinatario")
-        return ResultadoValidacion.ok()
+    def ejecutar(self, remito: RemitoCarnicoIn, resultado: ResultadoValidacion) -> None:
+        self._resultado = resultado
+        self.validar(remito)
 
 
-class ReglaNumeroTropa(ReglaValidacion):
-    """Cada renglón cuya mercadería lo requiere debe tener N° de tropa."""
+class ReglaFechaVencimiento(ReglaValidacion):
+    """Valida que la fecha de vencimiento sea posterior a la fecha de emisión."""
 
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
-        for i, renglon in enumerate(remito.renglones, start=1):
-            if renglon.mercaderia and renglon.mercaderia.requiere_numero_tropa and not renglon.numero_tropa:
-                return ResultadoValidacion.error(
-                    f"Renglón {i}: la mercadería {renglon.mercaderia.codigo} "
-                    f"({renglon.mercaderia.descripcion}) requiere N° de tropa"
-                )
-        return ResultadoValidacion.ok()
+    @property
+    def nombre(self) -> str:
+        return "Fecha de vencimiento"
 
-
-class ReglaRenglonesNoVacios(ReglaValidacion):
-    """El remito debe tener al menos un renglón."""
-
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
-        if not remito.renglones:
-            return ResultadoValidacion.error("El remito debe tener al menos un renglón de mercadería")
-        return ResultadoValidacion.ok()
-
-
-class ReglaFechas(ReglaValidacion):
-    """La fecha de vencimiento debe ser posterior a la de emisión."""
-
-    def validar(self, remito: "RemitoCarnico") -> ResultadoValidacion:
+    def validar(self, remito: RemitoCarnicoIn) -> None:
+        resultado = self._resultado
         if remito.fecha_vencimiento <= remito.fecha_emision:
-            return ResultadoValidacion.error("La fecha de vencimiento debe ser posterior a la de emisión")
-        return ResultadoValidacion.ok()
+            resultado.agregar_error("La fecha de vencimiento debe ser posterior a la fecha de emisión")
+
+    def __init__(self) -> None:
+        self._resultado: ResultadoValidacion | None = None
+
+    def ejecutar(self, remito: RemitoCarnicoIn, resultado: ResultadoValidacion) -> None:
+        self._resultado = resultado
+        self.validar(remito)
+
+
+class ReglaRenglones(ReglaValidacion):
+    """Valida que el remito tenga al menos un renglón."""
+
+    @property
+    def nombre(self) -> str:
+        return "Renglones"
+
+    def validar(self, remito: RemitoCarnicoIn) -> None:
+        resultado = self._resultado
+        if not remito.renglones:
+            resultado.agregar_error("El remito debe tener al menos un renglón")
+
+    def __init__(self) -> None:
+        self._resultado: ResultadoValidacion | None = None
+
+    def ejecutar(self, remito: RemitoCarnicoIn, resultado: ResultadoValidacion) -> None:
+        self._resultado = resultado
+        self.validar(remito)
 
 
 class ValidadorRemito:
-    """Ejecuta un conjunto de reglas de validación sobre un remito."""
+    """Validador de remitos electrónicos cárnicos.
 
-    def __init__(self, reglas: Optional[list[ReglaValidacion]] = None) -> None:
-        self._reglas: list[ReglaValidacion] = (
-            reglas
-            if reglas is not None
-            else [
-                ReglaRequiereDepositario(),
-                ReglaNoAdmiteDepositario(),
-                ReglaRequiereDestinatario(),
-                ReglaNoAdmiteDestinatario(),
-                ReglaNumeroTropa(),
-                ReglaRenglonesNoVacios(),
-                ReglaFechas(),
-            ]
-        )
+    Aplica una lista de reglas de validación y devuelve el resultado.
+    """
 
-    def agregar_regla(self, regla: ReglaValidacion) -> "ValidadorRemito":
-        self._reglas.append(regla)
-        return self
+    def __init__(self, reglas: list[ReglaValidacion] | None = None) -> None:
+        self._reglas = reglas or [
+            ReglaPuntoEmision(),
+            ReglaNumeroComprobante(),
+            ReglaFechaVencimiento(),
+            ReglaRenglones(),
+        ]
 
-    def validar(self, remito: "RemitoCarnico") -> list[str]:
-        errores: list[str] = []
+    def validar(self, remito: RemitoCarnicoIn) -> ResultadoValidacion:
+        """Valida el remito aplicando todas las reglas."""
+        resultado = ResultadoValidacion(es_valido=True)
         for regla in self._reglas:
-            resultado = regla.validar(remito)
-            if not resultado.valido:
-                errores.append(resultado.mensaje)
-        return errores
-
-    def es_valido(self, remito: "RemitoCarnico") -> bool:
-        return not self.validar(remito)
+            regla.ejecutar(remito, resultado)
+        return resultado
