@@ -15,3 +15,4 @@ override.tf
 override.tf.json
 terraform/.netlify
 terraform/.terraform.lock.hcl
+docs/procarne/establecimientos.xlsx
