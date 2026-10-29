@@ -41,7 +41,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Database URL (same variable used by the application)
+# Database URL (same variable used by the application).
+# The URL is resolved *after* alembic.ini is parsed, so it overrides the
+# hardcoded ``sqlite:///./rocca.db`` fallback in ``[alembic] sqlalchemy.url``.
 DATABASE_URL = os.environ.get(
     "ROCCA_DATABASE_URL",
     "sqlite:///./rocca.db",
@@ -69,7 +71,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     """Run migrations in online mode (real connection)."""
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": DATABASE_URL},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
