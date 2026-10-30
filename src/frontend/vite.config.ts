@@ -7,8 +7,9 @@ export default defineConfig({
   plugins: [react()],
   base: "/",
   build: {
-    outDir: "dist",
+    outDir: "../backend/app/static",
     assetsDir: "static",
+    emptyOutDir: true,
   },
   server: {
     // En dev, Vite proxy-kea la API al backend Python (uvicorn en :8000).

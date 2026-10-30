@@ -11,8 +11,11 @@ Uso::
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from configs.dao import crear_dao
 from core.mercaderia.dao import MercaderiaDAO
@@ -54,6 +57,21 @@ class RoccaApp:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+
+    def _montar_frontend(self) -> None:
+        """Monta el build de React (dist) como archivos estáticos en la raíz.
+
+        El directorio se genera con `pnpm build` en el frontend y se emite
+        en app/static/. Se monta DESPUÉS de los routers /api/* para que
+        las rutas de la API tengan prioridad.
+        """
+        static_dir = Path(__file__).resolve().parent / "static"
+        if static_dir.is_dir():
+            self.app.mount(
+                "/",
+                StaticFiles(directory=str(static_dir), html=True),
+                name="frontend",
+            )
 
     def registrar_modulos(self) -> None:
         """Registra los routers de todos los módulos en la aplicación."""
@@ -101,6 +119,7 @@ class RoccaApp:
     def crear(self) -> FastAPI:
         """Compone la aplicación completa y la devuelve lista para servir."""
         self.registrar_modulos()
+        self._montar_frontend()
         return self.app
 
 

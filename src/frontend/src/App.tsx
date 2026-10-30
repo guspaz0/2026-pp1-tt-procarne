@@ -16,7 +16,7 @@ export default function App() {
   const [operadores, setOperadores] = useState<Operador[]>([]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/operadores`)
+    fetch(`${API_BASE}/api/registro-operadores`)
       .then((res) => res.json())
       .then(setOperadores);
   }, []);
