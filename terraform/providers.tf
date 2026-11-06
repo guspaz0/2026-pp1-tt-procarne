@@ -8,13 +8,16 @@ terraform {
   required_providers {
     vercel = {
       source  = "vercel/vercel"
-      # --- fijar a la última versión del registry, ej. version = "~> 0.x"
+      version = "~> 5.0"
     }
   }
 }
 
 provider "vercel" {
-  # Lee VERCEL_API_TOKEN del entorno (o vercel_token si se define abajo)
+  # El token se toma de var.vercel_api_token, que puede poblarse de dos formas:
+  #   1. terraform.tfvars  →  vercel_api_token = "vercel_xxx..."
+  #   2. Env var           →  export TF_VAR_vercel_api_token="vercel_xxx..."
+  #    (Terraform auto-mapea TF_VAR_<nombre> → variable <nombre>)
   api_token = var.vercel_api_token
   # team = var.vercel_team_id   # solo si se despliega bajo un team
 }

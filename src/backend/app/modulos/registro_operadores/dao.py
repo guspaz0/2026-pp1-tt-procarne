@@ -5,6 +5,7 @@ Modelos:
 - ``Habilitacion`` — habilitación de un operador para una actividad.
 - ``Inscripcion`` — inscripción de un operador en el registro.
 - ``DomicilioOperativo`` — domicilio operativo de un operador.
+- ``RequisitoInscripcion`` — requisito (general o específico) cumplido por un operador.
 """
 
 from __future__ import annotations
@@ -37,6 +38,7 @@ class ROCCAOperador(Base):
     telefono: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     tipo: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    categoria: Mapped[Optional[str]] = mapped_column(String(40), nullable=True, index=True)
     estado_registral: Mapped[str] = mapped_column(
         String(20), default=EstadoRegistral.ACTIVO.value, nullable=False, index=True
     )
@@ -55,9 +57,12 @@ class ROCCAOperador(Base):
     domicilios_operativos: Mapped[list["DomicilioOperativo"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
+    requisitos: Mapped[list["RequisitoInscripcion"]] = relationship(
+        back_populates="operador", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
-        return f"<ROCCAOperador id={self.id} cuit={self.cuit} tipo={self.tipo}>"
+        return f"<ROCCAOperador id={self.id} cuit={self.cuit} tipo={self.tipo} categoria={self.categoria}>"
 
 
 class Habilitacion(Base):
@@ -127,6 +132,35 @@ class DomicilioOperativo(Base):
         return f"<DomicilioOperativo id={self.id} operador_id={self.operador_id}>"
 
 
+class RequisitoInscripcion(Base):
+    """Modelo ORM de requisito de inscripción cumplido por un operador.
+
+    Cada requisito puede ser general (común a todas las categorías) o
+    específico (vinculado a una categoría de operador).
+    """
+
+    __tablename__ = "rocca_requisitos_inscripcion"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    operador_id: Mapped[int] = mapped_column(
+        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    codigo: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
+    descripcion: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    es_general: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    cumplido: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    fecha_cumplimiento: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    observaciones: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    operador: Mapped["ROCCAOperador"] = relationship(back_populates="requisitos")
+
+    def __repr__(self) -> str:
+        return f"<RequisitoInscripcion id={self.id} operador_id={self.operador_id} codigo={self.codigo} cumplido={self.cumplido}>"
+
+
 class ROCCAOperadorDAO:
     """DAO de operadores de la cadena cárnica."""
 
@@ -135,7 +169,8 @@ class ROCCAOperadorDAO:
 
     def crear(self, cuit: str, razon_social: str, tipo: TipoOperador | str,
               domicilio: str | None = None, domicilio_fiscal: str | None = None,
-              telefono: str | None = None, email: str | None = None) -> ROCCAOperador:
+              telefono: str | None = None, email: str | None = None,
+              categoria: str | None = None) -> ROCCAOperador:
         """Crea y persiste un operador nuevo."""
         with self._session_factory() as session:
             operador = ROCCAOperador(
@@ -146,6 +181,7 @@ class ROCCAOperadorDAO:
                 domicilio_fiscal=domicilio_fiscal,
                 telefono=telefono,
                 email=email,
+                categoria=categoria,
                 alta_fecha=datetime.now(timezone.utc),
             )
             session.add(operador)
@@ -168,8 +204,9 @@ class ROCCAOperadorDAO:
             )
 
     def listar(self, tipo: TipoOperador | str | None = None,
-               estado_registral: EstadoRegistral | str | None = None) -> list[ROCCAOperador]:
-        """Lista operadores, opcionalmente filtrados por tipo y estado."""
+               estado_registral: EstadoRegistral | str | None = None,
+               categoria: str | None = None) -> list[ROCCAOperador]:
+        """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
         with self._session_factory() as session:
             query = session.query(ROCCAOperador)
             if tipo is not None:
@@ -178,6 +215,8 @@ class ROCCAOperadorDAO:
                 query = query.filter_by(
                     estado_registral=estado_registral if isinstance(estado_registral, str) else estado_registral.value
                 )
+            if categoria is not None:
+                query = query.filter_by(categoria=categoria)
             return list(query.all())
 
     def actualizar_estado(self, operador_id: int, estado: EstadoRegistral) -> ROCCAOperador | None:
@@ -194,3 +233,12 @@ class ROCCAOperadorDAO:
             session.commit()
             session.refresh(operador)
             return operador
+
+    def listar_requisitos(self, operador_id: int) -> list[RequisitoInscripcion]:
+        """Lista los requisitos de inscripción de un operador."""
+        with self._session_factory() as session:
+            return (
+                session.query(RequisitoInscripcion)
+                .filter_by(operador_id=operador_id)
+                .all()
+            )

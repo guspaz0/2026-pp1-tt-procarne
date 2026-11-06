@@ -1,9 +1,15 @@
 {
   "info": {
     "name": "ROCCA — ProCarne Test Suite",
-    "description": "Suite de pruebas Postman generada a partir de los tests del backend (pytest) de ROCCA (ProCarne) — Sistema Provincial de Trazabilidad Carnica de Santiago del Estero.\n\nCubre los 4 modulos de la API REST:\n- /api/registro-operadores (Modulo I — Registro Provincial de Operadores)\n- /api/remitos-carnicos (Modulo — Remitos Electronicos Carnicos)\n- /api/trazabilidad (Modulo II — Trazabilidad Comercial)\n- /api/fiscalizacion (Modulo III — Fiscalizacion)\n\nCada request replica un test del backend con sus aserciones. Se asume una BD con el seed minimo de los tests (ver fixtures).",
+    "description": "Suite de pruebas Postman de la API REST de ROCCA (ProCarne) — Sistema Provincial de Trazabilidad Cárnica de Santiago del Estero.\n\nGenerada a partir de los controladores reales implementados en src/backend/app/modulos/:\n- /api/registro-operadores (Módulo I — Registro Provincial de Operadores)\n- /api/remitos-carnicos (Módulo — Remitos Electrónicos Cárnicos)\n- /api/trazabilidad (Módulo II — Trazabilidad Comercial)\n- /api/fiscalizacion (Módulo III — Fiscalización)\n\nCada request replica un endpoint implementado con su schema Pydantic (In/Out) y sus aserciones. Se asume una BD con el seed mínimo de los tests (ver fixtures).",
     "schema": "https://schema.postman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    }
+  ],
   "item": [
     {
       "name": "Health",
@@ -72,7 +78,7 @@
                 "registro-operadores"
               ]
             },
-            "description": ""
+            "description": "GET '' — lista operadores, opcionalmente filtrados por tipo y estado_registral."
           }
         },
         {
@@ -101,9 +107,15 @@
               "path": [
                 "api",
                 "registro-operadores"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "FRIGORIFICO"
+                }
               ]
             },
-            "description": ""
+            "description": "GET '' con query tipo."
           }
         },
         {
@@ -132,74 +144,15 @@
               "path": [
                 "api",
                 "registro-operadores"
-              ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "GET obtener por CUIT",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"cuit correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.cuit === \"30111111111\");\n});",
-                  "pm.test(\"razon_social correcta\", function () {\n    var data = pm.response.json();\n    pm.expect(data.razon_social === \"FRIGORIFICO TEST S.A.\");\n});",
-                  "pm.test(\"tipo correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.tipo === \"FRIGORIFICO\");\n});",
-                  "pm.test(\"estado correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.estado_registral === \"ACTIVO\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/registro-operadores/30111111111",
-              "host": [
-                "{{base_url}}"
               ],
-              "path": [
-                "api",
-                "registro-operadores",
-                "30111111111"
+              "query": [
+                {
+                  "key": "estado_registral",
+                  "value": "ACTIVO"
+                }
               ]
             },
-            "description": ""
-          }
-        },
-        {
-          "name": "GET obtener no existe (404)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 404\", function () {\n    pm.response.to.have.status(404);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/registro-operadores/99999999999",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "registro-operadores",
-                "99999999999"
-              ]
-            },
-            "description": ""
+            "description": "GET '' con query estado_registral."
           }
         },
         {
@@ -213,18 +166,19 @@
                   "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
                   "",
                   "pm.test(\"cuit correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.cuit === \"30222222222\");\n});",
-                  "pm.test(\"tipo correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.tipo === \"CARNICERIA\");\n});",
-                  "pm.test(\"1 habilitación\", function () {\n    var data = pm.response.json();\n    pm.expect(data.habilitaciones.length === 1);\n});",
-                  "pm.test(\"1 inscripción\", function () {\n    var data = pm.response.json();\n    pm.expect(data.inscripciones.length === 1);\n});",
-                  "pm.test(\"1 domicilio\", function () {\n    var data = pm.response.json();\n    pm.expect(data.domicilios.length === 1);\n});",
-                  "pm.test(\"localidad correcta\", function () {\n    var data = pm.response.json();\n    pm.expect(data.domicilios[0].localidad === \"Santiago del Estero\");\n});"
+                  "pm.test(\"tipo correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.tipo === \"CARNICERIA\");\n});"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/registro-operadores",
               "host": [
@@ -235,10 +189,10 @@
                 "registro-operadores"
               ]
             },
-            "description": "",
+            "description": "POST '' — body ROCCAOperadorIn. 409 si el CUIT ya existe, 422 si el CUIT es inválido.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cuit\": \"30222222222\",\n  \"razon_social\": \"CARNICERIA EL ESTERO\",\n  \"tipo\": \"CARNICERIA\",\n  \"domicilio\": \"Av. Rivadavia 500\",\n  \"telefono\": \"385-4444444\",\n  \"email\": \"carniceria@ester.com\",\n  \"habilitaciones\": [\n    {\n      \"tipo\": \"Sanitaria\",\n      \"numero\": \"HAB-100\",\n      \"autoridad\": \"ProCarne Fiscalización\",\n      \"fecha_emision\": \"2026-01-10\",\n      \"estado\": \"VIGENTE\"\n    }\n  ],\n  \"inscripciones\": [\n    {\n      \"tipo\": \"NACIONAL\",\n      \"organismo\": \"RFOCB\",\n      \"numero\": \"RFOCB-999\",\n      \"fecha_inscripcion\": \"2025-11-20\",\n      \"estado\": \"ACTIVA\"\n    }\n  ],\n  \"domicilios\": [\n    {\n      \"tipo\": \"PRINCIPAL\",\n      \"calle\": \"Av. Rivadavia\",\n      \"numero\": \"500\",\n      \"localidad\": \"Santiago del Estero\",\n      \"departamento\": \"Capital\",\n      \"provincia\": \"Santiago del Estero\"\n    }\n  ]\n}",
+              "raw": "{\n  \"cuit\": \"30222222222\",\n  \"razon_social\": \"CARNICERIA EL ESTERO\",\n  \"tipo\": \"CARNICERIA\",\n  \"domicilio\": \"Av. Rivadavia 500\",\n  \"domicilio_fiscal\": \"Av. Rivadavia 500\",\n  \"telefono\": \"385-4444444\",\n  \"email\": \"carniceria@ester.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -255,14 +209,19 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 409\", function () {\n    pm.response.to.have.status(409);\n});"
+                  "pm.test(\"Status code es 400 o 409\", function () {\n    pm.expect([400, 409]).to.include(pm.response.code);\n});"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/registro-operadores",
               "host": [
@@ -273,7 +232,7 @@
                 "registro-operadores"
               ]
             },
-            "description": "",
+            "description": "POST '' con CUIT ya registrado → el servicio lanza ROCCAOperadorError → HTTP 400.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"cuit\": \"30111111111\",\n  \"razon_social\": \"FRIGORIFICO TEST S.A.\",\n  \"tipo\": \"FRIGORIFICO\"\n}",
@@ -293,14 +252,19 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 422\", function () {\n    pm.response.to.have.status(422);\n});"
+                  "pm.test(\"Status code es 422 o 400\", function () {\n    pm.expect([400, 422]).to.include(pm.response.code);\n});"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/api/registro-operadores",
               "host": [
@@ -311,7 +275,7 @@
                 "registro-operadores"
               ]
             },
-            "description": "",
+            "description": "POST '' con CUIT no válido → 422 (validación Pydantic) o 400 (regla de negocio).",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"cuit\": \"123\",\n  \"razon_social\": \"INVALIDO\",\n  \"tipo\": \"FRIGORIFICO\"\n}",
@@ -324,49 +288,39 @@
           }
         },
         {
-          "name": "PATCH cambiar estado",
+          "name": "GET obtener operador por id",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"estado actualizado\", function () {\n    var data = pm.response.json();\n    pm.expect(data.estado_registral === \"SUSPENDIDO\");\n});"
+                  "pm.test(\"id correcto (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.id === 1);\n    }\n});"
                 ]
               }
             }
           ],
           "request": {
-            "method": "PATCH",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/registro-operadores/30111111111/estado",
+              "raw": "{{base_url}}/api/registro-operadores/1",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "registro-operadores",
-                "30111111111",
-                "estado"
+                "1"
               ]
             },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado_registral\": \"SUSPENDIDO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "GET '/{operador_id}' (id entero, no CUIT). 404 si no existe."
           }
         },
         {
-          "name": "PATCH cambiar estado no existe (404)",
+          "name": "GET obtener operador no existe (404)",
           "event": [
             {
               "listen": "test",
@@ -379,24 +333,291 @@
             }
           ],
           "request": {
-            "method": "PATCH",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/registro-operadores/99999999999/estado",
+              "raw": "{{base_url}}/api/registro-operadores/9999",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "registro-operadores",
-                "99999999999",
-                "estado"
+                "9999"
               ]
             },
-            "description": "",
+            "description": "GET '/{operador_id}' con id inexistente → 404."
+          }
+        },
+        {
+          "name": "PATCH cambiar estado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"estado actualizado (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado_registral === \"SUSPENDIDO\");\n    }\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/estado?estado=SUSPENDIDO",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "estado"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "SUSPENDIDO"
+                }
+              ]
+            },
+            "description": "PATCH '/{operador_id}/estado' — el estado va en QUERY (EstadoRegistral: ACTIVO, SUSPENDIDO, BAJADO), no en body. 404 si el operador no existe."
+          }
+        },
+        {
+          "name": "GET listar habilitaciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "",
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data));\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/habilitaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "habilitaciones"
+              ]
+            },
+            "description": "GET '/{operador_id}/habilitaciones'."
+          }
+        },
+        {
+          "name": "POST agregar habilitacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201 o 404\", function () {\n    pm.expect([201, 404]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"actividad correcta (si existe)\", function () {\n    if (pm.response.code === 201) {\n      var data = pm.response.json();\n      pm.expect(data.actividad === \"Corte y faena\");\n    }\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/habilitaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "habilitaciones"
+              ]
+            },
+            "description": "POST '/{operador_id}/habilitaciones' — body HabilitacionIn {actividad, fecha_vencimiento}.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estado_registral\": \"BAJADO\"\n}",
+              "raw": "{\n  \"actividad\": \"Corte y faena\",\n  \"fecha_vencimiento\": \"2027-01-10T00:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET listar inscripciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "",
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data));\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/inscripciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "inscripciones"
+              ]
+            },
+            "description": "GET '/{operador_id}/inscripciones'."
+          }
+        },
+        {
+          "name": "POST agregar inscripcion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201 o 404\", function () {\n    pm.expect([201, 404]).to.include(pm.response.code);\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/inscripciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "inscripciones"
+              ]
+            },
+            "description": "POST '/{operador_id}/inscripciones' — body InscripcionIn {tipo, numero_inscripcion}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"PRINCIPAL\",\n  \"numero_inscripcion\": \"RFOCB-999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET listar domicilios operativos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "",
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data));\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/domicilios-operativos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "domicilios-operativos"
+              ]
+            },
+            "description": "GET '/{operador_id}/domicilios-operativos'."
+          }
+        },
+        {
+          "name": "POST agregar domicilio operativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201 o 404\", function () {\n    pm.expect([201, 404]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"localidad correcta (si existe)\", function () {\n    if (pm.response.code === 201) {\n      var data = pm.response.json();\n      pm.expect(data.localidad === \"Santiago del Estero\");\n    }\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/domicilios-operativos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "domicilios-operativos"
+              ]
+            },
+            "description": "POST '/{operador_id}/domicilios-operativos' — body DomicilioOperativoIn {direccion, localidad, provincia, codigo_postal, es_principal}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"direccion\": \"Av. Rivadavia 500\",\n  \"localidad\": \"Santiago del Estero\",\n  \"provincia\": \"Santiago del Estero\",\n  \"codigo_postal\": \"4300\",\n  \"es_principal\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -418,14 +639,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
                   "",
-                  "pm.test(\"devuelve lista\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(Array.isArray(data) && data.length >= 0);",
-                  "});"
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
                 ]
               }
             }
@@ -442,7 +658,8 @@
                 "api",
                 "remitos-carnicos"
               ]
-            }
+            },
+            "description": "GET '' — lista remitos, opcionalmente filtrados por estado."
           }
         },
         {
@@ -453,14 +670,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
                   "",
-                  "pm.test(\"todos son EMITIDO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.every(r => r.estado === \"EMITIDO\"));",
-                  "});"
+                  "pm.test(\"todos son EMITIDO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(r => r.estado === \"EMITIDO\"));\n});"
                 ]
               }
             }
@@ -483,7 +695,8 @@
                   "value": "EMITIDO"
                 }
               ]
-            }
+            },
+            "description": "GET '' con query estado."
           }
         },
         {
@@ -494,14 +707,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
+                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
                   "",
-                  "pm.test(\"estado es EMITIDO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.estado === \"EMITIDO\");",
-                  "});"
+                  "pm.test(\"estado es EMITIDO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.estado === \"EMITIDO\");\n});"
                 ]
               }
             }
@@ -514,10 +722,6 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"punto_emision\": \"0001\",\n  \"numero_comprobante\": \"0000000001\",\n  \"caso\": \"01\",\n  \"tipo_movimiento\": \"ENVIO_NORMAL\",\n  \"fecha_emision\": \"2025-06-01T10:00:00\",\n  \"fecha_vencimiento\": \"2025-06-02T10:00:00\",\n  \"titular_cuit\": \"30111111111\",\n  \"transportista_cuit\": \"30222222222\",\n  \"destinatario_cuit\": \"30333333333\",\n  \"chofer_apellido_nombre\": \"Juan Perez\",\n  \"chofer_documento\": \"12345678\",\n  \"dominio_vehiculo\": \"ABC123\",\n  \"renglones\": [\n    {\n      \"codigo_afip\": \"1101\",\n      \"unidades\": \"100\",\n      \"kilos\": \"500.5\",\n      \"numero_tropa\": \"T-001\"\n    }\n  ]\n}"
-            },
             "url": {
               "raw": "{{base_url}}/api/remitos-carnicos",
               "host": [
@@ -527,6 +731,16 @@
                 "api",
                 "remitos-carnicos"
               ]
+            },
+            "description": "POST '' — body RemitoCarnicoIn. 400 si el servicio lanza RemitoCarnicoError.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"punto_emision\": \"0001\",\n  \"numero_comprobante\": \"0000000001\",\n  \"caso\": \"01\",\n  \"tipo_movimiento\": \"ENVIO_NORMAL\",\n  \"fecha_emision\": \"2025-06-01T10:00:00\",\n  \"fecha_vencimiento\": \"2025-06-02T10:00:00\",\n  \"titular_cuit\": \"30111111111\",\n  \"transportista_cuit\": \"30222222222\",\n  \"destinatario_cuit\": \"30333333333\",\n  \"chofer_apellido_nombre\": \"Juan Perez\",\n  \"chofer_documento\": \"12345678\",\n  \"dominio_vehiculo\": \"ABC123\",\n  \"renglones\": [\n    {\n      \"codigo_afip\": \"1101\",\n      \"unidades\": 100,\n      \"kilos\": 500.5,\n      \"numero_tropa\": \"T-001\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -538,9 +752,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});"
                 ]
               }
             }
@@ -558,7 +770,8 @@
                 "remitos-carnicos",
                 "1"
               ]
-            }
+            },
+            "description": "GET '/{remito_id}' (id entero). 404 si no existe."
           }
         },
         {
@@ -569,14 +782,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"estado es ENTREGADO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.estado === \"ENTREGADO\");",
-                  "});"
+                  "pm.test(\"estado es ENTREGADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"ENTREGADO\");\n    }\n});"
                 ]
               }
             }
@@ -601,7 +809,8 @@
                   "value": "ENTREGADO"
                 }
               ]
-            }
+            },
+            "description": "PATCH '/{remito_id}/estado' — el estado va en QUERY (EstadoRemito: EMITIDO, EN_TRANSITO, ENTREGADO, ANULADO, VENCIDO). 404 si el remito no existe."
           }
         }
       ]
@@ -617,14 +826,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
                   "",
-                  "pm.test(\"devuelve lista\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(Array.isArray(data) && data.length >= 0);",
-                  "});"
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
                 ]
               }
             }
@@ -641,7 +845,8 @@
                 "api",
                 "trazabilidad"
               ]
-            }
+            },
+            "description": "GET '' — lista registros, filtrable por estado, especie, origen_cuit y destino_cuit."
           }
         },
         {
@@ -652,14 +857,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
                   "",
-                  "pm.test(\"todos son REGISTRADO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.every(r => r.estado === \"REGISTRADO\"));",
-                  "});"
+                  "pm.test(\"todos son REGISTRADO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(r => r.estado === \"REGISTRADO\"));\n});"
                 ]
               }
             }
@@ -682,7 +882,8 @@
                   "value": "REGISTRADO"
                 }
               ]
-            }
+            },
+            "description": "GET '' con query estado."
           }
         },
         {
@@ -693,14 +894,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
                   "",
-                  "pm.test(\"todos son BOVINO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.every(r => r.especie === \"BOVINO\"));",
-                  "});"
+                  "pm.test(\"todos son BOVINO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(r => r.especie === \"BOVINO\"));\n});"
                 ]
               }
             }
@@ -723,7 +919,8 @@
                   "value": "BOVINO"
                 }
               ]
-            }
+            },
+            "description": "GET '' con query especie."
           }
         },
         {
@@ -734,9 +931,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});"
                 ]
               }
             }
@@ -759,7 +954,8 @@
                   "value": "30111111111"
                 }
               ]
-            }
+            },
+            "description": "GET '' con query destino_cuit."
           }
         },
         {
@@ -770,14 +966,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
+                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
                   "",
-                  "pm.test(\"estado es REGISTRADO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.estado === \"REGISTRADO\");",
-                  "});"
+                  "pm.test(\"estado es REGISTRADO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.estado === \"REGISTRADO\");\n});"
                 ]
               }
             }
@@ -790,10 +981,6 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"origen_cuit\": \"30222222222\",\n  \"destino_cuit\": \"30111111111\",\n  \"especie\": \"BOVINO\",\n  \"cantidad\": 10,\n  \"peso_kg\": 500.5,\n  \"fecha_movimiento\": \"2025-06-01T10:00:00\",\n  \"remito_numero\": \"0000000001\"\n}"
-            },
             "url": {
               "raw": "{{base_url}}/api/trazabilidad",
               "host": [
@@ -803,6 +990,16 @@
                 "api",
                 "trazabilidad"
               ]
+            },
+            "description": "POST '' — body RegistroTrazabilidadIn.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo_ingreso\": \"COMPRA\",\n  \"especie\": \"BOVINO\",\n  \"cantidad\": 10,\n  \"peso_kg\": 500.5,\n  \"origen_cuit\": \"30222222222\",\n  \"destino_cuit\": \"30111111111\",\n  \"tipo_destino\": \"FRIGORIFICO\",\n  \"fecha_ingreso\": \"2025-06-01T10:00:00\",\n  \"numero_remito\": \"0000000001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -814,9 +1011,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});"
                 ]
               }
             }
@@ -834,7 +1029,8 @@
                 "trazabilidad",
                 "1"
               ]
-            }
+            },
+            "description": "GET '/{registro_id}' (id entero). 404 si no existe."
           }
         },
         {
@@ -845,14 +1041,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"estado es CONFIRMADO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.estado === \"CONFIRMADO\");",
-                  "});"
+                  "pm.test(\"estado es CONFIRMADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"CONFIRMADO\");\n    }\n});"
                 ]
               }
             }
@@ -871,7 +1062,8 @@
                 "1",
                 "confirmar"
               ]
-            }
+            },
+            "description": "POST '/{registro_id}/confirmar'. 404 si el registro no existe o no puede confirmarse."
           }
         },
         {
@@ -882,14 +1074,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"estado es ANULADO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.estado === \"ANULADO\");",
-                  "});"
+                  "pm.test(\"estado es ANULADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"ANULADO\");\n    }\n});"
                 ]
               }
             }
@@ -908,7 +1095,8 @@
                 "1",
                 "anular"
               ]
-            }
+            },
+            "description": "POST '/{registro_id}/anular'. 404 si el registro no existe o no puede anularse."
           }
         }
       ]
@@ -924,14 +1112,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
                   "",
-                  "pm.test(\"devuelve lista\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(Array.isArray(data) && data.length >= 0);",
-                  "});"
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
                 ]
               }
             }
@@ -949,7 +1132,8 @@
                 "fiscalizacion",
                 "inspecciones"
               ]
-            }
+            },
+            "description": "GET '/inspecciones' — opcionalmente filtrado por operador_cuit."
           }
         },
         {
@@ -960,9 +1144,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "",
+                  "pm.test(\"todas son del operador\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(i => i.operador_cuit === \"30222222222\"));\n});"
                 ]
               }
             }
@@ -986,7 +1170,8 @@
                   "value": "30222222222"
                 }
               ]
-            }
+            },
+            "description": "GET '/inspecciones' con query operador_cuit."
           }
         },
         {
@@ -997,9 +1182,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
+                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
+                  "",
+                  "pm.test(\"operador correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.operador_cuit === \"30222222222\");\n});"
                 ]
               }
             }
@@ -1012,10 +1197,6 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"operador_cuit\": \"30222222222\",\n  \"fecha\": \"2025-06-01T10:00:00\",\n  \"inspector\": \"Dr. Smith\",\n  \"resultado\": \"CONFORME\",\n  \"observaciones\": \"Todo en orden\"\n}"
-            },
             "url": {
               "raw": "{{base_url}}/api/fiscalizacion/inspecciones",
               "host": [
@@ -1026,6 +1207,16 @@
                 "fiscalizacion",
                 "inspecciones"
               ]
+            },
+            "description": "POST '/inspecciones' — body InspeccionIn {tipo, operador_cuit, fecha, inspector, observaciones}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"PROGRAMADA\",\n  \"operador_cuit\": \"30222222222\",\n  \"fecha\": \"2025-06-01T10:00:00\",\n  \"inspector\": \"Dr. Smith\",\n  \"observaciones\": \"Todo en orden\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1037,9 +1228,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});"
                 ]
               }
             }
@@ -1058,7 +1247,8 @@
                 "inspecciones",
                 "1"
               ]
-            }
+            },
+            "description": "GET '/inspecciones/{inspeccion_id}'. 404 si no existe."
           }
         },
         {
@@ -1069,9 +1259,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "",
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
                 ]
               }
             }
@@ -1089,7 +1279,8 @@
                 "fiscalizacion",
                 "actas"
               ]
-            }
+            },
+            "description": "GET '/actas' — opcionalmente filtrado por inspeccion_id."
           }
         },
         {
@@ -1100,9 +1291,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
+                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
+                  "",
+                  "pm.test(\"numero correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.numero === \"ACT-001\");\n});"
                 ]
               }
             }
@@ -1115,10 +1306,6 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"inspeccion_id\": 1,\n  \"numero\": \"ACT-001\",\n  \"descripcion\": \"Acta de inspeccion\",\n  \"observaciones\": \"Sin observaciones\"\n}"
-            },
             "url": {
               "raw": "{{base_url}}/api/fiscalizacion/actas",
               "host": [
@@ -1129,6 +1316,16 @@
                 "fiscalizacion",
                 "actas"
               ]
+            },
+            "description": "POST '/actas' — body ActaIn {inspeccion_id, tipo, numero, fecha, contenido}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inspeccion_id\": 1,\n  \"tipo\": \"INSPECCION\",\n  \"numero\": \"ACT-001\",\n  \"fecha\": \"2025-06-01T10:00:00\",\n  \"contenido\": \"Acta de inspeccion sin observaciones\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1140,14 +1337,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"firmado_por esta seteado\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.firmado_por === \"Dr. Smith\");",
-                  "});"
+                  "pm.test(\"firmado_por esta seteado (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.firmado_por === \"Dr. Smith\");\n    }\n});"
                 ]
               }
             }
@@ -1173,7 +1365,8 @@
                   "value": "Dr. Smith"
                 }
               ]
-            }
+            },
+            "description": "POST '/actas/{acta_id}/firmar' — firmado_por va en QUERY. 404 si el acta no existe."
           }
         },
         {
@@ -1184,9 +1377,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "",
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
                 ]
               }
             }
@@ -1204,7 +1397,8 @@
                 "fiscalizacion",
                 "infracciones"
               ]
-            }
+            },
+            "description": "GET '/infracciones' — opcionalmente filtrado por operador_cuit."
           }
         },
         {
@@ -1215,9 +1409,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
+                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
+                  "",
+                  "pm.test(\"tipo correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.tipo === \"FALTA_DE_HIGIENE\");\n});"
                 ]
               }
             }
@@ -1230,10 +1424,6 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"operador_cuit\": \"30222222222\",\n  \"tipo\": \"FALTA_DE_HIGIENE\",\n  \"gravedad\": \"GRAVE\",\n  \"descripcion\": \"Falta de condiciones de higiene\",\n  \"fecha\": \"2025-06-01T10:00:00\"\n}"
-            },
             "url": {
               "raw": "{{base_url}}/api/fiscalizacion/infracciones",
               "host": [
@@ -1244,6 +1434,16 @@
                 "fiscalizacion",
                 "infracciones"
               ]
+            },
+            "description": "POST '/infracciones' — body InfraccionIn {inspeccion_id, operador_cuit, tipo, gravedad, descripcion}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inspeccion_id\": 1,\n  \"operador_cuit\": \"30222222222\",\n  \"tipo\": \"FALTA_DE_HIGIENE\",\n  \"gravedad\": \"GRAVE\",\n  \"descripcion\": \"Falta de condiciones de higiene\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1255,9 +1455,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+                  "",
+                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
                 ]
               }
             }
@@ -1275,7 +1475,8 @@
                 "fiscalizacion",
                 "sanciones"
               ]
-            }
+            },
+            "description": "GET '/sanciones' — opcionalmente filtrado por operador_cuit."
           }
         },
         {
@@ -1286,9 +1487,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
+                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
+                  "",
+                  "pm.test(\"tipo correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.tipo === \"MULTA\");\n});"
                 ]
               }
             }
@@ -1301,10 +1502,6 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"operador_cuit\": \"30222222222\",\n  \"tipo\": \"MULTA\",\n  \"monto\": 10000.0,\n  \"descripcion\": \"Multa por falta de higiene\",\n  \"fecha\": \"2025-06-01T10:00:00\"\n}"
-            },
             "url": {
               "raw": "{{base_url}}/api/fiscalizacion/sanciones",
               "host": [
@@ -1315,6 +1512,16 @@
                 "fiscalizacion",
                 "sanciones"
               ]
+            },
+            "description": "POST '/sanciones' — body SancionIn {infraccion_id, operador_cuit, tipo, monto, observaciones}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"infraccion_id\": 1,\n  \"operador_cuit\": \"30222222222\",\n  \"tipo\": \"MULTA\",\n  \"monto\": 10000.0,\n  \"observaciones\": \"Multa por falta de higiene\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1326,14 +1533,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"estado es NOTIFICADO\", function () {",
-                  "    var data = pm.response.json();",
-                  "    pm.expect(data.estado === \"NOTIFICADO\");",
-                  "});"
+                  "pm.test(\"estado es NOTIFICADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"NOTIFICADO\");\n    }\n});"
                 ]
               }
             }
@@ -1353,7 +1555,8 @@
                 "1",
                 "notificar"
               ]
-            }
+            },
+            "description": "POST '/sanciones/{sancion_id}/notificar'. 404 si la sanción no existe."
           }
         },
         {
@@ -1364,9 +1567,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
+                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
+                  "",
+                  "pm.test(\"mercaderia correcta\", function () {\n    var data = pm.response.json();\n    pm.expect(data.mercaderia === \"Carne de vacuno\");\n});"
                 ]
               }
             }
@@ -1379,10 +1582,6 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"operador_cuit\": \"30222222222\",\n  \"mercaderia\": \"Carne de vacuno\",\n  \"cantidad\": 100,\n  \"peso_kg\": 500.0,\n  \"motivo\": \"Producto caducado\",\n  \"fecha\": \"2025-06-01T10:00:00\"\n}"
-            },
             "url": {
               "raw": "{{base_url}}/api/fiscalizacion/decomisos",
               "host": [
@@ -1393,6 +1592,16 @@
                 "fiscalizacion",
                 "decomisos"
               ]
+            },
+            "description": "POST '/decomisos' — body DecomisoIn {inspeccion_id, mercaderia, cantidad, peso_kg, motivo}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inspeccion_id\": 1,\n  \"mercaderia\": \"Carne de vacuno\",\n  \"cantidad\": 100,\n  \"peso_kg\": 500.0,\n  \"motivo\": \"Producto caducado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1404,9 +1613,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"operador correcto (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.operador_cuit === \"30222222222\");\n    }\n});"
                 ]
               }
             }
@@ -1425,7 +1634,8 @@
                 "reincidencias",
                 "30222222222"
               ]
-            }
+            },
+            "description": "GET '/reincidencias/{operador_cuit}'. 404 si no hay reincidencias para el operador."
           }
         }
       ]

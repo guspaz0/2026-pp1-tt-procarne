@@ -6,6 +6,7 @@ Casos de uso:
 - Listar operadores (con filtros).
 - Cambiar el estado registral.
 - Agregar habilitaciones, inscripciones y domicilios operativos.
+- Gestionar requisitos de inscripción (generales y específicos por categoría).
 """
 
 from __future__ import annotations
@@ -16,10 +17,16 @@ from modulos.registro_operadores.dao import (
     DomicilioOperativo,
     Habilitacion,
     Inscripcion,
+    RequisitoInscripcion,
     ROCCAOperador,
     ROCCAOperadorDAO,
 )
-from modulos.registro_operadores.enums import EstadoRegistral
+from modulos.registro_operadores.enums import (
+    CategoriaOperador,
+    EstadoRegistral,
+    RequisitoEspecifico,
+    RequisitoGeneral,
+)
 from modulos.registro_operadores.schema import (
     DomicilioOperativoIn,
     DomicilioOperativoOut,
@@ -27,6 +34,8 @@ from modulos.registro_operadores.schema import (
     HabilitacionOut,
     InscripcionIn,
     InscripcionOut,
+    RequisitoInscripcionIn,
+    RequisitoInscripcionOut,
     ROCCAOperadorIn,
     ROCCAOperadorOut,
 )
@@ -34,6 +43,41 @@ from modulos.registro_operadores.schema import (
 
 class ROCCAOperadorError(Exception):
     """Error de negocio del servicio de operadores."""
+
+
+# ---------------------------------------------------------------------------
+# Matriz de requisitos específicos por categoría (según especificación)
+# ---------------------------------------------------------------------------
+
+REQUISITOS_ESPECIFICOS_POR_CATEGORIA: dict[str, list[str]] = {
+    CategoriaOperador.SALA_DE_DESPOSTE.value: [
+        RequisitoEspecifico.REGISTRO_NACIONAL_FRIGORIFICOS.value,
+    ],
+    CategoriaOperador.CAMARAS_FRIGORIFICAS.value: [
+        RequisitoEspecifico.REGISTRO_NACIONAL_CAMARAS.value,
+    ],
+    CategoriaOperador.FABRICA_DE_CHACINADOS.value: [
+        RequisitoEspecifico.REGISTRO_NACIONAL_CHACINADOS.value,
+    ],
+    CategoriaOperador.CARNICERIAS.value: [
+        RequisitoEspecifico.MATRICULA_MUNICIPAL_CARNICERIA.value,
+    ],
+    CategoriaOperador.TRANSPONEDOR.value: [
+        RequisitoEspecifico.REGISTRO_NACIONAL_TRANSPORTE.value,
+    ],
+    CategoriaOperador.SUPERMERCADO.value: [
+        RequisitoEspecifico.MATRICULA_MUNICIPAL_SUPERMERCADO.value,
+    ],
+    CategoriaOperador.DISTRIBUIDOR.value: [
+        RequisitoEspecifico.REGISTRO_NACIONAL_DISTRIBUIDOR.value,
+    ],
+}
+
+REQUISITOS_GENERALES: list[str] = [
+    RequisitoGeneral.INGRESOS_BRUTOS.value,
+    RequisitoGeneral.AFIP.value,
+    RequisitoGeneral.REGIMEN_PROVISIONAL.value,
+]
 
 
 class ROCCAOperadorService:
@@ -51,6 +95,16 @@ class ROCCAOperadorService:
         existente = self._dao.obtener_por_cuit(data.cuit)
         if existente is not None:
             raise ROCCAOperadorError(f"Ya existe un operador con CUIT {data.cuit}")
+
+        # Validar categoría si se proporciona
+        if data.categoria is not None:
+            categorias_validas = [c.value for c in CategoriaOperador]
+            if data.categoria not in categorias_validas:
+                raise ROCCAOperadorError(
+                    f"Categoría inválida: {data.categoria}. "
+                    f"Categorías válidas: {', '.join(categorias_validas)}"
+                )
+
         operador = self._dao.crear(
             cuit=data.cuit,
             razon_social=data.razon_social,
@@ -59,7 +113,12 @@ class ROCCAOperadorService:
             domicilio_fiscal=data.domicilio_fiscal,
             telefono=data.telefono,
             email=data.email,
+            categoria=data.categoria,
         )
+
+        # Crear los requisitos (generales + específicos) con estado "no cumplido"
+        self._crear_requisitos_iniciales(operador.id, data.categoria)
+
         return ROCCAOperadorOut.model_validate(operador)
 
     def obtener_por_cuit(self, cuit: str) -> ROCCAOperadorOut | None:
@@ -68,9 +127,10 @@ class ROCCAOperadorService:
         return ROCCAOperadorOut.model_validate(operador) if operador else None
 
     def listar(self, tipo: str | None = None,
-               estado_registral: str | None = None) -> list[ROCCAOperadorOut]:
-        """Lista operadores, opcionalmente filtrados por tipo y estado."""
-        operadores = self._dao.listar(tipo=tipo, estado_registral=estado_registral)
+               estado_registral: str | None = None,
+               categoria: str | None = None) -> list[ROCCAOperadorOut]:
+        """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
+        operadores = self._dao.listar(tipo=tipo, estado_registral=estado_registral, categoria=categoria)
         return [ROCCAOperadorOut.model_validate(op) for op in operadores]
 
     def cambiar_estado(self, operador_id: int, estado: EstadoRegistral) -> ROCCAOperadorOut:
@@ -174,3 +234,72 @@ class ROCCAOperadorService:
                 .all()
             )
             return [DomicilioOperativoOut.model_validate(d) for d in domicilios]
+
+    # ------------------------------------------------------------------
+    # Requisitos de inscripción
+    # ------------------------------------------------------------------
+
+    def listar_requisitos(self, operador_id: int) -> list[RequisitoInscripcionOut]:
+        """Lista los requisitos de inscripción de un operador."""
+        requisitos = self._dao.listar_requisitos(operador_id)
+        return [RequisitoInscripcionOut.model_validate(r) for r in requisitos]
+
+    def actualizar_requisito(self, operador_id: int, requisito_id: int,
+                             cumplido: bool, observaciones: str | None = None) -> RequisitoInscripcionOut:
+        """Actualiza el estado de cumplimiento de un requisito."""
+        with self._dao._session_factory() as session:
+            requisito = session.get(RequisitoInscripcion, requisito_id)
+            if requisito is None or requisito.operador_id != operador_id:
+                raise ROCCAOperadorError(f"No existe el requisito {requisito_id} para el operador {operador_id}")
+            requisito.cumplido = cumplido
+            if observaciones is not None:
+                requisito.observaciones = observaciones
+            if cumplido:
+                requisito.fecha_cumplimiento = datetime.now(timezone.utc)
+            else:
+                requisito.fecha_cumplimiento = None
+            session.commit()
+            session.refresh(requisito)
+            return RequisitoInscripcionOut.model_validate(requisito)
+
+    def obtener_requisitos_pendientes(self, operador_id: int) -> list[RequisitoInscripcionOut]:
+        """Lista los requisitos aún no cumplidos de un operador."""
+        requisitos = self._dao.listar_requisitos(operador_id)
+        pendientes = [r for r in requisitos if not r.cumplido]
+        return [RequisitoInscripcionOut.model_validate(r) for r in pendientes]
+
+    def obtener_requisitos_especificos_por_categoria(self, categoria: str) -> list[str]:
+        """Devuelve los códigos de requisitos específicos para una categoría."""
+        return REQUISITOS_ESPECIFICOS_POR_CATEGORIA.get(categoria, [])
+
+    # ------------------------------------------------------------------
+    # Internos
+    # ------------------------------------------------------------------
+
+    def _crear_requisitos_iniciales(self, operador_id: int, categoria: str | None) -> None:
+        """Crea los requisitos iniciales (generales + específicos) para un operador."""
+        with self._dao._session_factory() as session:
+            # Requisitos generales (comunes a todas las categorías)
+            for codigo in REQUISITOS_GENERALES:
+                req = RequisitoInscripcion(
+                    operador_id=operador_id,
+                    codigo=codigo,
+                    descripcion=codigo.replace("_", " ").title(),
+                    es_general=True,
+                    cumplido=False,
+                )
+                session.add(req)
+
+            # Requisitos específicos según categoría
+            if categoria is not None:
+                for codigo in REQUISITOS_ESPECIFICOS_POR_CATEGORIA.get(categoria, []):
+                    req = RequisitoInscripcion(
+                        operador_id=operador_id,
+                        codigo=codigo,
+                        descripcion=codigo.replace("_", " ").title(),
+                        es_general=False,
+                        cumplido=False,
+                    )
+                    session.add(req)
+
+            session.commit()

@@ -14,6 +14,7 @@ class ROCCAOperadorIn(BaseModel):
     cuit: str = Field(..., description="CUIT del operador (13 dígitos)")
     razon_social: str = Field(..., description="Razón social")
     tipo: str = Field(..., description="Tipo de operador (PRODUCTOR, FRIGORIFICO, etc.)")
+    categoria: Optional[str] = Field(None, description="Categoría según especificación (SALA_DE_DESPOSTE, CARNICERIAS, etc.)")
     domicilio: Optional[str] = Field(None, description="Domicilio")
     domicilio_fiscal: Optional[str] = Field(None, description="Domicilio fiscal")
     telefono: Optional[str] = Field(None, description="Teléfono")
@@ -31,6 +32,7 @@ class ROCCAOperadorOut(BaseModel):
     telefono: Optional[str]
     email: Optional[str]
     tipo: str
+    categoria: Optional[str]
     estado_registral: str
     alta_fecha: Optional[datetime]
     baja_fecha: Optional[datetime]
@@ -99,5 +101,31 @@ class DomicilioOperativoOut(BaseModel):
     provincia: Optional[str]
     codigo_postal: Optional[str]
     es_principal: bool
+
+    model_config = {"from_attributes": True}
+
+
+class RequisitoInscripcionIn(BaseModel):
+    """DTO de entrada para registrar un requisito de inscripción."""
+
+    codigo: str = Field(..., description="Código del requisito (ej: INGRESOS_BRUTOS, REGISTRO_NACIONAL_FRIGORIFICOS)")
+    descripcion: Optional[str] = Field(None, description="Descripción del requisito")
+    es_general: bool = Field(False, description="¿Es un requisito general (común a todas las categorías)?")
+    cumplido: bool = Field(False, description="¿Está cumplido?")
+    observaciones: Optional[str] = Field(None, description="Observaciones")
+
+
+class RequisitoInscripcionOut(BaseModel):
+    """DTO de salida de un requisito de inscripción."""
+
+    id: int
+    operador_id: int
+    codigo: str
+    descripcion: Optional[str]
+    es_general: bool
+    cumplido: bool
+    fecha_cumplimiento: Optional[datetime]
+    observaciones: Optional[str]
+    creado_en: datetime
 
     model_config = {"from_attributes": True}

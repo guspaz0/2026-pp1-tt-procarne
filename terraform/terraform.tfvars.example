@@ -1,0 +1,8 @@
+# Plantilla — copiar a terraform.tfvars (no commitear) y completar.
+# vercel_api_token: https://vercel.com/account/tokens (cuenta guspaz0)
+vercel_api_token    = "hcm_..."
+vercel_project_name = "nombre-proyecto"
+github_repo         = "usuario-git/repositorio"
+
+# URL de PostgreSQL (Insforge / Neon). Siempre PostgreSQL, no SQLite.
+rocca_database_url = "postgresql://user:pass@host:5432/rocca"
