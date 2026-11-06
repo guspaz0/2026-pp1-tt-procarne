@@ -13,13 +13,10 @@ resource "vercel_project" "api" {
   # Requiere que la integración GitHub de Vercel tenga acceso al repo
   # (GitHub → Settings → Connections → Applications → Vercel → All repos).
   git_repository = {
-    type = "github"
-    repo = var.github_repo
+    type              = "github"
+    repo              = var.github_repo
+    production_branch = "backend"
   }
-
-  # Rama que se considera producción (default: "main").
-  # Si tu rama principal se llama distinto, cambiala acá.
-  production_branch = "backend"
 }
 
 resource "vercel_project_environment_variable" "database_url" {
