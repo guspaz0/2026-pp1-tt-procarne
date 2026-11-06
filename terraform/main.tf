@@ -9,13 +9,17 @@ resource "vercel_project" "api" {
   root_directory = "src/backend"
 
   # Conecta el proyecto a GitHub: cada push genera un deployment
-  # automático (main → producción, demás branches → preview).
+  # automático. production_branch → producción, demás branches → preview.
   # Requiere que la integración GitHub de Vercel tenga acceso al repo
   # (GitHub → Settings → Connections → Applications → Vercel → All repos).
   git_repository = {
     type = "github"
     repo = var.github_repo
   }
+
+  # Rama que se considera producción (default: "main").
+  # Si tu rama principal se llama distinto, cambiala acá.
+  production_branch = "backend"
 }
 
 resource "vercel_project_environment_variable" "database_url" {
