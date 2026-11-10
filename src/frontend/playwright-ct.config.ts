@@ -10,13 +10,13 @@
  * Los specs CT viven en src/ (testMatch *.ct.spec.tsx). El entry point de CT
  * es `playwright/index.tsx` (beforeMount con Provider + worker.start).
  *
- * `ctViteConfig` usa el Vite 5 + plugin-react 4.7 del proyecto (el harness de
- * CT trae por defecto un Vite/plugin-react más nuevo, incompatible con Vite 5).
+ * NOTA sobre versiones: @playwright/experimental-ct-core trae su propio
+ * Vite 8 + @vitejs/plugin-react 6.x, así que el app debe correr sobre Vite 6+
+ * para que el plugin (que importa `vite/internal`) funcione. Si el proyecto
+ * sigue en Vite 5, la capa CT no arranca (ver TESTING.md).
  */
 import { defineConfig, devices } from "@playwright/experimental-ct-react";
-import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   testDir: "./src",
@@ -24,14 +24,11 @@ export default defineConfig({
   use: {
     ctPort: 3100,
     // El worker MSW se sirve desde public/ (mockServiceWorker.js).
+    // El plugin de React lo inyecta el framework de CT (plugin-react 6.x);
+    // acá solo agregamos Tailwind (compatible con Vite 5..8).
     ctViteConfig: {
       publicDir: "public",
-      plugins: [react(), tailwindcss()],
-      resolve: {
-        alias: {
-          "@": fileURLToPath(new URL("./src", import.meta.url)),
-        },
-      },
+      plugins: [tailwindcss()],
     },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

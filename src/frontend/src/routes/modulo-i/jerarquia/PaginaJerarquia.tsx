@@ -1,23 +1,16 @@
 /**
  * Jerarquía: Personas y Sucursales — sub-ruta /modulo-i/jerarquia.
- * Agrupa los operadores (sucursales) según la persona titular, identificada
- * por el CUIT. Cada persona agrupa todas sus sucursales.
+ * Agrupa los operadores (sucursales) según la persona titular, usando el
+ * endpoint /jerarquia del backend que devuelve la estructura correcta.
  */
 import { IconBuildings, IconUser } from "../../../components/shared/Icons";
-import {
-  selectGruposPorPersona,
-  selectItems,
-} from "../../../store/operadoresSlice";
-import { useListarQuery } from "../../../store/operadoresApi";
-import { useAppSelector } from "../../../store/hooks";
+import { useListarJerarquiaQuery } from "../../../store/operadoresApi";
 import { ModuloILayout } from "../ModuloILayout";
 
 export function PaginaJerarquia() {
-  const { isLoading, error } = useListarQuery();
-  const operadores = useAppSelector(selectItems);
-  const grupos = useAppSelector(selectGruposPorPersona);
+  const { data: grupos, isLoading, error } = useListarJerarquiaQuery();
 
-  const cargando = isLoading;
+  const totalSucursales = grupos?.reduce((acc, g) => acc + g.sucursales.length, 0) ?? 0;
 
   return (
     <ModuloILayout>
@@ -27,29 +20,29 @@ export function PaginaJerarquia() {
             Jerarquía: Personas y Sucursales
           </h2>
           <p className="text-[12px] text-rocca-texto-suave">
-            {grupos.length} persona{grupos.length !== 1 ? "s" : ""} titular
-            {grupos.length !== 1 ? "es" : ""} con {operadores.length} sucursal
-            {operadores.length !== 1 ? "es" : ""} en total.
+            {grupos?.length ?? 0} persona{(grupos?.length ?? 0) !== 1 ? "s" : ""} titular
+            {(grupos?.length ?? 0) !== 1 ? "es" : ""} con {totalSucursales} sucursal
+            {totalSucursales !== 1 ? "es" : ""} en total.
           </p>
         </div>
 
-        {cargando && (
+        {isLoading && (
           <div className="py-12 text-center text-[13px] text-rocca-texto-apagado">
             Cargando jerarquía…
           </div>
         )}
 
-        {!cargando && error && (
+        {!isLoading && error && (
           <div className="py-12 text-center text-[13px] text-rocca-error">
             Error al cargar: {JSON.stringify(error)}
           </div>
         )}
 
-        {!cargando &&
+        {!isLoading &&
           !error &&
-          grupos.map((g) => (
+          grupos?.map((g) => (
             <div
-              key={g.cuit}
+              key={g.persona_id}
               className="overflow-hidden rounded-lg border border-rocca-borde"
             >
               <div className="flex items-center gap-3 border-b border-rocca-borde bg-[#f8fafc] px-4 py-3">
@@ -61,7 +54,7 @@ export function PaginaJerarquia() {
                     {g.nombre}
                   </span>
                   <span className="text-[11px] text-rocca-texto-apagado">
-                    CUIT: {g.cuit}
+                    {g.tipo_documento}: {g.cuit}
                   </span>
                 </div>
                 <span className="ml-auto rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">

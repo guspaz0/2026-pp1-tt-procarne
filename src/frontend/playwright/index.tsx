@@ -11,7 +11,7 @@
 import { beforeMount } from "@playwright/experimental-ct-react/hooks";
 import { Provider } from "react-redux";
 import { setupStore, type RootState } from "../src/store/store";
-import { worker } from "../src/mocks/browser";
+import { browserWorker as worker } from "../tests/mocks/browser";
 
 /** Config que cada test puede pasar a `mount<HooksConfig>(...)`. */
 export type HooksConfig = {

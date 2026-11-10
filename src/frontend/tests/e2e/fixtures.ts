@@ -20,7 +20,7 @@
 import { test as base, expect } from "@playwright/test";
 import { defineNetworkFixture } from "@msw/playwright";
 import type { BrowserContext } from "@playwright/test";
-import { createHandlers } from "../../src/mocks/handlers";
+import { createHandlers } from "../mocks/handlers";
 
 // `defineNetworkFixture` no expone tipos en 0.7.0; el network resultante
 // tiene .use / .enable / .disable / .resetHandlers / .restoreHandlers.

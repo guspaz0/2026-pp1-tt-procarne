@@ -153,6 +153,59 @@ class ROCCAOperadorService:
         operadores = self._dao.listar(tipo=tipo, estado_registral=estado_registral, categoria=categoria)
         return [ROCCAOperadorOut.model_validate(op) for op in operadores]
 
+    def listar_jerarquia(self) -> list[dict]:
+        """Lista la jerarquía de personas y sucursales.
+        
+        Devuelve una lista de diccionarios con la estructura:
+        {
+            "persona_id": int,
+            "nombre": str,
+            "cuit": str,
+            "tipo_documento": str,
+            "sucursales": [ROCCAOperadorOut]
+        }
+        """
+        from sqlalchemy import text
+        
+        with self._dao._session_factory() as session:
+            # Obtener todos los operadores
+            operadores = session.query(ROCCAOperador).all()
+            
+            # Agrupar por persona_id
+            por_persona: dict[int, list[ROCCAOperador]] = {}
+            for op in operadores:
+                if op.persona_id not in por_persona:
+                    por_persona[op.persona_id] = []
+                por_persona[op.persona_id].append(op)
+            
+            # Obtener las personas usando una consulta SQL directa
+            result = session.execute(
+                text("SELECT id, nombre, identificador, tipo_documento, tipo FROM personas")
+            )
+            personas = result.fetchall()
+            persona_por_id = {p[0]: p for p in personas}
+            
+            # Construir la jerarquía
+            jerarquia = []
+            for persona_id, ops in por_persona.items():
+                persona = persona_por_id.get(persona_id)
+                if persona is None:
+                    continue
+                
+                jerarquia.append({
+                    "persona_id": persona[0],
+                    "nombre": persona[1],
+                    "cuit": persona[2],
+                    "tipo_documento": persona[3],
+                    "tipo_persona": persona[4],
+                    "sucursales": [ROCCAOperadorOut.model_validate(op) for op in ops]
+                })
+            
+            # Ordenar por nombre de persona
+            jerarquia.sort(key=lambda x: x["nombre"].upper())
+            
+            return jerarquia
+
     def cambiar_estado(self, operador_id: int, estado: EstadoRegistral) -> ROCCAOperadorOut:
         """Cambia el estado registral de un operador."""
         operador = self._dao.actualizar_estado(operador_id, estado)
