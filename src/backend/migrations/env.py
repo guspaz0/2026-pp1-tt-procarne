@@ -27,11 +27,16 @@ if _APP_DIR not in sys.path:
     sys.path.insert(0, _APP_DIR)
 
 # Import Base and all models so autogenerate can detect them.
+# Sprint actual: solo Módulo I (Registro de Operadores) + core.
 from configs.db import Base  # noqa: E402
-import modulos.remitos_carnicos.remitos_carnicos  # noqa: F401, E402  (registers models)
+import core.persona.dao  # noqa: F401, E402
 import modulos.registro_operadores.registro_operadores  # noqa: F401, E402
-import modulos.trazabilidad_comercial.trazabilidad_comercial  # noqa: F401, E402
-import modulos.fiscalizacion.fiscalizacion  # noqa: F401, E402
+
+# Módulos fuera del scope (reactivar al ampliar):
+# import core.mercaderia.dao  # noqa: F401, E402
+# import modulos.remitos_carnicos.remitos_carnicos  # noqa: F401, E402
+# import modulos.trazabilidad_comercial.trazabilidad_comercial  # noqa: F401, E402
+# import modulos.fiscalizacion.fiscalizacion  # noqa: F401, E402
 
 # ---------------------------------------------------------------------------
 # Alembic configuration

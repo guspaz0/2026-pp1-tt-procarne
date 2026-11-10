@@ -40,6 +40,22 @@ class EstadoRegistral(str, Enum):
     BAJADO = "BAJADO"
 
 
+class EstadoCertificado(str, Enum):
+    """Estado del certificado de operador.
+
+    Ciclo de vida:
+    - ACTIVO: estado inicial al emitirse el certificado.
+    - VENCIDO: fecha_vencimiento en el pasado (cálculo automático al consultar).
+    - SUSPENDIDO: suspensión manual por supervisor.
+    - RELEVADO: reemplazado por un certificado nuevo emitido antes del vencimiento.
+    """
+
+    ACTIVO = "ACTIVO"
+    VENCIDO = "VENCIDO"
+    SUSPENDIDO = "SUSPENDIDO"
+    RELEVADO = "RELEVADO"
+
+
 class TipoInscripcion(str, Enum):
     """Tipo de inscripción en el registro."""
 

@@ -14,22 +14,32 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from modulos.registro_operadores.dao import (
+    ActividadEconomica,
+    Certificado,
     DomicilioOperativo,
+    GrupoActividad,
     Habilitacion,
     Inscripcion,
     RequisitoInscripcion,
     ROCCAOperador,
     ROCCAOperadorDAO,
+    SubgrupoActividad,
 )
 from modulos.registro_operadores.enums import (
     CategoriaOperador,
+    EstadoCertificado,
     EstadoRegistral,
     RequisitoEspecifico,
     RequisitoGeneral,
 )
 from modulos.registro_operadores.schema import (
+    ActividadEconomicaOut,
+    CertificadoIn,
+    CertificadoOut,
+    CertificadoSuspenderIn,
     DomicilioOperativoIn,
     DomicilioOperativoOut,
+    GrupoActividadOut,
     HabilitacionIn,
     HabilitacionOut,
     InscripcionIn,
@@ -38,6 +48,7 @@ from modulos.registro_operadores.schema import (
     RequisitoInscripcionOut,
     ROCCAOperadorIn,
     ROCCAOperadorOut,
+    SubgrupoActividadOut,
 )
 
 
@@ -109,8 +120,8 @@ class ROCCAOperadorService:
             cuit=data.cuit,
             razon_social=data.razon_social,
             tipo=data.tipo,
-            domicilio=data.domicilio,
-            domicilio_fiscal=data.domicilio_fiscal,
+            persona_id=data.persona_id,
+            domicilio_comercial=data.domicilio_comercial,
             telefono=data.telefono,
             email=data.email,
             categoria=data.categoria,
@@ -125,6 +136,15 @@ class ROCCAOperadorService:
         """Busca un operador por su CUIT."""
         operador = self._dao.obtener_por_cuit(cuit)
         return ROCCAOperadorOut.model_validate(operador) if operador else None
+
+    def obtener(self, operador_id: int) -> ROCCAOperadorOut | None:
+        """Busca un operador por su id."""
+        with self._dao._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                return None
+            session.refresh(operador)
+            return ROCCAOperadorOut.model_validate(operador)
 
     def listar(self, tipo: str | None = None,
                estado_registral: str | None = None,
@@ -271,6 +291,168 @@ class ROCCAOperadorService:
     def obtener_requisitos_especificos_por_categoria(self, categoria: str) -> list[str]:
         """Devuelve los códigos de requisitos específicos para una categoría."""
         return REQUISITOS_ESPECIFICOS_POR_CATEGORIA.get(categoria, [])
+
+    # ------------------------------------------------------------------
+    # Catálogo de actividades económicas
+    # ------------------------------------------------------------------
+
+    def listar_grupos(self) -> list[GrupoActividadOut]:
+        """Lista los grupos de actividades económicas."""
+        with self._dao._session_factory() as session:
+            grupos = session.query(GrupoActividad).order_by(GrupoActividad.codigo).all()
+            return [GrupoActividadOut.model_validate(g) for g in grupos]
+
+    def listar_subgrupos(self, grupo: str | None = None) -> list[SubgrupoActividadOut]:
+        """Lista los subgrupos, opcionalmente filtrados por grupo (código)."""
+        with self._dao._session_factory() as session:
+            q = session.query(SubgrupoActividad)
+            if grupo:
+                g = session.query(GrupoActividad).filter_by(codigo=grupo).first()
+                if g:
+                    q = q.filter_by(grupo_id=g.id)
+            subgrupos = q.order_by(SubgrupoActividad.codigo).all()
+            return [SubgrupoActividadOut.model_validate(s) for s in subgrupos]
+
+    def listar_actividades(
+        self, grupo: str | None = None, subgrupo: str | None = None
+    ) -> list[ActividadEconomicaOut]:
+        """Lista las actividades económicas, opcionalmente filtradas por grupo/subgrupo (código)."""
+        with self._dao._session_factory() as session:
+            q = session.query(ActividadEconomica)
+            if grupo:
+                g = session.query(GrupoActividad).filter_by(codigo=grupo).first()
+                if g:
+                    q = q.filter_by(grupo_id=g.id)
+            if subgrupo:
+                # Find subgrupo by codigo (within the grupo if specified)
+                sq = session.query(SubgrupoActividad).filter_by(codigo=subgrupo)
+                if grupo:
+                    g = session.query(GrupoActividad).filter_by(codigo=grupo).first()
+                    if g:
+                        sq = sq.filter_by(grupo_id=g.id)
+                sg = sq.first()
+                if sg:
+                    q = q.filter_by(subgrupo_id=sg.id)
+            actividades = q.order_by(ActividadEconomica.codigo).all()
+            return [ActividadEconomicaOut.model_validate(a) for a in actividades]
+
+    # ------------------------------------------------------------------
+    # Certificados
+    # ------------------------------------------------------------------
+
+    def listar_certificados(self, operador_id: int) -> list[CertificadoOut]:
+        """Lista los certificados de un operador (con estado efectivo calculado)."""
+        with self._dao._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+            certs = (
+                session.query(Certificado)
+                .filter_by(operador_id=operador_id)
+                .order_by(Certificado.fecha_emision.desc())
+                .all()
+            )
+            return [CertificadoOut.from_certificado(c) for c in certs]
+
+    def obtener_certificado(self, operador_id: int, certificado_id: int) -> CertificadoOut:
+        """Obtiene un certificado específico (con estado efectivo calculado)."""
+        with self._dao._session_factory() as session:
+            cert = session.get(Certificado, certificado_id)
+            if cert is None or cert.operador_id != operador_id:
+                raise ROCCAOperadorError(f"No existe el certificado {certificado_id} para el operador {operador_id}")
+            return CertificadoOut.from_certificado(cert)
+
+    def suspender_certificado(self, operador_id: int, certificado_id: int,
+                              data: CertificadoSuspenderIn) -> CertificadoOut:
+        """Suspende un certificado (acción de supervisor).
+
+        Solo se puede suspender un certificado en estado ACTIVO.
+        """
+        with self._dao._session_factory() as session:
+            cert = session.get(Certificado, certificado_id)
+            if cert is None or cert.operador_id != operador_id:
+                raise ROCCAOperadorError(f"No existe el certificado {certificado_id} para el operador {operador_id}")
+            if cert.estado != EstadoCertificado.ACTIVO.value:
+                raise ROCCAOperadorError(
+                    f"No se puede suspender un certificado en estado {cert.estado}"
+                )
+            cert.estado = EstadoCertificado.SUSPENDIDO.value
+            if data.observaciones:
+                cert.observaciones = (cert.observaciones or "") + f" | Suspendido: {data.observaciones}"
+            session.commit()
+            session.refresh(cert)
+            return CertificadoOut.from_certificado(cert)
+
+    def reactivar_certificado(self, operador_id: int, certificado_id: int) -> CertificadoOut:
+        """Reactiva un certificado suspendido (acción de supervisor).
+
+        Solo se puede reactivar un certificado en estado SUSPENDIDO.
+        """
+        with self._dao._session_factory() as session:
+            cert = session.get(Certificado, certificado_id)
+            if cert is None or cert.operador_id != operador_id:
+                raise ROCCAOperadorError(f"No existe el certificado {certificado_id} para el operador {operador_id}")
+            if cert.estado != EstadoCertificado.SUSPENDIDO.value:
+                raise ROCCAOperadorError(
+                    f"No se puede reactivar un certificado en estado {cert.estado}"
+                )
+            cert.estado = EstadoCertificado.ACTIVO.value
+            session.commit()
+            session.refresh(cert)
+            return CertificadoOut.from_certificado(cert)
+
+    def crear_certificado(self, operador_id: int, data: CertificadoIn) -> CertificadoOut:
+        """Crea un certificado para un operador.
+
+        Regla de relevación: si existe un certificado ACTIVO cuya fecha_vencimiento
+        es posterior a la fecha_emision del nuevo certificado, el certificado
+        anterior pasa a estado RELEVADO.
+        """
+        with self._dao._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+
+            # --- Regla de relevación ---
+            # Buscar certificados ACTIVO del mismo operador que estén vigentes
+            # en la fecha de emisión del nuevo certificado.
+            activos = (
+                session.query(Certificado)
+                .filter(
+                    Certificado.operador_id == operador_id,
+                    Certificado.estado == EstadoCertificado.ACTIVO.value,
+                )
+                .all()
+            )
+            for cert_ant in activos:
+                # El certificado anterior es relevante si su vencimiento es
+                # posterior a la emisión del nuevo (es decir, el nuevo se emite
+                # mientras el anterior aún estaba vigente).
+                if cert_ant.fecha_vencimiento is not None:
+                    venc = cert_ant.fecha_vencimiento
+                    emision = data.fecha_emision
+                    # Normalizar a aware UTC para la comparación
+                    if venc.tzinfo is None:
+                        venc = venc.replace(tzinfo=timezone.utc)
+                    if emision.tzinfo is None:
+                        emision = emision.replace(tzinfo=timezone.utc)
+                    if venc > emision:
+                        cert_ant.estado = EstadoCertificado.RELEVADO.value
+
+            # --- Crear el nuevo certificado ---
+            cert = Certificado(
+                operador_id=operador_id,
+                numero_certificado=data.numero_certificado,
+                tipo_certificado=data.tipo_certificado,
+                fecha_emision=data.fecha_emision,
+                fecha_vencimiento=data.fecha_vencimiento,
+                actividades_economicas=data.actividades_economicas,
+                observaciones=data.observaciones,
+            )
+            session.add(cert)
+            session.commit()
+            session.refresh(cert)
+            return CertificadoOut.from_certificado(cert)
 
     # ------------------------------------------------------------------
     # Internos

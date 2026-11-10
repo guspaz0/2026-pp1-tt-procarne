@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from configs.db import Base
 
@@ -28,6 +28,10 @@ class Persona(Base):
     domicilio: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     creado_en: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    operadores: Mapped[list["ROCCAOperador"]] = relationship(
+        back_populates="persona"
     )
 
     def __repr__(self) -> str:
