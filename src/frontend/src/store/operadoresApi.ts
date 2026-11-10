@@ -12,6 +12,16 @@ export type OperadorIn = {
   email?: string | null;
 };
 
+/** Estructura de jerarquía devuelta por el backend. */
+export type GrupoPersona = {
+  persona_id: number;
+  nombre: string;
+  cuit: string;
+  tipo_documento: string;
+  tipo_persona: string;
+  sucursales: Operador[];
+};
+
 /**
  * API RTK Query para el backend FastAPI (ROCCA).
  *
@@ -54,7 +64,14 @@ export const operadoresApi = createApi({
       }),
       invalidatesTags: () => [{ type: "Operador", id: "LIST" }] as const,
     }),
+    /**
+     * Jerarquía de personas y sucursales.
+     */
+    listarJerarquia: builder.query<GrupoPersona[], void>({
+      query: () => "/registro-operadores/jerarquia",
+      providesTags: [{ type: "Operador", id: "LIST" }] as const,
+    }),
   }),
 });
 
-export const { useListarQuery, useRegistrarMutation } = operadoresApi;
+export const { useListarQuery, useRegistrarMutation, useListarJerarquiaQuery } = operadoresApi;

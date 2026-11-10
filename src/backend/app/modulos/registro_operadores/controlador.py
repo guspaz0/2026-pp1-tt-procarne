@@ -80,6 +80,14 @@ def crear_router(servicio: ROCCAOperadorService) -> APIRouter:
         """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
         return servicio.listar(tipo=tipo, estado_registral=estado_registral, categoria=categoria)
 
+    @router.get("/jerarquia")
+    def listar_jerarquia():
+        """Lista la jerarquía de personas y sucursales.
+        
+        Devuelve una lista de personas, cada una con sus sucursales (operadores) asociadas.
+        """
+        return servicio.listar_jerarquia()
+
     @router.post("", response_model=ROCCAOperadorOut, status_code=201)
     def crear_operador(data: ROCCAOperadorIn):
         """Da de alta un operador en el registro provincial."""
@@ -271,3 +279,4 @@ def crear_router(servicio: ROCCAOperadorService) -> APIRouter:
             raise HTTPException(status_code=404, detail=str(e))
 
     return router
+# Force deploy 1794296750

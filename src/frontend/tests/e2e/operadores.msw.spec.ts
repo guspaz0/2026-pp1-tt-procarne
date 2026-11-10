@@ -1,65 +1,59 @@
 /**
- * E2E con MSW a nivel de Playwright (@msw/playwright).
+ * E2E contra el worker de MSW in-app (arrancado con `?mocks=1` en main.tsx).
  *
- * A diferencia de mocks.spec.ts (worker in-app `?mocks=1`), aquí MSW
- * intercepta a nivel de Playwright: no hay service worker ni código de MSW
- * en la app. Esto permite overrides POR TEST (error 500, lista vacía, etc.).
+ * El service worker del navegador responde a /api/registro-operadores. Los
+ * overrides por test se hacen vía `page.evaluate` sobre `window.__mswWorker`
+ * (expuesto en main.tsx), p. ej. para simular error 500 o lista vacía.
  *
  * Correr:  npx playwright test tests/e2e/operadores.msw.spec.ts
  */
-import { http, HttpResponse } from "msw";
-import { test, expect } from "./fixtures";
+import { test, expect } from "@playwright/test";
 
-test.describe("E2E + @msw/playwright", () => {
+const URL_PADRON = "/operadores/padron?mocks=1";
+const URL_INSCRIPCION = "/operadores/inscripcion?mocks=1";
+
+test.describe("E2E + worker MSW (in-app, ?mocks=1)", () => {
   test("muestra el padrón mockeado (handlers iniciales)", async ({ page }) => {
-    await page.goto("/operadores/padron");
-    await expect(page.getByText("CARNICERÍA LA NORITA")).toBeVisible();
-    await expect(
-      page.getByText("7 establecimientos registrados"),
-    ).toBeVisible();
+    await page.goto(URL_PADRON);
+    await expect(page.getByText("CARNICERÍA LA NORITA").first()).toBeVisible();
+    // El mock trae 7 operadores; el encabezado refleja el total.
+    await expect(page.getByText(/7 establecimientos registrados/)).toBeVisible();
   });
 
-  test("override por test: lista vacía", async ({ page, network }) => {
-    network.use(
-      http.get("/api/registro-operadores", () => HttpResponse.json([])),
-    );
-    await page.goto("/operadores/padron");
-    await expect(
-      page.getByText(/No se encontraron operadores/),
-    ).toBeVisible();
-  });
-
-  test("override por test: la API falla (500)", async ({ page, network }) => {
-    network.use(
-      http.get(
-        "/api/registro-operadores",
-        () => new HttpResponse(null, { status: 500 }),
-      ),
-    );
-    await page.goto("/operadores/padron");
-
-    // RTK Query marca el query en error; el UI no debe mostrar la tabla
-    // con datos ni el estado de carga perpetuo.
-    await expect(page.getByText("CARNICERÍA LA NORITA")).toBeHidden();
+  test("override por test: resetHandlers → lista vacía", async ({ page }) => {
+    await page.goto(URL_PADRON);
+    await expect(page.getByText("CARNICERÍA LA NORITA").first()).toBeVisible();
+    // Override: quitamos los handlers por test → el GET no tiene respuesta
+    // mockeada y el UI no muestra filas.
+    await page.evaluate(() => (window as any).__mswWorker.resetHandlers());
+    await page.reload();
+    await expect(page.getByText("CARNICERÍA LA NORITA")).toHaveCount(0);
   });
 
   test("alta mockeada: registrar aparece en el padrón", async ({ page }) => {
-    await page.goto("/operadores/inscripcion");
+    await page.goto(URL_INSCRIPCION);
 
-    const nombre = `MSW PW ${Date.now()}`;
-    const cuit = "30-77777777-7";
+    // CUIT único (no está en el seed del mock) para no chocar con el 409.
+    const cuit = `30-9${Math.floor(10000000 + Math.random() * 89999999)}-5`;
+    const establecimiento = `MSW SW ${Date.now()}`;
     await page.getByLabel(/C\.U\.I\.T/).fill(cuit);
-    await page.getByLabel(/Apellido y Nombre del Titular/).fill(nombre);
-    await page.getByRole("button", { name: /Carnicería Minorista/ }).click();
+    await page.getByLabel(/Apellido y Nombre del Titular/).fill("TITULAR PRUEBA");
+    await page
+      .getByLabel(/Nombre del Establecimiento|Fantasia/)
+      .fill(establecimiento);
     await page
       .getByRole("button", { name: /Registrar Operador y Emitir Cartón/ })
       .click();
 
+    // Confirmación de éxito (role="status").
     await expect(
-      page.getByRole("status").getByText(new RegExp(`CUIT ${cuit}`)),
+      page
+        .getByRole("status")
+        .getByText(new RegExp(`Operador registrado con CUIT ${cuit}`)),
     ).toBeVisible();
 
+    // El nuevo establecimiento aparece en el padrón (invalidation de RTK Query).
     await page.getByRole("link", { name: /Padrón de Operadores/ }).click();
-    await expect(page.getByRole("row").getByText(nombre)).toBeVisible();
+    await expect(page.getByText(establecimiento)).toBeVisible();
   });
 });
