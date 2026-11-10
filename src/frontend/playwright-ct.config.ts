@@ -23,6 +23,8 @@ export default defineConfig({
   testMatch: "**/*.ct.spec.tsx",
   use: {
     ctPort: 3100,
+    // Pantalla al FINAL de cada test (pasa y falla).
+    screenshot: "on",
     // El worker MSW se sirve desde public/ (mockServiceWorker.js).
     // El plugin de React lo inyecta el framework de CT (plugin-react 6.x);
     // acá solo agregamos Tailwind (compatible con Vite 5..8).

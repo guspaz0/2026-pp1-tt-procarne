@@ -14,6 +14,7 @@ class Mercaderia(Base):
     """Modelo ORM de mercadería (catálogo genérico)."""
 
     __tablename__ = "mercaderias_genericas"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     codigo: Mapped[str] = mapped_column(String(20), nullable=False, unique=True, index=True)

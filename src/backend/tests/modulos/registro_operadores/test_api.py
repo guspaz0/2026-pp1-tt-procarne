@@ -70,7 +70,7 @@ class TestAPIRegistroOperadores:
 
     def test_listar_filtrar_por_estado(self, api_client):
         r = api_client.get(
-            "/api/registro-operadores", params={"estado_registral": "ACTIVO"}
+            "/api/registro-operadores", params={"estado_registral": "PENDIENTE"}
         )
         assert r.status_code == 200
         assert len(r.json()) == 1
@@ -91,7 +91,7 @@ class TestAPIRegistroOperadores:
         assert r.status_code == 201
         body = r.json()
         assert body["cuit"] == "30222222222"
-        assert body["estado_registral"] == "ACTIVO"
+        assert body["estado_registral"] == "PENDIENTE"
 
     def test_crear_operador_duplicado(self, api_client):
         data = {

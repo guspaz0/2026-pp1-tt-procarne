@@ -19,6 +19,7 @@ class Persona(Base):
     """Modelo ORM de persona (física o jurídica)."""
 
     __tablename__ = "personas"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tipo: Mapped[str] = mapped_column(String(10), nullable=False)  # FISICA / JURIDICA
@@ -32,6 +33,9 @@ class Persona(Base):
 
     operadores: Mapped[list["ROCCAOperador"]] = relationship(
         back_populates="persona"
+    )
+    adjuntos: Mapped[list["AdjuntoPersona"]] = relationship(
+        back_populates="persona", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

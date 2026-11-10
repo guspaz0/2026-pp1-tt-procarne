@@ -22,6 +22,7 @@ class Actividad(Base):
     """Modelo ORM de actividad económica."""
 
     __tablename__ = "actividades"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     nombre: Mapped[str] = mapped_column(String(60), nullable=False, unique=True)
@@ -34,6 +35,7 @@ class CategoriaAfip(Base):
     """Modelo ORM de categoría AFIP."""
 
     __tablename__ = "categorias_afip"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     actividad_id: Mapped[int] = mapped_column(
@@ -50,6 +52,7 @@ class Situcion(Base):
     """Modelo ORM de situación del operador."""
 
     __tablename__ = "situaciones"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     descripcion: Mapped[str] = mapped_column(String(60), nullable=False, unique=True)
@@ -62,6 +65,7 @@ class CategoriaOperador(Base):
     """Modelo ORM de categoría de un operador."""
 
     __tablename__ = "operador_categorias"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(

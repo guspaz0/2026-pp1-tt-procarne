@@ -16,6 +16,7 @@ class CategoriaOperador(str, Enum):
     CAMARAS_FRIGORIFICAS = "CAMARAS_FRIGORIFICAS"
     FABRICA_DE_CHACINADOS = "FABRICA_DE_CHACINADOS"
     CARNICERIAS = "CARNICERIAS"
+    CARNICERIA_CON_CAMARA = "CARNICERIA_CON_CAMARA"
     TRANSPONEDOR = "TRANSPONEDOR"
     SUPERMERCADO = "SUPERMERCADO"
     DISTRIBUIDOR = "DISTRIBUIDOR"
@@ -33,8 +34,13 @@ class TipoOperador(str, Enum):
 
 
 class EstadoRegistral(str, Enum):
-    """Estado registral del operador."""
+    """Estado registral del operador.
 
+    Ciclo de vida:
+    PENDIENTE → (supervisor activa) → ACTIVO → (suspende) → SUSPENDIDO → (reactiva) → ACTIVO / (baja) → BAJADO
+    """
+
+    PENDIENTE = "PENDIENTE"
     ACTIVO = "ACTIVO"
     SUSPENDIDO = "SUSPENDIDO"
     BAJADO = "BAJADO"
@@ -70,28 +76,55 @@ class TipoDomicilio(str, Enum):
     OPERATIVO = "OPERATIVO"
 
 
-class RequisitoGeneral(str, Enum):
-    """Requisitos generales de inscripción (comunes a todas las categorías)."""
+class RequisitoAdjuntoPersona(str, Enum):
+    """Requisitos de adjuntos de persona (compartidos entre todos sus operadores).
 
-    INGRESOS_BRUTOS = "INGRESOS_BRUTOS"
-    AFIP = "AFIP"
-    REGIMEN_PROVISIONAL = "REGIMEN_PROVISIONAL"
+    Son documentos de identidad e impositivos que se cargan una sola vez.
+    """
+
+    DNI_FRENTE = "dni_frente"
+    DNI_DORSO = "dni_dorso"
+    CUIT = "cuit"
+    IIBB = "iibb"
+
+
+class RequisitoGeneralOperador(str, Enum):
+    """Requisitos generales de adjuntos de operador (comunes a todas las categorías)."""
+
+    AFIP_ULTIMO_PAGO = "afip_ultimo_pago"
+    REGIMEN_PROVISIONAL = "regimen_provisional"
 
 
 class RequisitoEspecifico(str, Enum):
-    """Requisitos específicos según categoría de operador."""
+    """Requisitos específicos según categoría de operador.
+
+    Cada código corresponde a un documento que se adjunta por operador.
+    """
+
+    # Comunes a varias categorías
+    FORMULARIO_101 = "formulario_101"
+    HABILITACION_MUNICIPAL = "habilitacion_municipal"
+    LIBRETA_SANITARIA = "libreta_sanitaria"
 
     # Sala de desposte
-    REGISTRO_NACIONAL_FRIGORIFICOS = "REGISTRO_NACIONAL_FRIGORIFICOS"
-    # Cámaras frigoríficas
-    REGISTRO_NACIONAL_CAMARAS = "REGISTRO_NACIONAL_CAMARAS"
+    MEMORIA_CONSTRUCTIVA = "memoria_constructiva"
+    MEMORIA_OPERATIVA = "memoria_operativa"
+    CERTIFICADO_EFLUENTES = "certificado_efluentes"
+
+    # Cámaras frigoríficas / Carnicería con cámara
+    PLANO_CAMARA = "plano_camara"
+    MATRICULA_RUCA = "matricula_ruca"
+    USUARIO_FAENADOR = "usuario_faenador"
+    DOMINIO_CAMARA = "dominio_camara"
+    HABILITACION_SANITARIA_CAMARA = "habilitacion_sanitaria_camara"
+
     # Fábrica de chacinados
-    REGISTRO_NACIONAL_CHACINADOS = "REGISTRO_NACIONAL_CHACINADOS"
-    # Carnicerías
-    MATRICULA_MUNICIPAL_CARNICERIA = "MATRICULA_MUNICIPAL_CARNICERIA"
-    # Transportista
-    REGISTRO_NACIONAL_TRANSPORTE = "REGISTRO_NACIONAL_TRANSPORTE"
-    # Supermercado
-    MATRICULA_MUNICIPAL_SUPERMERCADO = "MATRICULA_MUNICIPAL_SUPERMERCADO"
-    # Distribuidor
-    REGISTRO_NACIONAL_DISTRIBUIDOR = "REGISTRO_NACIONAL_DISTRIBUIDOR"
+    PLANOS_OBRA = "planos_obra"
+    MEMORIA_EDILICIA = "memoria_edilicia"
+    TASA_FOJAS = "tasa_fojas"
+    PERMISO_VUELCO_EFLUENTES = "permiso_vuelco_efluentes"
+    ACTA_CONSTITUCION = "acta_constitucion"
+    DOMINIO_ESTABLECIMIENTO = "dominio_establecimiento"
+    DDJJ_VOLUMEN = "ddjj_volumen"
+    LIBRO_ACTAS = "libro_actas"
+    INSCRIPCION_BROMATOLOGIA = "inscripcion_bromatologia"

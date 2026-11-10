@@ -207,10 +207,10 @@ export function PadronSucursales() {
                 </tr>
               )}
 
-              {!cargando && error && (
+              {!cargando && (error as object) && (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-rocca-error">
-                    Error al cargar el padrón: {JSON.stringify(error)}
+                    Error al cargar el padrón: {error instanceof Error ? error.message : JSON.stringify(error)}
                   </td>
                 </tr>
               )}

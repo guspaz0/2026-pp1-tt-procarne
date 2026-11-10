@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "ROCCA — ProCarne Test Suite",
-    "description": "Suite de pruebas Postman de la API REST de ROCCA (ProCarne) — Sistema Provincial de Trazabilidad Cárnica de Santiago del Estero.\n\nGenerada a partir de los controladores reales implementados en src/backend/app/modulos/:\n- /api/registro-operadores (Módulo I — Registro Provincial de Operadores)\n- /api/remitos-carnicos (Módulo — Remitos Electrónicos Cárnicos)\n- /api/trazabilidad (Módulo II — Trazabilidad Comercial)\n- /api/fiscalizacion (Módulo III — Fiscalización)\n\nCada request replica un endpoint implementado con su schema Pydantic (In/Out) y sus aserciones. Se asume una BD con el seed mínimo de los tests (ver fixtures).",
+    "description": "Suite de pruebas Postman de la API REST de ROCCA (ProCarne) — Sistema Provincial de Trazabilidad Cárnica de Santiago del Estero.\n\nGenerada a partir de los controladores reales implementados en src/backend/app/:\n- /api/auth (Autenticación — BFF con InsForge como IdP)\n- /api/registro-operadores (Módulo I — Registro Provincial de Operadores)\n- /api/remitos-carnicos (Módulo — Remitos Electrónicos Cárnicos)\n- /api/trazabilidad (Módulo II — Trazabilidad Comercial)\n- /api/fiscalizacion (Módulo III — Fiscalización)\n\nCada request replica un endpoint implementado con su schema Pydantic (In/Out) y sus aserciones. Se asume una BD con el seed mínimo de los tests (ver fixtures).\n\n**Auth**: Los endpoints de /api/auth/login y /api/auth/signup fijan cookies HttpOnly (rocca_access_token, rocca_refresh_token). Para probar los endpoints protegidos, ejecutar login primero y habilitar \"Send cookies\" en la configuración de la colección.",
     "schema": "https://schema.postman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -11,6 +11,226 @@
     }
   ],
   "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 401\", function () {\n    pm.expect([200, 401]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"devuelve access_token (si 200)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.access_token).to.be.a(\"string\").and.not.empty;\n      pm.expect(data.user).to.be.an(\"object\");\n    }\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "POST /api/auth/login — Login por email+contraseña. Fija cookies HttpOnly (rocca_access_token, rocca_refresh_token). 401 si las credenciales son inválidas, 503 si InsForge no está disponible.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"gusti.pay@gmail.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201 o 409 o 503\", function () {\n    pm.expect([201, 409, 503]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"devuelve access_token (si 201)\", function () {\n    if (pm.response.code === 201) {\n      var data = pm.response.json();\n      pm.expect(data.access_token).to.be.a(\"string\").and.not.empty;\n      pm.expect(data.user).to.be.an(\"object\");\n    }\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "POST /api/auth/signup — Alta de usuario en InsForge (usa API key admin). Fija cookies HttpOnly. 409 si el email ya existe, 503 si InsForge no está disponible.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo.usuario@gmail.com\",\n  \"password\": \"password123\",\n  \"name\": \"Nuevo Usuario\",\n  \"user_metadata\": {\n    \"persona_id\": \"1\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/refresh",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 401\", function () {\n    pm.expect([200, 401]).to.include(pm.response.code);\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "POST /api/auth/refresh — Renueva el access token usando la cookie rocca_refresh_token. Requiere haber hecho login antes (cookie presente). 401 si el refresh token es inválido o expirado."
+          }
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "POST /api/auth/logout — Cierra la sesión en InsForge y borra las cookies HttpOnly. Siempre devuelve 200 (aunque no haya sesión)."
+          }
+        },
+        {
+          "name": "GET /api/auth/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 401\", function () {\n    pm.expect([200, 401]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"devuelve email (si 200)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.email).to.be.a(\"string\").and.not.empty;\n    }\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "GET /api/auth/me — Devuelve los datos del usuario autenticado. Requiere cookie rocca_access_token válida (hacer login antes). 401 si no hay cookie o está expirada."
+          }
+        },
+        {
+          "name": "GET /api/registro-operadores (protegido)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 401\", function () {\n    pm.expect([200, 401]).to.include(pm.response.code);\n});",
+                  "",
+                  "pm.test(\"devuelve lista (si 200)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(Array.isArray(data));\n    }\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores"
+              ]
+            },
+            "description": "GET /api/registro-operadores — Endpoint protegido: requiere cookie rocca_access_token válida. 401 si no hay sesión. Ejecutar login primero y habilitar cookies en Postman."
+          }
+        }
+      ]
+    },
     {
       "name": "Health",
       "item": [

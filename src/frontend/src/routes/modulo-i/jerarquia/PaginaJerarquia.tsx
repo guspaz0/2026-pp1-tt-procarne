@@ -1,16 +1,42 @@
 /**
  * Jerarquía: Personas y Sucursales — sub-ruta /modulo-i/jerarquia.
- * Agrupa los operadores (sucursales) según la persona titular, usando el
- * endpoint /jerarquia del backend que devuelve la estructura correcta.
+ *
+ * No hay endpoint propio para esta vista: se reutiliza el padrón completo
+ * (`GET /registro-operadores`, `useListarQuery`) y la agrupación por
+ * persona titular se hace en el frontend con `Object.groupBy` sobre el
+ * CUIT de cada operador (un CUIT = una persona titular; sus sucursales
+ * son los operadores que lo comparten).
  */
 import { IconBuildings, IconUser } from "../../../components/shared/Icons";
-import { useListarJerarquiaQuery } from "../../../store/operadoresApi";
+import { useListarQuery } from "../../../store/operadoresApi";
+import type { Operador } from "../../../types";
 import { ModuloILayout } from "../ModuloILayout";
 
-export function PaginaJerarquia() {
-  const { data: grupos, isLoading, error } = useListarJerarquiaQuery();
+/**
+ * Agrupa los operadores por CUIT de la persona titular.
+ * Devuelve un mapa ordenado (CUIT → sucursales, por nombre de sucursal)
+ * listo para renderizar.
+ */
+function agruparPorCuit(operadores: Operador[]): [string, Operador[]][] {
+  // Object.groupBy (ES2024) devuelve un objeto plano Record<K, T[]>.
+  const porCuit = Object.groupBy(
+    operadores,
+    (o: Operador) => o.cuit.toUpperCase(),
+  ) as Record<string, Operador[]>;
 
-  const totalSucursales = grupos?.reduce((acc, g) => acc + g.sucursales.length, 0) ?? 0;
+  return Object.entries(porCuit)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([cuit, ops]) => [
+      cuit,
+      [...ops].sort((a, b) => a.razon_social.localeCompare(b.razon_social)),
+    ]);
+}
+
+export function PaginaJerarquia() {
+  const { data: operadores, isLoading, error } = useListarQuery();
+
+  const grupos = agruparPorCuit(operadores ?? []);
+  const totalSucursales = operadores?.length ?? 0;
 
   return (
     <ModuloILayout>
@@ -20,8 +46,8 @@ export function PaginaJerarquia() {
             Jerarquía: Personas y Sucursales
           </h2>
           <p className="text-[12px] text-rocca-texto-suave">
-            {grupos?.length ?? 0} persona{(grupos?.length ?? 0) !== 1 ? "s" : ""} titular
-            {(grupos?.length ?? 0) !== 1 ? "es" : ""} con {totalSucursales} sucursal
+            {grupos.length} persona{grupos.length !== 1 ? "s" : ""} titular
+            {grupos.length !== 1 ? "es" : ""} con {totalSucursales} sucursal
             {totalSucursales !== 1 ? "es" : ""} en total.
           </p>
         </div>
@@ -32,17 +58,23 @@ export function PaginaJerarquia() {
           </div>
         )}
 
-        {!isLoading && error && (
+        {!isLoading && (error as object) && (
           <div className="py-12 text-center text-[13px] text-rocca-error">
-            Error al cargar: {JSON.stringify(error)}
+            Error al cargar: {error instanceof Error ? error.message : JSON.stringify(error)}
+          </div>
+        )}
+
+        {!isLoading && !error && grupos.length === 0 && (
+          <div className="py-12 text-center text-[13px] text-rocca-texto-apagado">
+            No hay operadores registrados.
           </div>
         )}
 
         {!isLoading &&
           !error &&
-          grupos?.map((g) => (
+          grupos.map(([cuit, sucursales]) => (
             <div
-              key={g.persona_id}
+              key={cuit}
               className="overflow-hidden rounded-lg border border-rocca-borde"
             >
               <div className="flex items-center gap-3 border-b border-rocca-borde bg-[#f8fafc] px-4 py-3">
@@ -51,19 +83,19 @@ export function PaginaJerarquia() {
                 </span>
                 <div className="flex flex-col">
                   <span className="text-[14px] font-bold text-rocca-azul-oscuro">
-                    {g.nombre}
+                    {sucursales[0].razon_social}
                   </span>
                   <span className="text-[11px] text-rocca-texto-apagado">
-                    {g.tipo_documento}: {g.cuit}
+                    CUIT: {cuit}
                   </span>
                 </div>
                 <span className="ml-auto rounded-full bg-slate-200 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
-                  {g.sucursales.length} sucursal{g.sucursales.length !== 1 ? "es" : ""}
+                  {sucursales.length} sucursal{sucursales.length !== 1 ? "es" : ""}
                 </span>
               </div>
 
               <ul className="divide-y divide-rocca-borde">
-                {g.sucursales.map((s) => (
+                {sucursales.map((s) => (
                   <li
                     key={s.id}
                     className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#f8fafc]"

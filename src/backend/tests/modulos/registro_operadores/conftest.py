@@ -7,7 +7,10 @@ import pytest
 # Reutilizar fixtures de configuración compartidas
 from tests.fixtures import db_engine, db_session_factory, db_dao  # noqa: F401
 
-# Importar los modelos del módulo para que Base.metadata los conozca
+# Importar los modelos del módulo (y la tabla personas, FK NOT NULL de
+# operadores) para que Base.metadata los conozca al crear las tablas.
+from core.persona.dao import Persona  # noqa: F401
+from core.persona.servicio import PersonaService  # noqa: F401
 from modulos.registro_operadores.dao import (  # noqa: F401
     DomicilioOperativo,
     Habilitacion,
@@ -20,3 +23,12 @@ from modulos.registro_operadores.dao import (  # noqa: F401
 def session_factory(db_session_factory):
     """Alias de :func:`db_session_factory` para compatibilidad."""
     return db_session_factory
+
+
+@pytest.fixture()
+def persona_service(db_session_factory):
+    """PersonaService sobre la BD en memoria (para resolver la persona titular)."""
+    from core.persona.dao import PersonaDAO
+    from core.persona.servicio import PersonaService
+
+    return PersonaService(PersonaDAO(db_session_factory))

@@ -1,44 +1,19 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { Operador } from "../types";
+import type { Operador, OperadorIn } from "../types";
+import { baseQueryWithAuth } from "./authGuard";
 
-/** Payload de alta (ROCCAOperadorIn del backend). */
-export type OperadorIn = {
-  cuit: string;
-  razon_social: string;
-  tipo: string;
-  categoria?: string | null;
-  domicilio_comercial?: string | null;
-  telefono?: string | null;
-  email?: string | null;
-};
-
-/** Estructura de jerarquía devuelta por el backend. */
-export type GrupoPersona = {
-  persona_id: number;
-  nombre: string;
-  cuit: string;
-  tipo_documento: string;
-  tipo_persona: string;
-  sucursales: Operador[];
-};
-
-/**
- * API RTK Query para el backend FastAPI (ROCCA).
- *
- * Reemplaza los fetch manuales + async thunks: el cacheo, los estados
- * (isLoading/isError) y la invalidación tras cada alta quedan a cargo de
- * RTK Query, usando tags para refrescar el padrón de forma declarativa.
- *
- * En dev, Vite proxy-kea `/api` al backend (uvicorn :8000); en prod, el
- * backend sirve el build, así que la base queda relativa.
- */
-const baseQuery = fetchBaseQuery({
-  baseUrl: "/api",
-  prepareHeaders: (headers) => {
-    headers.set("Accept", "application/json");
-    return headers;
-  },
-});
+const baseQuery = baseQueryWithAuth(
+  fetchBaseQuery({
+    baseUrl: "/api",
+    // Las cookies de sesión (InsForge tokens) se envían automáticamente por el
+    // navegador porque son HttpOnly. No necesitamos leerlas en JS.
+    credentials: "include",
+    prepareHeaders: (headers) => {
+      headers.set("Accept", "application/json");
+      return headers;
+    },
+  }),
+);
 
 export const operadoresApi = createApi({
   reducerPath: "operadoresApi",
@@ -46,7 +21,7 @@ export const operadoresApi = createApi({
   tagTypes: ["Operador"],
   endpoints: (builder) => ({
     /**
-     * Lista de operadores (padrón).
+     * Lista de operadores (padrón). También alimenta la vista de Jerarquía.
      */
     listar: builder.query<Operador[], void>({
       query: () => "/registro-operadores",
@@ -64,14 +39,7 @@ export const operadoresApi = createApi({
       }),
       invalidatesTags: () => [{ type: "Operador", id: "LIST" }] as const,
     }),
-    /**
-     * Jerarquía de personas y sucursales.
-     */
-    listarJerarquia: builder.query<GrupoPersona[], void>({
-      query: () => "/registro-operadores/jerarquia",
-      providesTags: [{ type: "Operador", id: "LIST" }] as const,
-    }),
   }),
 });
 
-export const { useListarQuery, useRegistrarMutation, useListarJerarquiaQuery } = operadoresApi;
+export const { useListarQuery, useRegistrarMutation } = operadoresApi;

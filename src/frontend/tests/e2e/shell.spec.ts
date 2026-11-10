@@ -1,14 +1,16 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Sanity: la app carga, el header ROCCA aparece y la ruta raíz redirige
- * al padrón de operadores.
+ * Sanity: la app carga, el header ROCCA aparece y el login funciona.
+ *
+ * Con la sesión guardada por `auth.setup.ts` (storageState), la ruta raíz
+ * redirige al padrón de operadores; sin sesión, redirige al login.
  */
 test.describe("Shell de la aplicación", () => {
   test("carga el header ROCCA y redirige de / al padrón", async ({ page }) => {
     await page.goto("/");
 
-    // Redirect / -> /operadores -> /operadores/padron
+    // Redirect / -> /operadores -> /operadores/padron (con sesión activa).
     await expect(page).toHaveURL(/\/operadores\/padron$/);
 
     // Header global

@@ -22,20 +22,41 @@ def operador_dao(db_session_factory):
 
 
 @pytest.fixture()
-def operador_service(operador_dao):
+def operador_service(operador_dao, persona_service):
     """Servicio de operadores."""
-    return ROCCAOperadorService(operador_dao)
+    return ROCCAOperadorService(operador_dao, persona_service=persona_service)
 
 
 def crear_rocca_operador_test(session, cuit: str, razon_social: str, tipo: str = "FRIGORIFICO") -> int:
-    """Crea un operador de prueba y devuelve su id."""
+    """Crea un operador de prueba y devuelve su id.
+
+    ``operadores.persona_id`` es NOT NULL: se crea (o reutiliza) la persona
+    titular con el CUIT del operador.
+    """
+    from core.persona.dao import Persona
     from modulos.registro_operadores.dao import ROCCAOperador
     from datetime import datetime, timezone
+
+    persona = (
+        session.query(Persona)
+        .filter(Persona.identificador == cuit)
+        .first()
+    )
+    if persona is None:
+        persona = Persona(
+            tipo="JURIDICA",
+            tipo_documento="CUIT",
+            identificador=cuit,
+            nombre=razon_social,
+        )
+        session.add(persona)
+        session.flush()
 
     op = ROCCAOperador(
         cuit=cuit,
         razon_social=razon_social,
         tipo=tipo,
+        persona_id=persona.id,
         alta_fecha=datetime.now(timezone.utc),
     )
     session.add(op)
@@ -57,7 +78,7 @@ class TestROCCAOperadorService:
         assert resultado.cuit == "30111111111"
         assert resultado.razon_social == "FRIGORIFICO TEST S.A."
         assert resultado.tipo == "FRIGORIFICO"
-        assert resultado.estado_registral == "ACTIVO"
+        assert resultado.estado_registral == "PENDIENTE"
 
     def test_crear_operador_duplicado(self, operador_service):
         data = ROCCAOperadorIn(

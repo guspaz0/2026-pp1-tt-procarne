@@ -8,7 +8,11 @@
  * contador se pinta de inmediato.
  */
 import { NavLink, useLocation } from "react-router-dom";
-import { IconBuildings, IconHierarchy, IconForm } from "../../components/shared/Icons";
+import {
+  IconBuildings,
+  IconHierarchy,
+  IconForm,
+} from "../../components/shared/Icons";
 import { useListarQuery } from "../../store/operadoresApi";
 import {
   selectItems,
@@ -35,11 +39,21 @@ export function ModuloITabs() {
   const totalPersonas = grupos.length;
 
   const TABS: TabDef[] = [
-    { to: "/operadores/padron", label: "Padrón de Operadores", icon: IconBuildings, count: totalOperadores },
-    { to: "/operadores/jerarquia", label: "Jerarquía: Personas y Sucursales", icon: IconHierarchy, count: totalPersonas },
+    {
+      to: "/operadores/padron",
+      label: "Padrón de Operadores",
+      icon: IconBuildings,
+      count: totalOperadores,
+    },
+    {
+      to: "/operadores/jerarquia",
+      label: "Jerarquía: Personas y Sucursales",
+      icon: IconHierarchy,
+      count: totalPersonas,
+    },
     {
       to: "/operadores/inscripcion",
-      label: "Formulario de Inscripción / Emitir Cartón F 102",
+      label: "Formulario de Inscripción F101",
       icon: IconForm,
       count: null,
     },
@@ -67,7 +81,9 @@ export function ModuloITabs() {
             {t.count !== null && (
               <span
                 className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${
-                  isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-200 text-slate-600"
                 }`}
               >
                 {cargada ? t.count : isLoading ? "…" : "—"}

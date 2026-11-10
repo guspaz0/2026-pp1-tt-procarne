@@ -25,6 +25,7 @@ class Inspeccion(Base):
     """Modelo ORM de inspección."""
 
     __tablename__ = "fiscalizacion_inspecciones"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tipo: Mapped[str] = mapped_column(String(30), nullable=False)
@@ -55,6 +56,7 @@ class Acta(Base):
     """Modelo ORM de acta."""
 
     __tablename__ = "fiscalizacion_actas"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     inspeccion_id: Mapped[int] = mapped_column(
@@ -82,6 +84,7 @@ class Decomiso(Base):
     """Modelo ORM de decomiso."""
 
     __tablename__ = "fiscalizacion_decomisos"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     inspeccion_id: Mapped[int] = mapped_column(
@@ -110,6 +113,7 @@ class Infraccion(Base):
     """Modelo ORM de infracción."""
 
     __tablename__ = "fiscalizacion_infracciones"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     inspeccion_id: Mapped[int] = mapped_column(
@@ -138,6 +142,7 @@ class Sancion(Base):
     """Modelo ORM de sanción."""
 
     __tablename__ = "fiscalizacion_sanciones"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     infraccion_id: Mapped[int] = mapped_column(
@@ -168,6 +173,7 @@ class Reincidencia(Base):
     """Modelo ORM de reincidencia."""
 
     __tablename__ = "fiscalizacion_reincidencias"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_cuit: Mapped[str] = mapped_column(String(13), nullable=False, index=True)
