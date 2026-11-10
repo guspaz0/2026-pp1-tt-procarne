@@ -6,10 +6,13 @@
 
 resource "vercel_project" "api" {
   name = var.vercel_project_name
+  framework = "fastapi"
+
+  root_directory = "src/backend"
 }
 
 data "vercel_project_directory" "app" {
-  path = "${path.module}/../src/backend"
+   path = "${path.module}/../src/backend"
 }
 
 resource "vercel_deployment" "api" {
@@ -19,6 +22,8 @@ resource "vercel_deployment" "api" {
 
   depends_on = [
     vercel_project_environment_variable.database_url,
+    vercel_project_environment_variable.insforge_url,
+    vercel_project_environment_variable.insforge_api_key
   ]
 }
 
