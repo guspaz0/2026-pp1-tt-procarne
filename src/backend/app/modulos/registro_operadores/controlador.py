@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response
 
 from modulos.registro_operadores.enums import EstadoRegistral
 from modulos.registro_operadores.schema import (
+    ActividadEconomicaOut,
+    CertificadoIn,
+    CertificadoOut,
+    CertificadoSuspenderIn,
     DomicilioOperativoIn,
     DomicilioOperativoOut,
+    GrupoActividadOut,
     HabilitacionIn,
     HabilitacionOut,
     InscripcionIn,
@@ -15,6 +23,7 @@ from modulos.registro_operadores.schema import (
     RequisitoInscripcionOut,
     ROCCAOperadorIn,
     ROCCAOperadorOut,
+    SubgrupoActividadOut,
 )
 from modulos.registro_operadores.servicio import (
     REQUISITOS_ESPECIFICOS_POR_CATEGORIA,
@@ -39,6 +48,24 @@ def crear_router(servicio: ROCCAOperadorService) -> APIRouter:
             "generales": REQUISITOS_GENERALES,
             "especificos_por_categoria": REQUISITOS_ESPECIFICOS_POR_CATEGORIA,
         }
+
+    @router.get("/catalogo/actividades/grupos", response_model=list[GrupoActividadOut])
+    def catalogo_grupos():
+        """Lista los grupos de actividades económicas (A, B, C, ...)."""
+        return servicio.listar_grupos()
+
+    @router.get("/catalogo/actividades/subgrupos", response_model=list[SubgrupoActividadOut])
+    def catalogo_subgrupos(grupo: str | None = Query(None, description="Filtrar por grupo")):
+        """Lista los subgrupos de actividades económicas."""
+        return servicio.listar_subgrupos(grupo=grupo)
+
+    @router.get("/catalogo/actividades", response_model=list[ActividadEconomicaOut])
+    def catalogo_actividades(
+        grupo: str | None = Query(None, description="Filtrar por grupo"),
+        subgrupo: str | None = Query(None, description="Filtrar por subgrupo"),
+    ):
+        """Lista las actividades económicas (con alícuota)."""
+        return servicio.listar_actividades(grupo=grupo, subgrupo=subgrupo)
 
     # ------------------------------------------------------------------
     # Operadores
@@ -77,6 +104,93 @@ def crear_router(servicio: ROCCAOperadorService) -> APIRouter:
             return servicio.cambiar_estado(operador_id, estado)
         except ROCCAOperadorError as e:
             raise HTTPException(status_code=404, detail=str(e))
+
+    # ------------------------------------------------------------------
+    # Certificado de operador (PDF)
+    # ------------------------------------------------------------------
+
+    @router.get("/{operador_id}/certificado.pdf")
+    def certificado_operador(operador_id: int):
+        """Genera y devuelve el Certificado de Operador en PDF.
+
+        Usa la librería Python ``pdfme`` para reconstruir el diseño del
+        template ``template-certificado-operador.json``.
+        """
+        operador = servicio.obtener(operador_id)
+        if operador is None:
+            raise HTTPException(status_code=404, detail=f"No existe un operador con id {operador_id}")
+
+        habilitaciones = servicio.listar_habilitaciones(operador_id)
+        inscripciones = servicio.listar_inscripciones(operador_id)
+
+        from core.pdfme.certificado_operador import (
+            CertificadoOperadorPDF,
+            construir_certificado_data,
+        )
+
+        template_path = Path(__file__).resolve().parents[2] / "core" / "pdfme" / "template-certificado-operador.json"
+        generador = CertificadoOperadorPDF(template_path)
+        data = construir_certificado_data(servicio, operador, habilitaciones, inscripciones)
+        pdf_bytes = generador.generar(data)
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'inline; filename="certificado-operador-{operador_id}.pdf"'
+            },
+        )
+
+    # ------------------------------------------------------------------
+    # Certificados
+    # ------------------------------------------------------------------
+
+    @router.get("/{operador_id}/certificados", response_model=list[CertificadoOut])
+    def listar_certificados(operador_id: int):
+        """Lista los certificados de un operador (con estado efectivo calculado)."""
+        try:
+            return servicio.listar_certificados(operador_id)
+        except ROCCAOperadorError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+    @router.post("/{operador_id}/certificados", response_model=CertificadoOut, status_code=201)
+    def crear_certificado(operador_id: int, data: CertificadoIn):
+        """Crea un certificado de habilitación para un operador.
+
+        Si existe un certificado ACTIVO vigente en la fecha de emisión del nuevo,
+        el anterior pasa a estado RELEVADO.
+        """
+        try:
+            return servicio.crear_certificado(operador_id, data)
+        except ROCCAOperadorError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @router.get("/{operador_id}/certificados/{certificado_id}", response_model=CertificadoOut)
+    def obtener_certificado(operador_id: int, certificado_id: int):
+        """Obtiene un certificado específico (con estado efectivo calculado)."""
+        try:
+            return servicio.obtener_certificado(operador_id, certificado_id)
+        except ROCCAOperadorError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+    @router.post("/{operador_id}/certificados/{certificado_id}/suspender", response_model=CertificadoOut)
+    def suspender_certificado(operador_id: int, certificado_id: int, data: CertificadoSuspenderIn = CertificadoSuspenderIn()):
+        """Suspende un certificado (acción de supervisor).
+
+        Solo se puede suspender un certificado en estado ACTIVO.
+        """
+        try:
+            return servicio.suspender_certificado(operador_id, certificado_id, data)
+        except ROCCAOperadorError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @router.post("/{operador_id}/certificados/{certificado_id}/reactivar", response_model=CertificadoOut)
+    def reactivar_certificado(operador_id: int, certificado_id: int):
+        """Reactiva un certificado suspendido (acción de supervisor)."""
+        try:
+            return servicio.reactivar_certificado(operador_id, certificado_id)
+        except ROCCAOperadorError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     # ------------------------------------------------------------------
     # Habilitaciones

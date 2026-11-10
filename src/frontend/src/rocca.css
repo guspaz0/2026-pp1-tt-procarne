@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-rocca-rojo: #8b1425;
+  --color-rocca-rojo-oscuro: #731321;
+  --color-rocca-rojo-claro: #fdf2f3;
+  --color-rocca-rojo-pastel: #fce7e9;
+  --color-rocca-azul-oscuro: #0f172a;
+  --color-rocca-azul-header: #0f1e36;
+  --color-rocca-fondo: #f1f5f9;
+  --color-rocca-tarjeta: #f8fafc;
+  --color-rocca-borde: #e2e8f0;
+  --color-rocca-borde-input: #cbd5e1;
+  --color-rocca-texto: #1e293b;
+  --color-rocca-texto-medio: #334155;
+  --color-rocca-texto-suave: #475569;
+  --color-rocca-texto-apagado: #64748b;
+  --color-rocca-texto-muy-apagado: #94a3b8;
+  --color-rocca-placeholder: #9ca3af;
+  --color-rocca-exito: #10b981;
+  --color-rocca-exito-claro: #ecfdf5;
+  --color-rocca-exito-borde: #a7f3d0;
+  --color-rocca-exito-texto: #022c22;
+  --color-rocca-aviso: #f59e0b;
+  --color-rocca-aviso-fondo: #fffbeb;
+  --color-rocca-aviso-borde: #fcd34d;
+  --color-rocca-aviso-texto: #451a03;
+  --color-rocca-error: #dc2626;
+  --color-rocca-error-fondo: #fef2f2;
+  --color-rocca-checkbox: #0075ff;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background: var(--color-rocca-fondo);
+  color: var(--color-rocca-texto);
+  -webkit-font-smoothing: antialiased;
+}

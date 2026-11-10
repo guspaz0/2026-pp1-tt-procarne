@@ -17,7 +17,7 @@ import os
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -71,8 +71,41 @@ class DatabaseDAO:
             session.close()
 
     def crear_tablas(self) -> None:
-        """Crea todas las tablas definidas en ``Base.metadata``."""
+        """Crea todas las tablas definidas en ``Base.metadata``.
+
+        Además aplica una migración ligera para bases de datos SQLite
+        existentes que predatan cambios de esquema: añade columnas que
+        estén definidas en el modelo pero falten en la tabla.
+        """
         Base.metadata.create_all(bind=self._engine)
+        if self._database_url.startswith("sqlite"):
+            self._migrar_columnas_faltantes()
+
+    def _migrar_columnas_faltantes(self) -> None:
+        """Añade columnas faltantes en tablas SQLite existentes.
+
+        Comparan las columnas definidas en el modelo con las que existen
+        en la base de datos y ejecuta ``ALTER TABLE ADD COLUMN`` para las
+        que falten. Solo aplica a SQLite (desarrollo); en PostgreSQL se
+        espera Alembic.
+        """
+        inspector = inspect(self._engine)
+        existing_tables = set(inspector.get_table_names())
+        with self._engine.begin() as conn:
+            for table in Base.metadata.tables.values():
+                if table.name not in existing_tables:
+                    continue
+                db_cols = {c["name"] for c in inspector.get_columns(table.name)}
+                for col in table.columns:
+                    if col.name in db_cols:
+                        continue
+                    col_type = col.type.compile(dialect=self._engine.dialect)
+                    conn.execute(
+                        text(
+                            f'ALTER TABLE "{table.name}" ADD COLUMN '
+                            f'"{col.name}" {col_type}'
+                        )
+                    )
 
     @property
     def engine(self):

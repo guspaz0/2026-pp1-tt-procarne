@@ -13,21 +13,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from configs.dao import crear_dao
-from core.mercaderia.dao import MercaderiaDAO
-from core.mercaderia.servicio import MercaderiaService
 from core.persona.dao import PersonaDAO
 from core.persona.servicio import PersonaService
-from modulos.fiscalizacion.fiscalizacion import FiscalizacionModulo
 from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
-from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
-from modulos.trazabilidad_comercial.trazabilidad_comercial import (
-    TrazabilidadComercialModulo,
-)
+
+# Sprint actual: solo Módulo I (Registro de Operadores)
+# Los demás módulos se reactivan al ampliar el scope:
+# from core.mercaderia.dao import MercaderiaDAO
+# from core.mercaderia.servicio import MercaderiaService
+# from modulos.fiscalizacion.fiscalizacion import FiscalizacionModulo
+# from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
+# from modulos.trazabilidad_comercial.trazabilidad_comercial import TrazabilidadComercialModulo
 
 
 class RoccaApp:
@@ -59,19 +61,39 @@ class RoccaApp:
         )
 
     def _montar_frontend(self) -> None:
-        """Monta el build de React (dist) como archivos estáticos en la raíz.
+        """Sirve el build de React (dist) y el fallback SPA (BrowserRouter).
 
         El directorio se genera con `pnpm build` en el frontend y se emite
-        en app/static/. Se monta DESPUÉS de los routers /api/* para que
+        en app/static/. Se registra DESPUÉS de los routers /api/* para que
         las rutas de la API tengan prioridad.
+
+        - Los assets con extensión (js, css, imágenes, fuentes) se sirven
+          directamente del build.
+        - Cualquier otra ruta (p. ej. /modulo-vi) devuelve index.html para
+          que react-router resuelva el cliente.
         """
         static_dir = Path(__file__).resolve().parent / "static"
-        if static_dir.is_dir():
-            self.app.mount(
-                "/",
-                StaticFiles(directory=str(static_dir), html=True),
-                name="frontend",
-            )
+        if not static_dir.is_dir():
+            return
+
+        index_file = static_dir / "index.html"
+        static_root = str(static_dir.resolve())
+
+        def responder_index():
+            if index_file.is_file():
+                return FileResponse(index_file)
+            raise HTTPException(status_code=404, detail="Frontend no construido")
+
+        @self.app.get("/{ruta:path}", include_in_schema=False)
+        def servir_spa(ruta: str):
+            # Asset con extensión: servir el archivo estático si existe.
+            nombre = ruta.rsplit("/", 1)[-1]
+            if "." in nombre:
+                archivo = (static_dir / ruta).resolve()
+                if str(archivo).startswith(static_root) and archivo.is_file():
+                    return FileResponse(archivo)
+            # Sino: fallback SPA → index.html.
+            return responder_index()
 
     def registrar_modulos(self) -> None:
         """Registra los routers de todos los módulos en la aplicación."""
@@ -87,8 +109,6 @@ class RoccaApp:
         # Catálogos genéricos compartidos (core)
         persona_dao = PersonaDAO(db_dao.obtener_sesion)
         persona_service = PersonaService(persona_dao)
-        mercaderia_dao = MercaderiaDAO(db_dao.obtener_sesion)
-        mercaderia_service = MercaderiaService(mercaderia_dao)
 
         # Módulo I — Registro Provincial de Operadores
         registro = RegistroOperadoresModulo(
@@ -98,23 +118,24 @@ class RoccaApp:
         )
         registro.registrar(self.app)
 
-        # Módulo — Remitos Electrónicos Cárnicos
-        remitos = RemitosCarnicosModulo(
-            db_dao,
-            persona_dao=persona_dao,
-            persona_service=persona_service,
-            mercaderia_dao=mercaderia_dao,
-            mercaderia_service=mercaderia_service,
-        )
-        remitos.registrar(self.app)
-
-        # Módulo II — Trazabilidad Comercial
-        trazabilidad = TrazabilidadComercialModulo(db_dao)
-        trazabilidad.registrar(self.app)
-
-        # Módulo III — Fiscalización
-        fiscalizacion = FiscalizacionModulo(db_dao)
-        fiscalizacion.registrar(self.app)
+        # --- Módulos fuera del scope del sprint actual (comentados) ---
+        # mercaderia_dao = MercaderiaDAO(db_dao.obtener_sesion)
+        # mercaderia_service = MercaderiaService(mercaderia_dao)
+        #
+        # remitos = RemitosCarnicosModulo(
+        #     db_dao,
+        #     persona_dao=persona_dao,
+        #     persona_service=persona_service,
+        #     mercaderia_dao=mercaderia_dao,
+        #     mercaderia_service=mercaderia_service,
+        # )
+        # remitos.registrar(self.app)
+        #
+        # trazabilidad = TrazabilidadComercialModulo(db_dao)
+        # trazabilidad.registrar(self.app)
+        #
+        # fiscalizacion = FiscalizacionModulo(db_dao)
+        # fiscalizacion.registrar(self.app)
 
     def crear(self) -> FastAPI:
         """Compone la aplicación completa y la devuelve lista para servir."""

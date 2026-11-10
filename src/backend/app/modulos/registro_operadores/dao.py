@@ -13,10 +13,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, ForeignKey, String
+from sqlalchemy import Boolean, Date, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from configs.db import Base
+from core.persona.dao import Persona
 from modulos.registro_operadores.enums import (
     EstadoRegistral,
     TipoDomicilio,
@@ -26,15 +27,23 @@ from modulos.registro_operadores.enums import (
 
 
 class ROCCAOperador(Base):
-    """Modelo ORM de operador de la cadena cárnica."""
+    """Modelo ORM de operador de la cadena cárnica.
 
-    __tablename__ = "rocca_operadores"
+    Tabla ``operadores`` — cada fila es una sucursal/establecimiento.
+    Se vincula a una ``persona`` (entidad legal padre) vía ``persona_id``.
+    El ``domicilio`` es el domicilio comercial propio de esta sucursal,
+    que puede diferir del domicilio de la persona titular.
+    """
+
+    __tablename__ = "operadores"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    persona_id: Mapped[int] = mapped_column(
+        ForeignKey("personas.id"), nullable=False, index=True
+    )
     cuit: Mapped[str] = mapped_column(String(13), nullable=False, unique=True, index=True)
     razon_social: Mapped[str] = mapped_column(String(255), nullable=False)
-    domicilio: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    domicilio_fiscal: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    domicilio_comercial: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     telefono: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     tipo: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
@@ -48,6 +57,7 @@ class ROCCAOperador(Base):
         default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
+    persona: Mapped["Persona"] = relationship(back_populates="operadores")
     habilitaciones: Mapped[list["Habilitacion"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
@@ -60,6 +70,9 @@ class ROCCAOperador(Base):
     requisitos: Mapped[list["RequisitoInscripcion"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
+    certificados: Mapped[list["Certificado"]] = relationship(
+        back_populates="operador", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<ROCCAOperador id={self.id} cuit={self.cuit} tipo={self.tipo} categoria={self.categoria}>"
@@ -68,11 +81,11 @@ class ROCCAOperador(Base):
 class Habilitacion(Base):
     """Modelo ORM de habilitación de un operador para una actividad."""
 
-    __tablename__ = "rocca_habilitaciones"
+    __tablename__ = "habilitaciones"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
-        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("operadores.id", ondelete="CASCADE"), nullable=False, index=True
     )
     actividad: Mapped[str] = mapped_column(String(120), nullable=False)
     estado: Mapped[str] = mapped_column(
@@ -90,11 +103,11 @@ class Habilitacion(Base):
 class Inscripcion(Base):
     """Modelo ORM de inscripción de un operador en el registro."""
 
-    __tablename__ = "rocca_inscripciones"
+    __tablename__ = "inscripciones"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
-        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("operadores.id", ondelete="CASCADE"), nullable=False, index=True
     )
     tipo: Mapped[str] = mapped_column(
         String(20), default=TipoInscripcion.PRINCIPAL.value, nullable=False
@@ -108,14 +121,96 @@ class Inscripcion(Base):
         return f"<Inscripcion id={self.id} operador_id={self.operador_id}>"
 
 
-class DomicilioOperativo(Base):
-    """Modelo ORM de domicilio operativo de un operador."""
+class GrupoActividad(Base):
+    """Modelo ORM de grupo de actividad económica (letra: A, B, C, ...)."""
 
-    __tablename__ = "rocca_domicilios_operativos"
+    __tablename__ = "grupos_actividad"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    codigo: Mapped[str] = mapped_column(String(1), nullable=False, unique=True)
+    descripcion: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<GrupoActividad {self.codigo} {self.descripcion[:40]}>"
+
+
+class SubgrupoActividad(Base):
+    """Modelo ORM de subgrupo de actividad económica."""
+
+    __tablename__ = "subgrupos_actividad"
+    __table_args__ = (UniqueConstraint("grupo_id", "codigo", name="uq_subgrupo_grupo_codigo"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    codigo: Mapped[str] = mapped_column(String(10), nullable=False)
+    descripcion: Mapped[str] = mapped_column(String(500), nullable=False)
+    grupo_id: Mapped[int] = mapped_column(
+        ForeignKey("grupos_actividad.id"), nullable=False, index=True
+    )
+
+    grupo: Mapped["GrupoActividad"] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<SubgrupoActividad {self.codigo} {self.descripcion[:40]}>"
+
+
+class ActividadEconomica(Base):
+    """Modelo ORM de actividad económica (DGR Santiago)."""
+
+    __tablename__ = "actividades_economicas"
+    __table_args__ = (UniqueConstraint("subgrupo_id", "codigo", name="uq_actividad_subgrupo_codigo"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    codigo: Mapped[str] = mapped_column(String(10), nullable=False)
+    descripcion: Mapped[str] = mapped_column(String(500), nullable=False)
+    alicuota: Mapped[Optional[float]] = mapped_column(nullable=True)
+    grupo_id: Mapped[int] = mapped_column(
+        ForeignKey("grupos_actividad.id"), nullable=False, index=True
+    )
+    subgrupo_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("subgrupos_actividad.id"), nullable=True, index=True
+    )
+
+    grupo: Mapped["GrupoActividad"] = relationship()
+    subgrupo: Mapped[Optional["SubgrupoActividad"]] = relationship()
+
+    def __repr__(self) -> str:
+        return f"<ActividadEconomica {self.codigo} {self.descripcion[:40]}>"
+
+
+class Certificado(Base):
+    """Modelo ORM de certificado de habilitación de un operador."""
+
+    __tablename__ = "certificados"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
-        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("operadores.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    numero_certificado: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
+    tipo_certificado: Mapped[str] = mapped_column(String(50), nullable=False, default="HABILITACION")
+    fecha_emision: Mapped[datetime] = mapped_column(nullable=False)
+    fecha_vencimiento: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    actividades_economicas: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    observaciones: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    estado: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVO")
+    creado_en: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    operador: Mapped["ROCCAOperador"] = relationship(back_populates="certificados")
+
+    def __repr__(self) -> str:
+        return f"<Certificado {self.numero_certificado} operador={self.operador_id} estado={self.estado}>"
+
+
+class DomicilioOperativo(Base):
+    """Modelo ORM de domicilio operativo de un operador."""
+
+    __tablename__ = "domicilios_operativos"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    operador_id: Mapped[int] = mapped_column(
+        ForeignKey("operadores.id", ondelete="CASCADE"), nullable=False, index=True
     )
     tipo: Mapped[str] = mapped_column(
         String(20), default=TipoDomicilio.OPERATIVO.value, nullable=False
@@ -139,11 +234,11 @@ class RequisitoInscripcion(Base):
     específico (vinculado a una categoría de operador).
     """
 
-    __tablename__ = "rocca_requisitos_inscripcion"
+    __tablename__ = "requisitos_inscripcion"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
-        ForeignKey("rocca_operadores.id", ondelete="CASCADE"), nullable=False, index=True
+        ForeignKey("operadores.id", ondelete="CASCADE"), nullable=False, index=True
     )
     codigo: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
     descripcion: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -168,17 +263,18 @@ class ROCCAOperadorDAO:
         self._session_factory = session_factory
 
     def crear(self, cuit: str, razon_social: str, tipo: TipoOperador | str,
-              domicilio: str | None = None, domicilio_fiscal: str | None = None,
+              persona_id: int | None = None,
+              domicilio_comercial: str | None = None,
               telefono: str | None = None, email: str | None = None,
               categoria: str | None = None) -> ROCCAOperador:
-        """Crea y persiste un operador nuevo."""
+        """Crea y persiste un operador nuevo (sucursal/establecimiento)."""
         with self._session_factory() as session:
             operador = ROCCAOperador(
                 cuit=cuit,
                 razon_social=razon_social,
                 tipo=tipo if isinstance(tipo, str) else tipo.value,
-                domicilio=domicilio,
-                domicilio_fiscal=domicilio_fiscal,
+                persona_id=persona_id,
+                domicilio_comercial=domicilio_comercial,
                 telefono=telefono,
                 email=email,
                 categoria=categoria,

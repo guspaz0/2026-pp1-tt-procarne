@@ -14,11 +14,9 @@ terraform {
 }
 
 provider "vercel" {
-  # El token se toma de var.vercel_api_token, que puede poblarse de dos formas:
-  #   1. terraform.tfvars  →  vercel_api_token = "vercel_xxx..."
-  #   2. Env var           →  export TF_VAR_vercel_api_token="vercel_xxx..."
-  #    (Terraform auto-mapea TF_VAR_<nombre> → variable <nombre>)
+  # Lee VERCEL_API_TOKEN del entorno (o vercel_token si se define abajo)
   api_token = var.vercel_api_token
-  # team = var.vercel_team_id   # solo si se despliega bajo un team
+  # El proyecto "procarne" vive dentro de un team. Sin `team` el provider
+  # resuelve en el scope personal del token y la API responde 403 Forbidden.
+  team = var.vercel_team_id
 }
-

@@ -16,3 +16,6 @@ override.tf.json
 terraform/.netlify
 terraform/.terraform.lock.hcl
 docs/procarne/establecimientos.xlsx
+
+# Copia limpia del backend generada por terraform/sync.sh (no commitear)
+deploy/backend/

@@ -3,7 +3,7 @@
 # ---------------------------------------------------------------------------
 
 variable "vercel_api_token" {
-  description = "API token de Vercel (https://vercel.com/account/tokens). Alternativa: exportar VERCEL_API_TOKEN."
+  description = "API token de Vercel (https://vercel.com/account/tokens)"
   type        = string
   sensitive   = true
   default     = ""
@@ -15,14 +15,15 @@ variable "vercel_project_name" {
   default     = "procarne"
 }
 
-variable "github_repo" {
-  description = "Repositorio GitHub en formato owner/name (ej. guspaz0/2026-pp1-tt-procarne)"
+variable "vercel_team_id" {
+  description = "ID del team de Vercel que posee el proyecto. Sin este valor el provider no resuelve el proyecto (403 Forbidden)."
   type        = string
-  default     = "guspaz0/2026-pp1-tt-procarne"
+  default     = "team_jBuR0GcDPltyl5R6JqLOsSPO"
 }
 
 variable "rocca_database_url" {
   description = "URL de PostgreSQL (Insforge, Render Postgres o Neon). Se inyecta como ROCCA_DATABASE_URL."
   type        = string
   sensitive   = true
+  default     = ""
 }

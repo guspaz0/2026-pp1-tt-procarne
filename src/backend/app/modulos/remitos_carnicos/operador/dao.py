@@ -1,63 +1,53 @@
-"""DAO y modelo ORM del operador de la cadena cárnica."""
+"""DAO del operador de la cadena cárnica.
+
+Ahora usa el modelo unificado ``ROCCAOperador`` (tabla ``operadores``)
+del módulo de registro de operadores.
+"""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from configs.db import Base
+from modulos.registro_operadores.dao import ROCCAOperador, ROCCAOperadorDAO
 
 
-class Operador(Base):
-    """Modelo ORM de operador de la cadena cárnica."""
-
-    __tablename__ = "operadores"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    persona_id: Mapped[int] = mapped_column(
-        ForeignKey("personas.id"), nullable=False, unique=True, index=True
-    )
-    creado_en: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc), nullable=False
-    )
-
-    def __repr__(self) -> str:
-        return f"<Operador id={self.id} persona_id={self.persona_id}>"
+# Alias para compatibilidad con código existente
+Operador = ROCCAOperador
 
 
 class OperadorDAO:
-    """DAO de operadores de la cadena cárnica."""
+    """DAO de operadores (compatibilidad con módulo de remitos).
+
+    Delega en el ``ROCCAOperadorDAO`` del módulo de registro.
+    """
 
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
+        self._dao = ROCCAOperadorDAO(session_factory)
 
-    def crear(self, persona_id: int) -> Operador:
+    def crear(self, persona_id: int, cuit: str | None = None,
+              razon_social: str | None = None, tipo: str | None = None) -> ROCCAOperador:
         """Crea y persiste un operador nuevo."""
-        with self._session_factory() as session:
-            operador = Operador(persona_id=persona_id)
-            session.add(operador)
-            session.commit()
-            session.refresh(operador)
-            return operador
+        return self._dao.crear(
+            cuit=cuit or f"00000000000",
+            razon_social=razon_social or f"Operador {persona_id}",
+            tipo=tipo or "COMERCIALIZADOR",
+            persona_id=persona_id,
+        )
 
-    def obtener_por_id(self, operador_id: int) -> Operador | None:
+    def obtener_por_id(self, operador_id: int) -> ROCCAOperador | None:
         """Devuelve el operador con el id dado, o ``None``."""
-        with self._session_factory() as session:
-            return session.get(Operador, operador_id)
+        return self._dao.obtener_por_id(operador_id)
 
-    def obtener_por_persona(self, persona_id: int) -> Operador | None:
-        """Devuelve el operador asociado a una persona, o ``None``."""
+    def obtener_por_persona(self, persona_id: int) -> list[ROCCAOperador]:
+        """Devuelve los operadores asociados a una persona."""
         with self._session_factory() as session:
             return (
-                session.query(Operador)
+                session.query(ROCCAOperador)
                 .filter_by(persona_id=persona_id)
-                .first()
+                .all()
             )
 
-    def listar(self) -> list[Operador]:
+    def listar(self) -> list[ROCCAOperador]:
         """Devuelve todos los operadores."""
-        with self._session_factory() as session:
-            return list(session.query(Operador).all())
+        return self._dao.listar()
