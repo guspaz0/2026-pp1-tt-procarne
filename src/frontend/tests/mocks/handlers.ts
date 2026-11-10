@@ -21,6 +21,27 @@ const BASE = "/api";
  * pasás `db` el mock muta ese array al registrar, imitando la persistencia
  * del backend real — útil para tests de flujo completo.
  */
+/**
+ * Agrupa los operadores por persona (CUIT), imitando /registro-operadores/jerarquia.
+ * Devuelve el shape GrupoPersona[] que consume la vista de Jerarquía.
+ */
+function jerarquiaDe(db: OperadorMock[]) {
+  const porCuit = new Map<string, OperadorMock[]>();
+  for (const o of db) {
+    const arr = porCuit.get(o.cuit) ?? [];
+    arr.push(o);
+    porCuit.set(o.cuit, arr);
+  }
+  return [...porCuit.entries()].map(([cuit, sucursales]) => ({
+    persona_id: sucursales[0].persona_id,
+    nombre: sucursales[0].razon_social,
+    cuit,
+    tipo_documento: "CUIT",
+    tipo_persona: sucursales[0].tipo === "CARNICERIA" ? "fisica" : "juridica",
+    sucursales,
+  }));
+}
+
 export function createHandlers(
   db: OperadorMock[] = [...OPERADORES_MOCK],
 ): RequestHandler[] {
@@ -28,6 +49,10 @@ export function createHandlers(
     http.get(`${BASE}/registro-operadores`, () => {
       // Copia defensiva para que el cliente no mutar el estado interno.
       return HttpResponse.json([...db]);
+    }),
+
+    http.get(`${BASE}/registro-operadores/jerarquia`, () => {
+      return HttpResponse.json(jerarquiaDe(db));
     }),
 
     http.post(`${BASE}/registro-operadores`, async ({ request }) => {
