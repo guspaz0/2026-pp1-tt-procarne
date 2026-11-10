@@ -1,11 +1,14 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Padrón de Operadores — la suite que valida el bug del selector RTK Query:
+ * Padrón de Operadores — la suite que valida el selector RTK Query:
  * los operadores deben SERVENIR (fetched) Y RENDERIZARSE en la tabla.
  *
  * Requiere backend FastAPI corriendo en :8000 con datos en la tabla
  * `operadores` (la misma que lee la API /api/registro-operadores).
+ *
+ * La API exige sesión (middleware de autenticación): la cookie de prueba
+ * la provee `auth.setup.ts` vía `storageState` (ver playwright.config.ts).
  */
 test.describe("Padrón de Operadores", () => {
   test("renderiza los operadores devueltos por la API", async ({
@@ -42,7 +45,7 @@ test.describe("Padrón de Operadores", () => {
     //    (Antes del fix, queries["listar"] era undefined → 0 filas.)
     for (const op of operadores) {
       await expect(
-        page.getByRole("row").getByText(op.razon_social),
+        page.getByRole("row").getByText(op.razon_social).first(),
       ).toBeVisible();
     }
 
@@ -70,7 +73,7 @@ test.describe("Padrón de Operadores", () => {
 
     // Espera a que la tabla esté poblada antes de filtrar.
     await expect(
-      page.getByRole("row").getByText(objetivo.razon_social),
+      page.getByRole("row").getByText(objetivo.razon_social).first(),
     ).toBeVisible();
 
     // Busca un CUIT único: debe quedar solo esa fila.
@@ -85,7 +88,7 @@ test.describe("Padrón de Operadores", () => {
     // Limpiar el filtro restaura la lista completa.
     await busqueda.fill("");
     await expect(
-      page.getByRole("row").getByText(objetivo.razon_social),
+      page.getByRole("row").getByText(objetivo.razon_social).first(),
     ).toBeVisible();
   });
 
@@ -100,7 +103,7 @@ test.describe("Padrón de Operadores", () => {
     await page.goto("/operadores/padron");
 
     const op = operadores[0];
-    const fila = page.getByRole("row").getByText(op.razon_social);
+    const fila = page.getByRole("row").getByText(op.razon_social).first();
     await expect(fila).toBeVisible();
 
     await fila
@@ -131,7 +134,7 @@ test.describe("Padrón de Operadores", () => {
 
     await page.goto("/operadores/padron");
     await expect(
-      page.getByRole("row").getByText(operadores[0].razon_social),
+      page.getByRole("row").getByText(operadores[0].razon_social).first(),
     ).toBeVisible();
 
     await page

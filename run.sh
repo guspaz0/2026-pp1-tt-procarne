@@ -16,6 +16,13 @@ FRONTEND="$ROOT/src/frontend"
 SKIP_BUILD=0
 [[ "${1:-}" == "--no-build" ]] && SKIP_BUILD=1
 
+# Cargar variables de entorno desde .env (si existe)
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  source "$ROOT/.env"
+  set +a
+fi
+
 # URL de la base de datos (PostgreSQL local vía Docker)
 export ROCCA_DATABASE_URL="${ROCCA_DATABASE_URL:-postgresql+psycopg://gusta:Gustavo10*@localhost:5432/rocca}"
 
@@ -57,7 +64,7 @@ if [[ "$SKIP_BUILD" -eq 0 ]]; then
   (
     cd "$FRONTEND"
     if [[ ! -d node_modules || package.json -nt node_modules || pnpm-lock.yaml -nt node_modules/.pnpm ]]; then
-      pnpm install --ignore-workspace --silent
+      pnpm install --ignore-workspace --silent 2>/dev/null || pnpm install --ignore-workspace --ignore-scripts --silent
     fi
     pnpm build
   )

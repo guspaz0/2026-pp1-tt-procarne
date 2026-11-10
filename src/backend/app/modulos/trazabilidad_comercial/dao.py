@@ -16,6 +16,7 @@ class RegistroTrazabilidad(Base):
     """Modelo ORM de registro de trazabilidad comercial."""
 
     __tablename__ = "registros_trazabilidad"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tipo_ingreso: Mapped[str] = mapped_column(String(30), nullable=False, index=True)

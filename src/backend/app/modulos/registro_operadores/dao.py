@@ -36,6 +36,7 @@ class ROCCAOperador(Base):
     """
 
     __tablename__ = "operadores"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     persona_id: Mapped[int] = mapped_column(
@@ -49,7 +50,7 @@ class ROCCAOperador(Base):
     tipo: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
     categoria: Mapped[Optional[str]] = mapped_column(String(40), nullable=True, index=True)
     estado_registral: Mapped[str] = mapped_column(
-        String(20), default=EstadoRegistral.ACTIVO.value, nullable=False, index=True
+        String(20), default=EstadoRegistral.PENDIENTE.value, nullable=False, index=True
     )
     alta_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     baja_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
@@ -73,6 +74,9 @@ class ROCCAOperador(Base):
     certificados: Mapped[list["Certificado"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
+    adjuntos: Mapped[list["AdjuntoOperador"]] = relationship(
+        back_populates="operador", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<ROCCAOperador id={self.id} cuit={self.cuit} tipo={self.tipo} categoria={self.categoria}>"
@@ -82,6 +86,7 @@ class Habilitacion(Base):
     """Modelo ORM de habilitación de un operador para una actividad."""
 
     __tablename__ = "habilitaciones"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
@@ -104,6 +109,7 @@ class Inscripcion(Base):
     """Modelo ORM de inscripción de un operador en el registro."""
 
     __tablename__ = "inscripciones"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
@@ -125,6 +131,7 @@ class GrupoActividad(Base):
     """Modelo ORM de grupo de actividad económica (letra: A, B, C, ...)."""
 
     __tablename__ = "grupos_actividad"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     codigo: Mapped[str] = mapped_column(String(1), nullable=False, unique=True)
@@ -138,7 +145,10 @@ class SubgrupoActividad(Base):
     """Modelo ORM de subgrupo de actividad económica."""
 
     __tablename__ = "subgrupos_actividad"
-    __table_args__ = (UniqueConstraint("grupo_id", "codigo", name="uq_subgrupo_grupo_codigo"),)
+    __table_args__ = (
+        UniqueConstraint("grupo_id", "codigo", name="uq_subgrupo_grupo_codigo"),
+        {"extend_existing": True},
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     codigo: Mapped[str] = mapped_column(String(10), nullable=False)
@@ -157,7 +167,10 @@ class ActividadEconomica(Base):
     """Modelo ORM de actividad económica (DGR Santiago)."""
 
     __tablename__ = "actividades_economicas"
-    __table_args__ = (UniqueConstraint("subgrupo_id", "codigo", name="uq_actividad_subgrupo_codigo"),)
+    __table_args__ = (
+        UniqueConstraint("subgrupo_id", "codigo", name="uq_actividad_subgrupo_codigo"),
+        {"extend_existing": True},
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     codigo: Mapped[str] = mapped_column(String(10), nullable=False)
@@ -181,6 +194,7 @@ class Certificado(Base):
     """Modelo ORM de certificado de habilitación de un operador."""
 
     __tablename__ = "certificados"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
@@ -207,6 +221,7 @@ class DomicilioOperativo(Base):
     """Modelo ORM de domicilio operativo de un operador."""
 
     __tablename__ = "domicilios_operativos"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(
@@ -235,6 +250,7 @@ class RequisitoInscripcion(Base):
     """
 
     __tablename__ = "requisitos_inscripcion"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     operador_id: Mapped[int] = mapped_column(

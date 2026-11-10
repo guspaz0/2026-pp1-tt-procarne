@@ -1,4 +1,5 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
+import authReducer from "./authSlice";
 import operadoresReducer from "./operadoresSlice";
 import formF102Reducer from "./formF102Slice";
 import { operadoresApi } from "./operadoresApi";
@@ -8,6 +9,7 @@ import { operadoresApi } from "./operadoresApi";
  * inyectar `preloadedState` en tests (component tests + Node).
  */
 const rootReducer = combineReducers({
+  auth: authReducer,
   operadores: operadoresReducer,
   formF102: formF102Reducer,
   [operadoresApi.reducerPath]: operadoresApi.reducer,

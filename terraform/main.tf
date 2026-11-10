@@ -5,18 +5,7 @@
 # ---------------------------------------------------------------------------
 
 resource "vercel_project" "api" {
-  name      = var.vercel_project_name
-  framework = "fastapi"
-
-  root_directory = "src/backend"
-}
-
-resource "vercel_project_environment_variable" "database_url" {
-  project_id = vercel_project.api.id
-  key        = "ROCCA_DATABASE_URL"
-  value      = var.rocca_database_url
-  target     = ["production", "preview"]
-  sensitive  = true
+  name = var.vercel_project_name
 }
 
 data "vercel_project_directory" "app" {
@@ -31,4 +20,29 @@ resource "vercel_deployment" "api" {
   depends_on = [
     vercel_project_environment_variable.database_url,
   ]
+}
+
+# --- Variables de entorno (se inyectan en la app FastAPI) ---
+resource "vercel_project_environment_variable" "database_url" {
+  project_id = vercel_project.api.id
+  key        = "ROCCA_DATABASE_URL"
+  value      = var.rocca_database_url
+  target     = ["production", "preview"]
+  sensitive  = true
+}
+
+resource "vercel_project_environment_variable" "insforge_url" {
+  project_id = vercel_project.api.id
+  key        = "INSFORGE_URL"
+  value      = var.insforge_url
+  target     = ["production", "preview"]
+  sensitive  = false
+}
+
+resource "vercel_project_environment_variable" "insforge_api_key" {
+  project_id = vercel_project.api.id
+  key        = "INSFORGE_API_KEY"
+  value      = var.insforge_api_key
+  target     = ["production", "preview"]
+  sensitive  = true
 }

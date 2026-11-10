@@ -16,6 +16,7 @@ class RemitoCarnico(Base):
     """Modelo ORM de remito electrónico cárnico."""
 
     __tablename__ = "remitos_carnicos"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     punto_emision: Mapped[str] = mapped_column(String(4), nullable=False)
@@ -60,6 +61,7 @@ class RenglonRemito(Base):
     """Modelo ORM de renglón de remito."""
 
     __tablename__ = "renglones_remito"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     remito_id: Mapped[int] = mapped_column(

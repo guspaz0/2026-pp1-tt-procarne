@@ -1,11 +1,31 @@
 /**
  * Header institucional del diseño Figma "ROCCA - Control Cadena Cárnica SDE - /".
  * Gradiente azul→granate. A la izquierda, pegado al logo: badges, título ROCCA
- * y subtítulo. A la derecha, el panel de interconexión federal (glass card).
+ * y subtítulo. A la derecha, el usuario logueado (email) con botón "Salir".
  */
-// import { IconWifi } from "../shared/Icons"; // [INTERCONEXIÓN FEDERAL] desactivado
+import { useNavigate } from "react-router-dom";
+import { useLogoutMutation } from "../../store/authApi";
+import { cerrarSesion } from "../../store/authSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 
 export function Header() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { usuario } = useAppSelector((s) => s.auth);
+  const [logout, { isLoading: cerrando }] = useLogoutMutation();
+
+  async function onLogout() {
+    // Cierra la sesión en InsForge y limpia las cookies (el backend hace el
+    // sign-out y borra las cookies HttpOnly).
+    try {
+      await logout().unwrap();
+    } catch {
+      // Mejor esfuerzo: aunque el sign-out remoto falle, limpiamos local.
+    }
+    dispatch(cerrarSesion());
+    navigate("/", { replace: true });
+  }
+
   return (
     <header
       className="w-full"
@@ -37,15 +57,6 @@ export function Header() {
             <span className="rounded bg-[#f59e0b/20] px-2 py-0.5 text-[11px] font-semibold tracking-[1.1px] text-[#fcd34d] border border-[#fbbf24/30]">
               GOBIERNO DE SANTIAGO DEL ESTERO
             </span>
-            {/* [AGROTRAZA] desactivado
-            <span className="flex items-center gap-1.5 rounded bg-[#10b981/20] px-2 py-0.5 text-[11px] text-[#6ee7b7] border border-[#34d399/30]">
-              <span
-                className="size-1.5 rounded-full"
-                style={{ background: "#34d399", boxShadow: "0 0 6px #34d399" }}
-              />
-              AGROTRAZA Integrado
-            </span>
-            */}
           </div>
 
           {/* Título ROCCA + subtítulo en la misma línea */}
@@ -64,32 +75,27 @@ export function Header() {
           </div>
         </div>
 
-        {/* Panel interconexión federal (glass) — desactivado
-        <div
-          className="flex shrink-0 items-center gap-3 rounded-lg px-4 py-3"
-          style={{
-            background: "rgba(0,0,0,0.35)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            backdropFilter: "blur(24px)",
-          }}
-        >
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-1.5">
-              <IconWifi size={14} className="text-[#34d399]" />
-              <span className="text-[12px] font-semibold text-[#f1f5f9]">
-                Interconexión Federal Activa
-              </span>
+        {/* Usuario logueado + botón de salir */}
+        {usuario && (
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="flex flex-col items-end">
+              <span className="text-[13px] font-semibold text-white">{usuario.email}</span>
+              {typeof usuario.user_metadata?.nombre === "string" && (
+                <span className="text-[10px] text-[#cbd5e1]">
+                  {usuario.user_metadata.nombre as string}
+                </span>
+              )}
             </div>
-            <span className="text-[10px] text-[#94a3b8]">
-              ARCA (REC) • SENASA (SIGSA)
-            </span>
+            <button
+              type="button"
+              onClick={onLogout}
+              disabled={cerrando}
+              className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {cerrando ? "Cerrando…" : "Salir"}
+            </button>
           </div>
-          <span
-            className="size-3 rounded-full"
-            style={{ background: "#34d399", boxShadow: "0 0 10px #34d399" }}
-          />
-        </div>
-        */}
+        )}
       </div>
     </header>
   );

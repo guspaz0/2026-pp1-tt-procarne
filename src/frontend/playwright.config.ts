@@ -23,11 +23,22 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:5173",
     trace: "retain-on-failure",
-    screenshot: "only-on-failure",
+    // Pantalla al FINAL de cada test (pasa y falla).
+    screenshot: "on",
+    // Sesión compartida: auth.setup.ts loguea y guarda la cookie HttpOnly
+    // en este storageState; todos los tests la reutilizan (la API exige
+    // autenticación vía middleware de InsForge).
+    storageState: "tests/e2e/.auth/user.json",
   },
   projects: [
     {
+      // Login de prueba: corre solo una vez, antes del resto de la suite.
+      name: "setup",
+      testMatch: /auth\.setup\.ts$/,
+    },
+    {
       name: "chromium",
+      testIgnore: /auth\.setup\.ts$/,
       use: { ...devices["Desktop Chrome"] },
     },
   ],
@@ -38,3 +49,6 @@ export default defineConfig({
     timeout: 60_000,
   },
 });
+
+// No usamos globalSetup: el project `setup` (auth.setup.ts) loguea y
+// persiste el storageState que el project `chromium` reutiliza.

@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 
 /**
  * Jerarquía: Personas y Sucursales — agrupa los operadores por CUIT.
+ *
+ * La agrupación se hace en el frontend (Object.groupBy sobre `cuit`) a
+ * partir de GET /registro-operadores; no existe endpoint de jerarquía.
+ * La API exige sesión (cookie de `auth.setup.ts` vía storageState).
  */
 test.describe("Jerarquía", () => {
   test("agrupa las sucursales por persona titular (CUIT)", async ({
@@ -29,13 +33,15 @@ test.describe("Jerarquía", () => {
 
     // Cada persona (CUIT único) tiene su card.
     for (const cuit of cuitsUnicos) {
-      await expect(page.getByText(`CUIT: ${cuit}`)).toBeVisible();
+      await expect(
+        page.getByText(new RegExp(`CUIT: ${cuit.toUpperCase()}`, "i")).first(),
+      ).toBeVisible();
     }
 
     // Cada sucursal aparece dentro de su grupo.
     for (const op of operadores) {
       await expect(
-        page.getByRole("listitem").getByText(op.razon_social),
+        page.getByRole("listitem").getByText(op.razon_social).first(),
       ).toBeVisible();
     }
   });

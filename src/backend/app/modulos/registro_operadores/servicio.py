@@ -7,12 +7,20 @@ Casos de uso:
 - Cambiar el estado registral.
 - Agregar habilitaciones, inscripciones y domicilios operativos.
 - Gestionar requisitos de inscripción (generales y específicos por categoría).
+
+NOTA: la "jerarquía" de personas y sucursales NO tiene endpoint propio —
+el frontend reutiliza `listar` (GET /registro-operadores) y agrupa los
+operadores por CUIT de la persona titular en el cliente
+(PaginaJerarquia.tsx).
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from core.persona.schema import PersonaIn
+from core.persona.servicio import PersonaService
+from modulos.registro_operadores.adjunto_dao import AdjuntoOperador, AdjuntoOperadorDAO
 from modulos.registro_operadores.dao import (
     ActividadEconomica,
     Certificado,
@@ -25,12 +33,14 @@ from modulos.registro_operadores.dao import (
     ROCCAOperadorDAO,
     SubgrupoActividad,
 )
+from core.storage.insforge import InsforgeStorage
 from modulos.registro_operadores.enums import (
     CategoriaOperador,
     EstadoCertificado,
     EstadoRegistral,
+    RequisitoAdjuntoPersona,
     RequisitoEspecifico,
-    RequisitoGeneral,
+    RequisitoGeneralOperador,
 )
 from modulos.registro_operadores.schema import (
     ActividadEconomicaOut,
@@ -60,52 +70,103 @@ class ROCCAOperadorError(Exception):
 # Matriz de requisitos específicos por categoría (según especificación)
 # ---------------------------------------------------------------------------
 
+# Adjuntos de persona (compartidos entre todos sus operadores)
+REQUISITOS_ADJUNTO_PERSONA: list[str] = [
+    RequisitoAdjuntoPersona.DNI_FRENTE.value,
+    RequisitoAdjuntoPersona.DNI_DORSO.value,
+    RequisitoAdjuntoPersona.CUIT.value,
+    RequisitoAdjuntoPersona.IIBB.value,
+]
+
+# Requisitos generales de operador (comunes a todas las categorías)
+REQUISITOS_GENERALES: list[str] = [
+    RequisitoGeneralOperador.AFIP_ULTIMO_PAGO.value,
+    RequisitoGeneralOperador.REGIMEN_PROVISIONAL.value,
+]
+
+# Matriz de requisitos específicos por categoría (según especificación)
 REQUISITOS_ESPECIFICOS_POR_CATEGORIA: dict[str, list[str]] = {
     CategoriaOperador.SALA_DE_DESPOSTE.value: [
-        RequisitoEspecifico.REGISTRO_NACIONAL_FRIGORIFICOS.value,
+        RequisitoEspecifico.FORMULARIO_101.value,
+        RequisitoEspecifico.HABILITACION_MUNICIPAL.value,
+        RequisitoEspecifico.MEMORIA_CONSTRUCTIVA.value,
+        RequisitoEspecifico.MEMORIA_OPERATIVA.value,
+        RequisitoEspecifico.CERTIFICADO_EFLUENTES.value,
     ],
     CategoriaOperador.CAMARAS_FRIGORIFICAS.value: [
-        RequisitoEspecifico.REGISTRO_NACIONAL_CAMARAS.value,
+        RequisitoEspecifico.FORMULARIO_101.value,
+        RequisitoEspecifico.HABILITACION_MUNICIPAL.value,
+        RequisitoEspecifico.PLANO_CAMARA.value,
+        RequisitoEspecifico.MATRICULA_RUCA.value,
+        RequisitoEspecifico.USUARIO_FAENADOR.value,
+        RequisitoEspecifico.DOMINIO_CAMARA.value,
+        RequisitoEspecifico.HABILITACION_SANITARIA_CAMARA.value,
     ],
     CategoriaOperador.FABRICA_DE_CHACINADOS.value: [
-        RequisitoEspecifico.REGISTRO_NACIONAL_CHACINADOS.value,
+        RequisitoEspecifico.HABILITACION_MUNICIPAL.value,
+        RequisitoEspecifico.LIBRETA_SANITARIA.value,
+        RequisitoEspecifico.MEMORIA_OPERATIVA.value,
+        RequisitoEspecifico.PLANOS_OBRA.value,
+        RequisitoEspecifico.MEMORIA_EDILICIA.value,
+        RequisitoEspecifico.TASA_FOJAS.value,
+        RequisitoEspecifico.PERMISO_VUELCO_EFLUENTES.value,
+        RequisitoEspecifico.ACTA_CONSTITUCION.value,
+        RequisitoEspecifico.DOMINIO_ESTABLECIMIENTO.value,
+        RequisitoEspecifico.DDJJ_VOLUMEN.value,
+        RequisitoEspecifico.LIBRO_ACTAS.value,
+        RequisitoEspecifico.INSCRIPCION_BROMATOLOGIA.value,
     ],
     CategoriaOperador.CARNICERIAS.value: [
-        RequisitoEspecifico.MATRICULA_MUNICIPAL_CARNICERIA.value,
+        RequisitoEspecifico.FORMULARIO_101.value,
+        RequisitoEspecifico.HABILITACION_MUNICIPAL.value,
+        RequisitoEspecifico.LIBRETA_SANITARIA.value,
     ],
-    CategoriaOperador.TRANSPONEDOR.value: [
-        RequisitoEspecifico.REGISTRO_NACIONAL_TRANSPORTE.value,
+    CategoriaOperador.CARNICERIA_CON_CAMARA.value: [
+        RequisitoEspecifico.FORMULARIO_101.value,
+        RequisitoEspecifico.HABILITACION_MUNICIPAL.value,
+        RequisitoEspecifico.LIBRETA_SANITARIA.value,
+        RequisitoEspecifico.PLANO_CAMARA.value,
+        RequisitoEspecifico.MATRICULA_RUCA.value,
+        RequisitoEspecifico.USUARIO_FAENADOR.value,
+        RequisitoEspecifico.DOMINIO_CAMARA.value,
+        RequisitoEspecifico.HABILITACION_SANITARIA_CAMARA.value,
     ],
-    CategoriaOperador.SUPERMERCADO.value: [
-        RequisitoEspecifico.MATRICULA_MUNICIPAL_SUPERMERCADO.value,
-    ],
-    CategoriaOperador.DISTRIBUIDOR.value: [
-        RequisitoEspecifico.REGISTRO_NACIONAL_DISTRIBUIDOR.value,
-    ],
+    # Transportista, Supermercado y Distribuidor: pendientes de definir
+    CategoriaOperador.TRANSPONEDOR.value: [],
+    CategoriaOperador.SUPERMERCADO.value: [],
+    CategoriaOperador.DISTRIBUIDOR.value: [],
 }
-
-REQUISITOS_GENERALES: list[str] = [
-    RequisitoGeneral.INGRESOS_BRUTOS.value,
-    RequisitoGeneral.AFIP.value,
-    RequisitoGeneral.REGIMEN_PROVISIONAL.value,
-]
 
 
 class ROCCAOperadorService:
     """Servicio de negocio de operadores de la cadena cárnica."""
 
-    def __init__(self, dao: ROCCAOperadorDAO) -> None:
+    def __init__(self, dao: ROCCAOperadorDAO, persona_service: PersonaService | None = None,
+                 adjunto_dao: AdjuntoOperadorDAO | None = None,
+                 storage: InsforgeStorage | None = None) -> None:
         self._dao = dao
+        self._persona_service = persona_service
+        self._adjunto_dao = adjunto_dao
+        self._storage = storage
 
     # ------------------------------------------------------------------
     # Operadores
     # ------------------------------------------------------------------
 
     def crear_operador(self, data: ROCCAOperadorIn) -> ROCCAOperadorOut:
-        """Da de alta un operador y devuelve su representación de salida."""
+        """Da de alta un operador y devuelve su representación de salida.
+
+        Si el alta no trae ``persona_id``, se crea la persona titular con el
+        CUIT del operador (1 persona : N sucursales).
+        """
         existente = self._dao.obtener_por_cuit(data.cuit)
         if existente is not None:
             raise ROCCAOperadorError(f"Ya existe un operador con CUIT {data.cuit}")
+
+        # ``operadores.persona_id`` es NOT NULL: si el alta no trae la persona
+        # titular, la creamos con los datos del propio operador (idempotente
+        # por CUIT).
+        persona_id = self._resolver_persona(data.persona_id, data.cuit, data.razon_social, data.tipo)
 
         # Validar categoría si se proporciona
         if data.categoria is not None:
@@ -120,7 +181,7 @@ class ROCCAOperadorService:
             cuit=data.cuit,
             razon_social=data.razon_social,
             tipo=data.tipo,
-            persona_id=data.persona_id,
+            persona_id=persona_id,
             domicilio_comercial=data.domicilio_comercial,
             telefono=data.telefono,
             email=data.email,
@@ -137,6 +198,37 @@ class ROCCAOperadorService:
         operador = self._dao.obtener_por_cuit(cuit)
         return ROCCAOperadorOut.model_validate(operador) if operador else None
 
+    # ------------------------------------------------------------------
+    # Personas (titulares)
+    # ------------------------------------------------------------------
+
+    def _resolver_persona(self, persona_id: int | None, cuit: str,
+                          razon_social: str, tipo: str) -> int:
+        """Devuelve el id de la persona titular del operador.
+
+        Si el alta trae ``persona_id`` lo usa directamente; si no, busca la
+        persona por CUIT y la crea (idempotente) con los datos del primer
+        operador registrado bajo ese CUIT.
+        """
+        if persona_id is not None:
+            return persona_id
+        if self._persona_service is not None:
+            existente = self._persona_service.obtener_por_documento("CUIT", cuit)
+            if existente is not None:
+                return existente.id
+            creada = self._persona_service.crear_persona(
+                PersonaIn(
+                    tipo=tipo if tipo in ("FISICA", "JURIDICA") else "JURIDICA",
+                    tipo_documento="CUIT",
+                    identificador=cuit,
+                    nombre=razon_social,
+                )
+            )
+            return creada.id
+        raise ROCCAOperadorError(
+            "El operador no tiene persona titular (persona_id) y no hay PersonaService configurado"
+        )
+
     def obtener(self, operador_id: int) -> ROCCAOperadorOut | None:
         """Busca un operador por su id."""
         with self._dao._session_factory() as session:
@@ -152,59 +244,6 @@ class ROCCAOperadorService:
         """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
         operadores = self._dao.listar(tipo=tipo, estado_registral=estado_registral, categoria=categoria)
         return [ROCCAOperadorOut.model_validate(op) for op in operadores]
-
-    def listar_jerarquia(self) -> list[dict]:
-        """Lista la jerarquía de personas y sucursales.
-        
-        Devuelve una lista de diccionarios con la estructura:
-        {
-            "persona_id": int,
-            "nombre": str,
-            "cuit": str,
-            "tipo_documento": str,
-            "sucursales": [ROCCAOperadorOut]
-        }
-        """
-        from sqlalchemy import text
-        
-        with self._dao._session_factory() as session:
-            # Obtener todos los operadores
-            operadores = session.query(ROCCAOperador).all()
-            
-            # Agrupar por persona_id
-            por_persona: dict[int, list[ROCCAOperador]] = {}
-            for op in operadores:
-                if op.persona_id not in por_persona:
-                    por_persona[op.persona_id] = []
-                por_persona[op.persona_id].append(op)
-            
-            # Obtener las personas usando una consulta SQL directa
-            result = session.execute(
-                text("SELECT id, nombre, identificador, tipo_documento, tipo FROM personas")
-            )
-            personas = result.fetchall()
-            persona_por_id = {p[0]: p for p in personas}
-            
-            # Construir la jerarquía
-            jerarquia = []
-            for persona_id, ops in por_persona.items():
-                persona = persona_por_id.get(persona_id)
-                if persona is None:
-                    continue
-                
-                jerarquia.append({
-                    "persona_id": persona[0],
-                    "nombre": persona[1],
-                    "cuit": persona[2],
-                    "tipo_documento": persona[3],
-                    "tipo_persona": persona[4],
-                    "sucursales": [ROCCAOperadorOut.model_validate(op) for op in ops]
-                })
-            
-            # Ordenar por nombre de persona
-            jerarquia.sort(key=lambda x: x["nombre"].upper())
-            
-            return jerarquia
 
     def cambiar_estado(self, operador_id: int, estado: EstadoRegistral) -> ROCCAOperadorOut:
         """Cambia el estado registral de un operador."""
@@ -345,6 +384,15 @@ class ROCCAOperadorService:
         """Devuelve los códigos de requisitos específicos para una categoría."""
         return REQUISITOS_ESPECIFICOS_POR_CATEGORIA.get(categoria, [])
 
+    def requisitos_para_categoria(self, categoria: str) -> list[str]:
+        """Devuelve todos los requisitos de adjunto (generales + específicos) para una categoría."""
+        return REQUISITOS_GENERALES + REQUISITOS_ESPECIFICOS_POR_CATEGORIA.get(categoria, [])
+
+    def validar_requisito_para_categoria(self, categoria: str, requisito: str) -> bool:
+        """Valida que un requisito corresponda a la categoría del operador."""
+        validos = self.requisitos_para_categoria(categoria)
+        return requisito in validos
+
     # ------------------------------------------------------------------
     # Catálogo de actividades económicas
     # ------------------------------------------------------------------
@@ -393,6 +441,49 @@ class ROCCAOperadorService:
     # Certificados
     # ------------------------------------------------------------------
 
+    def obtener_certificado_vigente(self, operador_id: int) -> CertificadoOut | None:
+        """Devuelve el único certificado válido del operador.
+
+        Regla: entre los certificados que NO están RELEVADO, elige el de
+        máxima fecha_vencimiento (NULL = sin vencimiento, se trata como
+        infinito). Desempate: máxima fecha_emision.
+
+        Si no existe ninguno → None.
+        """
+        from datetime import datetime as dt, timezone as tz
+
+        with self._dao._session_factory() as session:
+            operador = session.get(ROCCAOperador, operador_id)
+            if operador is None:
+                raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+
+            certs = (
+                session.query(Certificado)
+                .filter(
+                    Certificado.operador_id == operador_id,
+                    Certificado.estado != EstadoCertificado.RELEVADO.value,
+                )
+                .all()
+            )
+            if not certs:
+                return None
+
+            # Elegir: max fecha_vencimiento (None = ∞), desempate max fecha_emision
+            def _sort_key(c: Certificado):
+                venc = c.fecha_vencimiento
+                # None (sin vencimiento) se trata como infinito → usar un datetime lejano
+                if venc is None:
+                    venc = dt.max.replace(tzinfo=tz.utc)
+                elif venc.tzinfo is None:
+                    venc = venc.replace(tzinfo=tz.utc)
+                emision = c.fecha_emision
+                if emision.tzinfo is None:
+                    emision = emision.replace(tzinfo=tz.utc)
+                return (venc, emision)
+
+            vigente = max(certs, key=_sort_key)
+            return CertificadoOut.from_certificado(vigente)
+
     def listar_certificados(self, operador_id: int) -> list[CertificadoOut]:
         """Lista los certificados de un operador (con estado efectivo calculado)."""
         with self._dao._session_factory() as session:
@@ -412,7 +503,7 @@ class ROCCAOperadorService:
         with self._dao._session_factory() as session:
             cert = session.get(Certificado, certificado_id)
             if cert is None or cert.operador_id != operador_id:
-                raise ROCCAOperadorError(f"No existe el certificado {certificado_id} para el operador {operador_id}")
+                raise ROCCAOperadorError(f"No existe el certificado {operador_id}/{certificado_id}")
             return CertificadoOut.from_certificado(cert)
 
     def suspender_certificado(self, operador_id: int, certificado_id: int,
@@ -424,7 +515,7 @@ class ROCCAOperadorService:
         with self._dao._session_factory() as session:
             cert = session.get(Certificado, certificado_id)
             if cert is None or cert.operador_id != operador_id:
-                raise ROCCAOperadorError(f"No existe el certificado {certificado_id} para el operador {operador_id}")
+                raise ROCCAOperadorError(f"No existe el certificado {operador_id}/{certificado_id}")
             if cert.estado != EstadoCertificado.ACTIVO.value:
                 raise ROCCAOperadorError(
                     f"No se puede suspender un certificado en estado {cert.estado}"
@@ -436,7 +527,8 @@ class ROCCAOperadorService:
             session.refresh(cert)
             return CertificadoOut.from_certificado(cert)
 
-    def reactivar_certificado(self, operador_id: int, certificado_id: int) -> CertificadoOut:
+    def reactivar_certificado(self, operador_id: int, certificado_id: int,
+                              data: CertificadoSuspenderIn | None = None) -> CertificadoOut:
         """Reactiva un certificado suspendido (acción de supervisor).
 
         Solo se puede reactivar un certificado en estado SUSPENDIDO.
@@ -444,7 +536,7 @@ class ROCCAOperadorService:
         with self._dao._session_factory() as session:
             cert = session.get(Certificado, certificado_id)
             if cert is None or cert.operador_id != operador_id:
-                raise ROCCAOperadorError(f"No existe el certificado {certificado_id} para el operador {operador_id}")
+                raise ROCCAOperadorError(f"No existe el certificado {operador_id}/{certificado_id}")
             if cert.estado != EstadoCertificado.SUSPENDIDO.value:
                 raise ROCCAOperadorError(
                     f"No se puede reactivar un certificado en estado {cert.estado}"
@@ -538,3 +630,92 @@ class ROCCAOperadorService:
                     session.add(req)
 
             session.commit()
+
+    # ------------------------------------------------------------------
+    # Adjuntos de operador
+    # ------------------------------------------------------------------
+
+    async def subir_adjunto_operador(
+        self, operador_id: int, requisito: str, filename: str,
+        content_type: str, size: int, data: bytes,
+    ) -> dict:
+        """Sube un adjunto a storage y registra la fila en BD."""
+        if self._storage is None:
+            raise ROCCAOperadorError("Storage no configurado")
+        if self._adjunto_dao is None:
+            raise ROCCAOperadorError("DAO de adjuntos no configurado")
+
+        # Verificar que el operador existe
+        operador = self._dao.obtener_por_id(operador_id)
+        if operador is None:
+            raise ROCCAOperadorError(f"No existe un operador con id {operador_id}")
+
+        # Validar content type
+        if content_type not in ("image/jpeg", "image/png", "application/pdf"):
+            raise ROCCAOperadorError(f"Tipo de archivo no permitido: {content_type}")
+        # Validar tamaño
+        if size > 10 * 1024 * 1024:
+            raise ROCCAOperadorError("Archivo excede el tamaño máximo de 10 MB")
+        # Validar que el requisito corresponda a la categoría
+        categoria = operador.categoria or ""
+        if not self.validar_requisito_para_categoria(categoria, requisito):
+            raise ROCCAOperadorError(
+                f"El requisito '{requisito}' no corresponde a la categoría '{categoria}'"
+            )
+
+        # Subir a storage
+        storage_key = await self._storage.upload(filename, content_type, size, data)
+
+        # Registrar en BD
+        adjunto = self._adjunto_dao.crear(
+            operador_id=operador_id,
+            requisito=requisito,
+            storage_key=storage_key,
+            content_type=content_type,
+            size=size,
+            nombre_original=filename,
+        )
+        return self._adjunto_a_dict(adjunto)
+
+    def listar_adjuntos_operador(self, operador_id: int) -> list[dict]:
+        """Lista los adjuntos de un operador."""
+        if self._adjunto_dao is None:
+            return []
+        adjuntos = self._adjunto_dao.listar_por_operador(operador_id)
+        return [self._adjunto_a_dict(a) for a in adjuntos]
+
+    async def obtener_url_adjunto_operador(self, operador_id: int, adjunto_id: int) -> str:
+        """Obtiene una URL firmada para descargar un adjunto."""
+        if self._adjunto_dao is None or self._storage is None:
+            raise ROCCAOperadorError("Storage no configurado")
+        adjunto = self._adjunto_dao.obtener_por_id(adjunto_id)
+        if adjunto is None or adjunto.operador_id != operador_id:
+            raise ROCCAOperadorError(f"No existe un adjunto {adjunto_id} para el operador {operador_id}")
+        return await self._storage.download_url(adjunto.storage_key)
+
+    async def eliminar_adjunto_operador(self, operador_id: int, adjunto_id: int) -> None:
+        """Elimina un adjunto (fila + objeto en storage)."""
+        if self._adjunto_dao is None:
+            raise ROCCAOperadorError("DAO de adjuntos no configurado")
+        adjunto = self._adjunto_dao.obtener_por_id(adjunto_id)
+        if adjunto is None or adjunto.operador_id != operador_id:
+            raise ROCCAOperadorError(f"No existe un adjunto {adjunto_id} para el operador {operador_id}")
+        if self._storage:
+            try:
+                await self._storage.delete(adjunto.storage_key)
+            except Exception:
+                pass
+        self._adjunto_dao.eliminar(adjunto_id)
+
+    @staticmethod
+    def _adjunto_a_dict(adjunto: AdjuntoOperador) -> dict:
+        return {
+            "id": adjunto.id,
+            "operador_id": adjunto.operador_id,
+            "requisito": adjunto.requisito,
+            "storage_key": adjunto.storage_key,
+            "content_type": adjunto.content_type,
+            "size": adjunto.size,
+            "nombre_original": adjunto.nombre_original,
+            "creado_en": adjunto.creado_en.isoformat() if adjunto.creado_en else None,
+        }

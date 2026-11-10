@@ -30,6 +30,8 @@ async function completarFormulario(page: Page, cuit: string, nombre: string) {
   await page.getByLabel(/C\.U\.I\.T/).fill(cuit);
   // Por defecto tipoPersona === "fisica" → el campo se llama "Apellido y Nombre del Titular".
   await page.getByLabel(/Apellido y Nombre del Titular/).fill(nombre);
+  // Nombre del establecimiento (obligatorio: la API exige domicilio_comercial).
+  await page.getByLabel(/Nombre del Establecimiento|Fantasia/).fill(`SUC. ${nombre}`);
   // Selecciona al menos una categoría cárnica (obligatorio).
   await page.getByRole("button", { name: /Carnicería Minorista/ }).click();
 }
@@ -52,14 +54,17 @@ test.describe("Alta de operador (F 102)", () => {
 
     // Mensaje de éxito con el CUIT.
     await expect(
-      page.getByRole("status").getByText(new RegExp(`CUIT ${cuit}`)),
+      page.getByRole("status").getByText(
+        new RegExp(`Operador registrado con CUIT ${cuit}`),
+      ),
     ).toBeVisible();
 
     // Navega al padrón: el nuevo operador debe estar renderizado
-    // (valida invalidatesTags + selectItems).
+    // (valida invalidatesTags + selectItems). El nombre aparece en 2
+    // celdas (establecimiento y persona titular) → .first().
     await page.getByRole("link", { name: /Padrón de Operadores/ }).click();
     await expect(
-      page.getByRole("row").getByText(nombre),
+      page.getByText(nombre).first(),
     ).toBeVisible();
   });
 
@@ -83,4 +88,17 @@ test.describe("Alta de operador (F 102)", () => {
       page.getByRole("status").getByText(/Error al registrar/),
     ).toBeVisible();
   });
+});
+
+test.describe("Guard de autenticación", () => {
+  test("redirige a /login si no hay sesión", async ({ page }) => {
+    // Contexto sin el storageState de la sesión guardada.
+    await page.context().clearCookies();
+
+    await page.goto("/operadores/padron");
+
+    // El guard de ruta redirige al login recordando la ruta de origen.
+    await expect(page).toHaveURL(/\/login/);
+  });
+});
 });

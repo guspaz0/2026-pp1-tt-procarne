@@ -1,36 +1,38 @@
-# ROCCA — Terraform (Vercel vía GitHub)
+# ROCCA — Terraform (Vercel)
 
-Deploy del monorepo:
+Deploy del monorepo a **Vercel** (framework `fastapi`):
 
-- **Backend** (FastAPI, `src/backend`) → **Vercel**, conectado al repositorio
-  GitHub con `git_repository`: **cada push genera un deployment automático**
-  (`main` → producción, demás branches → preview deployments).
-- **Frontend** (Vite/React, `src/frontend`) → **Netlify** (deploy del site
-  vía `netlify-cli`, fuera de Terraform).
+- **Backend** (FastAPI, `src/backend`) → Vercel, framework `fastapi`.
+- **Frontend** (Vite/React, `src/frontend`) → se builda localmente
+  (`pnpm build`) y se emite en `src/backend/app/static/`. Vercel sirve
+  el build estático como fallback SPA (el backend tiene un catch-all
+  `GET /{ruta:path}` que devuelve `index.html`).
 
-> El deploy anterior en **Render** quedó como residuo en `terraform.tfstate`
-> (`render_web_service.api`) — descartarlo antes de `apply` (ver abajo).
+> No hay conexión a GitHub: el deploy se hace con `vercel_deployment`
+> subiendo los archivos locales (regenerados por `sync.sh`).
 
 ## Estructura
 
 ```
 terraform/
-├── main.tf        # vercel_project.api + vercel_git_repository.api + env vars + outputs
-├── providers.tf   # required_providers + provider vercel
-├── variables.tf   # Variables
-└── terraform.tfvars.example  # Plantilla de variables (no commitear .tfvars)
+├── main.tf                    # vercel_project + vercel_deployment + env vars
+├── providers.tf               # required_providers + provider vercel (con team)
+├── variables.tf               # Variables de entrada
+├── outputs.tf                 # Outputs (app_url, deployment_url, deployment_id)
+├── sync.sh                    # Copia limpia de src/backend → deploy/backend
+├── terraform.tfvars.example   # Plantilla de variables (no commitear .tfvars)
+└── deploy/backend/            # Generado por sync.sh (no commitear)
 ```
 
 ## Requisitos
 
 - Terraform >= 1.5
-- `netlify-cli` instalado (`npm i -g netlify-cli`)
 - API token de Vercel: <https://vercel.com/account/tokens>
-  - El token debe pertenecer a la cuenta **guspaz0** que ya tiene Vercel
-    conectado a GitHub (el repo ya está vinculado, así que no hay que
-    re-autorizar).
-- Personal access token de Netlify: <https://app.netlify.com/user/applications#personal-access-tokens>
-- Site de Netlify ya creado en el dashboard (el provider no soporta creación de sites)
+  - El token debe pertenecer al **team** que posee el proyecto
+    (`vercel_team_id` en `terraform.tfvars`). Sin el team, la API
+    responde 403 Forbidden.
+- `rsync` instalado (lo usa `sync.sh`).
+- Para buildar el frontend antes del deploy: `pnpm` en `src/frontend`.
 
 ## Variables
 
@@ -38,70 +40,62 @@ terraform/
 |-----------------------|-----------|----------------------------------------------------------|-------------------------------|
 | `vercel_api_token`    | sí        | API token de Vercel                                      | —                             |
 | `vercel_project_name` | no        | Nombre del proyecto en Vercel (define la URL)            | `procarne`                    |
-| `github_repo`         | no        | Repo GitHub `owner/name` al que se conecta Vercel        | `guspaz0/2026-pp1-tt-procarne` |
+| `vercel_team_id`      | no        | ID del team de Vercel (`team_xxx`)                       | `team_jBuR0GcDPltyl5R6JqLOsSPO` |
 | `rocca_database_url`  | sí        | URL de PostgreSQL (Insforge / Neon) — **no SQLite**      | —                             |
-| `netlify_token`       | sí        | Personal access token de Netlify                         | —                             |
-| `netlify_site_id`     | no        | ID del site en Netlify (lo ves en la URL del dashboard)   | `procarne-sde`                |
+| `insforge_url`        | no        | URL del proyecto Insforge (IdP)                          | —                             |
+| `insforge_api_key`    | sí        | API Key administrativa de Insforge (`ik_...`)            | —                             |
 
-## Cómo funciona el redeploy automático
-
-1. Vercel se conecta a `guspaz0/2026-pp1-tt-procarne` en GitHub
-   (`vercel_project.git_repository` + `vercel_git_repository`).
-2. Cada push a cualquier branch dispara un deployment vía webhook:
-   - `main` → **producción** (`https://procarne.vercel.app`).
-   - Cualquier otra branch → **preview deployment** con URL efímera.
-3. Vercel clona el repo, instala dependencias de `src/backend/requirements.txt`
-   y builda el framework `fastapi`. No se necesita `vercel_deployment`
-   (subida de archivos local) ni `vercel.json` extra.
-
-## Uso
+## Flujo de deploy
 
 ```bash
 cd terraform
 
-# 1) Descartar el estado antiguo de Render (solo la primera vez):
-terraform state rm render_web_service.api
+# 1) Build del frontend (emite en src/backend/app/static)
+cd ../src/frontend && pnpm build && cd ../terraform
 
-# 2) Init + apply:
+# 2) Regenerar la copia limpia para Vercel
+./sync.sh
+
+# 3) Init (solo la primera vez) + apply
 terraform init
 terraform apply
 ```
 
-Variables: por defecto se toman de `terraform.tfvars` (local, no commitear).
-Si no existe, copiar `terraform.tfvars.example` a `terraform.tfvars` y
-completar los valores.
+`sync.sh` copia `src/backend/` → `deploy/backend/` excluyendo `.venv`,
+`__pycache__`, `.pytest_cache`, `*.db` y `.git`. El resource
+`vercel_deployment.api` sube ese directorio a Vercel.
 
-Después del apply, todo push a GitHub ya redirige automáticamente a Vercel.
-Para verificar: Vercel Dashboard → proyecto `procarne` → tab *Git*, debe
-mostrar el repo conectado y el historial de deployments por push.
+## Variables de entorno inyectadas en Vercel
 
-## Redeploys manuales (opcional)
+| Key                   | Source                    | Sensitive |
+|-----------------------|---------------------------|-----------|
+| `ROCCA_DATABASE_URL`  | `var.rocca_database_url`  | sí        |
+| `INSFORGE_URL`        | `var.insforge_url`        | no        |
+| `INSFORGE_API_KEY`    | `var.insforge_api_key`    | sí        |
 
-- **Backend**: push a la branch (o `git push` de un commit vacío si solo
-  se quiere re-trigger): `git commit --allow-empty -m "redeploy" && git push`.
-- **Frontend (Netlify)**:
-  ```bash
-  cd ../src/frontend && pnpm run build
-  cd ../terraform && terraform apply -target=terraform_data.netlify_deploy
-  ```
+Se inyectan para los targets `production` y `preview`.
 
 ## Outputs
 
-- `api_url` — URL del backend en Vercel (`https://<vercel_project_name>.vercel.app`)
-- `frontend_url` — `https://<netlify_site_name>.netlify.app`
+- `app_url` — URL del backend en Vercel (`https://<vercel_project_name>.vercel.app`)
+- `deployment_url` — URL del deployment de producción actual (cambia en cada apply)
+- `deployment_id` — ID del deployment de producción actual
 
 ## Notas
 
 - El backend lee `ROCCA_DATABASE_URL` (PostgreSQL en prod; **siempre**
   PostgreSQL, no SQLite — en Vercel el filesystem es efímero).
-- `ROCCA_CORS_ORIGINS`: inyectarlo como env var de Vercel con la URL de
-  Netlify si el frontend hace fetch al backend desde otro origen.
-- El frontend lee `VITE_API_BASE_URL` en build time; fijarlo manualmente en
-  las variables de entorno de Netlify apuntando a
-  `https://<vercel_project_name>.vercel.app`.
+- `ROCCA_CORS_ORIGINS`: inyectarlo como env var de Vercel con la URL del
+  frontend si hace fetch al backend desde otro origen. En este setup el
+  frontend se sirve desde el mismo origen que el backend (catch-all SPA),
+  así que CORS no es un problema.
+- `ROCCA_COOKIE_SECURE`: en producción (HTTPS) dejar en `1` (default).
+  Para desarrollo local por HTTP, fijar en `0`.
 - Health check del backend: `GET /api/health`.
 - Límites de Vercel con FastAPI (función serverless): sin tareas de fondo
   largas ni WebSockets; cold starts por `crear_app()`; límite de tamaño de
   bundle.
 - State: no commitear `terraform.tfstate` ni `*.tfvars`. Para uso en equipo,
   usar un backend remoto (Terraform Cloud, S3).
+- El frontend no se despliega por separado: `pnpm build` emite en
+  `src/backend/app/static/` y el backend lo sirve como SPA.

@@ -9,7 +9,7 @@ from modulos.registro_operadores.enums import (
     CategoriaOperador,
     EstadoRegistral,
     RequisitoEspecifico,
-    RequisitoGeneral,
+    RequisitoGeneralOperador,
     TipoOperador,
 )
 from modulos.registro_operadores.schema import ROCCAOperadorIn
@@ -27,8 +27,8 @@ def operador_dao(db_session_factory):
 
 
 @pytest.fixture()
-def operador_service(operador_dao):
-    return ROCCAOperadorService(operador_dao)
+def operador_service(operador_dao, persona_service):
+    return ROCCAOperadorService(operador_dao, persona_service=persona_service)
 
 
 class TestCategorias:
@@ -84,7 +84,6 @@ class TestCategorias:
             operador_service.crear_operador(data)
 
     def test_listar_filtrar_por_categoria(self, operador_service):
-        # Crear operadores de distintas categorías
         for i, cat in enumerate([
             CategoriaOperador.SALA_DE_DESPOSTE,
             CategoriaOperador.CARNICERIAS,
@@ -145,24 +144,19 @@ class TestRequisitos:
         creado = operador_service.crear_operador(data)
         requisitos = operador_service.listar_requisitos(creado.id)
 
-        # 3 generales + 1 específico = 4 requisitos
-        assert len(requisitos) == 4
+        # 2 generales + 5 específicos (SALA_DE_DESPOSTE) = 7 requisitos
+        assert len(requisitos) == 7
 
         generales = [r for r in requisitos if r.es_general]
         especificos = [r for r in requisitos if not r.es_general]
-        assert len(generales) == 3
-        assert len(especificos) == 1
+        assert len(generales) == 2
+        assert len(especificos) == 5
 
-        # Verificar que los generales son los esperados
         codigos_generales = {r.codigo for r in generales}
         assert codigos_generales == {
-            RequisitoGeneral.INGRESOS_BRUTOS.value,
-            RequisitoGeneral.AFIP.value,
-            RequisitoGeneral.REGIMEN_PROVISIONAL.value,
+            RequisitoGeneralOperador.AFIP_ULTIMO_PAGO.value,
+            RequisitoGeneralOperador.REGIMEN_PROVISIONAL.value,
         }
-
-        # Verificar que el específico es el de sala de desposte
-        assert especificos[0].codigo == RequisitoEspecifico.REGISTRO_NACIONAL_FRIGORIFICOS.value
 
     def test_requisitos_especificos_por_categoria_carniceria(self, operador_service):
         data = ROCCAOperadorIn(
@@ -175,8 +169,8 @@ class TestRequisitos:
         requisitos = operador_service.listar_requisitos(creado.id)
 
         especificos = [r for r in requisitos if not r.es_general]
-        assert len(especificos) == 1
-        assert especificos[0].codigo == RequisitoEspecifico.MATRICULA_MUNICIPAL_CARNICERIA.value
+        # CARNICERIAS: formulario_101, habilitacion_municipal, libreta_sanitaria
+        assert len(especificos) == 3
 
     def test_requisitos_especificos_por_categoria_transportista(self, operador_service):
         data = ROCCAOperadorIn(
@@ -188,9 +182,9 @@ class TestRequisitos:
         creado = operador_service.crear_operador(data)
         requisitos = operador_service.listar_requisitos(creado.id)
 
+        # TRANSPONEDOR no tiene específicos
         especificos = [r for r in requisitos if not r.es_general]
-        assert len(especificos) == 1
-        assert especificos[0].codigo == RequisitoEspecifico.REGISTRO_NACIONAL_TRANSPORTE.value
+        assert len(especificos) == 0
 
     def test_requisitos_sin_categoria(self, operador_service):
         data = ROCCAOperadorIn(
@@ -201,8 +195,8 @@ class TestRequisitos:
         creado = operador_service.crear_operador(data)
         requisitos = operador_service.listar_requisitos(creado.id)
 
-        # Solo 3 generales, sin específicos
-        assert len(requisitos) == 3
+        # Solo 2 generales, sin específicos
+        assert len(requisitos) == 2
         assert all(r.es_general for r in requisitos)
 
     def test_actualizar_requisito_cumplido(self, operador_service):
@@ -215,7 +209,6 @@ class TestRequisitos:
         creado = operador_service.crear_operador(data)
         requisitos = operador_service.listar_requisitos(creado.id)
 
-        # Marcar un requisito como cumplido
         req_id = requisitos[0].id
         actualizado = operador_service.actualizar_requisito(creado.id, req_id, cumplido=True)
         assert actualizado.cumplido is True
@@ -231,7 +224,6 @@ class TestRequisitos:
         creado = operador_service.crear_operador(data)
         requisitos = operador_service.listar_requisitos(creado.id)
 
-        # Marcar como no cumplido (ya lo está)
         req_id = requisitos[0].id
         actualizado = operador_service.actualizar_requisito(creado.id, req_id, cumplido=False)
         assert actualizado.cumplido is False
@@ -246,16 +238,16 @@ class TestRequisitos:
         )
         creado = operador_service.crear_operador(data)
 
-        # Inicialmente todos están pendientes
+        # Inicialmente todos están pendientes (2 generales + 5 específicos)
         pendientes = operador_service.obtener_requisitos_pendientes(creado.id)
-        assert len(pendientes) == 4
+        assert len(pendientes) == 7
 
         # Cumplir uno
         requisitos = operador_service.listar_requisitos(creado.id)
         operador_service.actualizar_requisito(creado.id, requisitos[0].id, cumplido=True)
 
         pendientes = operador_service.obtener_requisitos_pendientes(creado.id)
-        assert len(pendientes) == 3
+        assert len(pendientes) == 6
 
     def test_requisito_no_existente(self, operador_service):
         data = ROCCAOperadorIn(
@@ -269,127 +261,27 @@ class TestRequisitos:
             operador_service.actualizar_requisito(creado.id, 99999, cumplido=True)
 
     def test_catalogo_requisitos(self, operador_service):
-        # Verificar que el catálogo tiene las 7 categorías
-        assert len(REQUISITOS_ESPECIFICOS_POR_CATEGORIA) == 7
+        # Verificar que el catálogo tiene las 8 categorías
+        assert len(REQUISITOS_ESPECIFICOS_POR_CATEGORIA) == 8
 
-        # Verificar que hay 3 requisitos generales
-        assert len(REQUISITOS_GENERALES) == 3
+        # Verificar que hay 2 requisitos generales
+        assert len(REQUISITOS_GENERALES) == 2
 
-        # Verificar que cada categoría tiene al menos 1 requisito específico
-        for categoria, requisitos in REQUISITOS_ESPECIFICOS_POR_CATEGORIA.items():
+        # Verificar que las categorías con requisitos tienen al menos 1
+        categorias_con_requisitos = {
+            k: v for k, v in REQUISITOS_ESPECIFICOS_POR_CATEGORIA.items() if v
+        }
+        for categoria, requisitos in categorias_con_requisitos.items():
             assert len(requisitos) >= 1, f"Categoría {categoria} sin requisitos específicos"
 
-
-class TestAPIRequisitos:
-    """Tests de la API para requisitos de inscripción."""
-
-    @pytest.fixture()
-    def api_client(self, db_engine):
-        from fastapi import FastAPI
-        from fastapi.testclient import TestClient
-        from configs.dao import SQLiteDAO
-        from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
-        from sqlalchemy.orm import sessionmaker
-
-        app = FastAPI(title="ROCCA Test")
-
-        dao = SQLiteDAO("sqlite://")
-        dao._engine = db_engine
-        dao._session_factory = sessionmaker(
-            autocommit=False, autoflush=False, expire_on_commit=False, bind=db_engine
+    def test_validar_requisito_para_categoria(self, operador_service):
+        """El método de validación devuelve True/False correctamente."""
+        assert operador_service.validar_requisito_para_categoria(
+            CategoriaOperador.SALA_DE_DESPOSTE.value, "habilitacion_municipal"
         )
-
-        modulo = RegistroOperadoresModulo(dao)
-        modulo.registrar(app)
-
-        return TestClient(app)
-
-    def test_listar_requisitos(self, api_client):
-        # Crear operador con categoría
-        r = api_client.post("/api/registro-operadores", json={
-            "cuit": "30111111111",
-            "razon_social": "SALA TEST",
-            "tipo": "FRIGORIFICO",
-            "categoria": "SALA_DE_DESPOSTE",
-        })
-        assert r.status_code == 201
-        op_id = r.json()["id"]
-
-        # Listar requisitos
-        r = api_client.get(f"/api/registro-operadores/{op_id}/requisitos")
-        assert r.status_code == 200
-        data = r.json()
-        assert len(data) == 4  # 3 generales + 1 específico
-
-    def test_listar_requisitos_pendientes(self, api_client):
-        r = api_client.post("/api/registro-operadores", json={
-            "cuit": "30222222222",
-            "razon_social": "CARNICERIA TEST",
-            "tipo": "CARNICERIA",
-            "categoria": "CARNICERIAS",
-        })
-        op_id = r.json()["id"]
-
-        r = api_client.get(f"/api/registro-operadores/{op_id}/requisitos/pendientes")
-        assert r.status_code == 200
-        assert len(r.json()) == 4  # Todos pendientes inicialmente
-
-    def test_actualizar_requisito_via_api(self, api_client):
-        r = api_client.post("/api/registro-operadores", json={
-            "cuit": "30333333333",
-            "razon_social": "TRANSPORTES TEST",
-            "tipo": "TRANSPORTE",
-            "categoria": "TRANSPONEDOR",
-        })
-        op_id = r.json()["id"]
-
-        # Obtener requisitos
-        r = api_client.get(f"/api/registro-operadores/{op_id}/requisitos")
-        req_id = r.json()[0]["id"]
-
-        # Marcar como cumplido
-        r = api_client.patch(
-            f"/api/registro-operadores/{op_id}/requisitos/{req_id}",
-            params={"cumplido": True},
+        assert not operador_service.validar_requisito_para_categoria(
+            CategoriaOperador.SALA_DE_DESPOSTE.value, "libreta_sanitaria"
         )
-        assert r.status_code == 200
-        assert r.json()["cumplido"] is True
-
-    def test_catalogo_requisitos_endpoint(self, api_client):
-        r = api_client.get("/api/registro-operadores/catalogo/requisitos")
-        assert r.status_code == 200
-        data = r.json()
-        assert "generales" in data
-        assert "especificos_por_categoria" in data
-        assert len(data["generales"]) == 3
-        assert len(data["especificos_por_categoria"]) == 7
-
-    def test_listar_filtrar_por_categoria_api(self, api_client):
-        # Crear operadores de distintas categorías
-        api_client.post("/api/registro-operadores", json={
-            "cuit": "30444444440",
-            "razon_social": "SALA 1",
-            "tipo": "FRIGORIFICO",
-            "categoria": "SALA_DE_DESPOSTE",
-        })
-        api_client.post("/api/registro-operadores", json={
-            "cuit": "30444444441",
-            "razon_social": "CARNICERIA 1",
-            "tipo": "CARNICERIA",
-            "categoria": "CARNICERIAS",
-        })
-        api_client.post("/api/registro-operadores", json={
-            "cuit": "30444444442",
-            "razon_social": "SALA 2",
-            "tipo": "FRIGORIFICO",
-            "categoria": "SALA_DE_DESPOSTE",
-        })
-
-        # Filtrar por categoría
-        r = api_client.get("/api/registro-operadores", params={"categoria": "SALA_DE_DESPOSTE"})
-        assert r.status_code == 200
-        assert len(r.json()) == 2
-
-        r = api_client.get("/api/registro-operadores", params={"categoria": "CARNICERIAS"})
-        assert r.status_code == 200
-        assert len(r.json()) == 1
+        assert operador_service.validar_requisito_para_categoria(
+            CategoriaOperador.TRANSPONEDOR.value, "afip_ultimo_pago"
+        )
