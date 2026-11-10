@@ -39,9 +39,10 @@ test.describe("MSW — Padrón mockeado", () => {
       ),
     ).toBeVisible();
 
-    // El primer operador mock (LA NORITA) está en la tabla.
+    // El primer operador mock (LA NORITA) está en la tabla (aparece en 2
+    // celdas: establecimiento y persona titular) → .first().
     await expect(
-      page.getByRole("row").getByText("CARNICERÍA LA NORITA"),
+      page.getByRole("row").getByText("CARNICERÍA LA NORITA").first(),
     ).toBeVisible();
   });
 
@@ -61,7 +62,7 @@ test.describe("MSW — Padrón mockeado", () => {
 
     // El GET se resuelve vía worker; la tabla debe estar poblada.
     await expect(
-      page.getByRole("row").getByText("SALADERO ARTESANAL PAMPA"),
+      page.getByRole("row").getByText("SALADERO ARTESANAL PAMPA").first(),
     ).toBeVisible();
 
     // Si MSW interceptó correctamente, `realNetworkHits` solo contiene el
@@ -80,17 +81,21 @@ test.describe("MSW — Padrón mockeado", () => {
 
     await page.getByLabel(/C\.U\.I\.T/).fill(cuit);
     await page.getByLabel(/Apellido y Nombre del Titular/).fill(nombre);
-    await page.getByRole("button", { name: /Carnicería Minorista/ }).click();
+    await page.getByLabel(/Nombre del Establecimiento|Fantasia/).fill("SUC. PRUEBA");
     await page
       .getByRole("button", { name: /Registrar Operador y Emitir Cartón/ })
       .click();
 
+    // Confirmación de éxito (role="status"): "Operador registrado con CUIT …".
     await expect(
-      page.getByRole("status").getByText(new RegExp(`CUIT ${cuit}`)),
+      page
+        .getByRole("status")
+        .getByText(new RegExp(`Operador registrado con CUIT ${cuit}`)),
     ).toBeVisible();
 
+    // El nuevo titular aparece en el padrón (aparece en 2 celdas) → .first().
     await page.getByRole("link", { name: /Padrón de Operadores/ }).click();
-    await expect(page.getByRole("row").getByText(nombre)).toBeVisible();
+    await expect(page.getByText(nombre).first()).toBeVisible();
   });
 });
 

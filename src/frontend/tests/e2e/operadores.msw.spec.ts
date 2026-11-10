@@ -35,12 +35,10 @@ test.describe("E2E + worker MSW (in-app, ?mocks=1)", () => {
 
     // CUIT único (no está en el seed del mock) para no chocar con el 409.
     const cuit = `30-9${Math.floor(10000000 + Math.random() * 89999999)}-5`;
-    const establecimiento = `MSW SW ${Date.now()}`;
+    const titular = `TITULAR MSW ${Date.now()}`;
     await page.getByLabel(/C\.U\.I\.T/).fill(cuit);
-    await page.getByLabel(/Apellido y Nombre del Titular/).fill("TITULAR PRUEBA");
-    await page
-      .getByLabel(/Nombre del Establecimiento|Fantasia/)
-      .fill(establecimiento);
+    await page.getByLabel(/Apellido y Nombre del Titular/).fill(titular);
+    await page.getByLabel(/Nombre del Establecimiento|Fantasia/).fill("SUC. PRUEBA");
     await page
       .getByRole("button", { name: /Registrar Operador y Emitir Cartón/ })
       .click();
@@ -52,8 +50,10 @@ test.describe("E2E + worker MSW (in-app, ?mocks=1)", () => {
         .getByText(new RegExp(`Operador registrado con CUIT ${cuit}`)),
     ).toBeVisible();
 
-    // El nuevo establecimiento aparece en el padrón (invalidation de RTK Query).
+    // El nuevo operador aparece en el padrón (invalidation de RTK Query).
+    // El padrón muestra el titular + CUIT de la persona recién registrada.
     await page.getByRole("link", { name: /Padrón de Operadores/ }).click();
-    await expect(page.getByText(establecimiento)).toBeVisible();
+    // Aparece en dos celdas (establecimiento y persona titular) → .first().
+    await expect(page.getByText(titular).first()).toBeVisible();
   });
 });
