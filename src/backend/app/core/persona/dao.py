@@ -31,7 +31,7 @@ class Persona(Base):
         default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
-    operadores: Mapped[list["ROCCAOperador"]] = relationship(
+    operadores: Mapped[list["Operador"]] = relationship(
         back_populates="persona"
     )
     adjuntos: Mapped[list["AdjuntoPersona"]] = relationship(

@@ -15,7 +15,7 @@ from modulos.registro_operadores.dao import (  # noqa: F401
     DomicilioOperativo,
     Habilitacion,
     Inscripcion,
-    ROCCAOperador,
+    Operador,
 )
 
 
@@ -32,3 +32,41 @@ def persona_service(db_session_factory):
     from core.persona.servicio import PersonaService
 
     return PersonaService(PersonaDAO(db_session_factory))
+
+
+@pytest.fixture()
+def operador_service(db_session_factory, persona_service):
+    """OperadorService con sus servicios delegados inyectados.
+
+    Mantiene la API pública del servicio monolítico antiguo: los métodos
+    ``agregar_habilitacion`` / ``agregar_inscripcion`` /
+    ``agregar_domicilio_operativo`` / ``listar_requisitos`` / etc. delegan
+    en los servicios por entidad.
+    """
+    from modulos.registro_operadores.adjunto_operador.dao import AdjuntoOperadorDAO
+    from modulos.registro_operadores.certificado.dao import CertificadoDAO
+    from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
+    from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
+    from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
+    from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
+    from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
+    from modulos.registro_operadores.inscripcion.servicio import InscripcionService
+    from modulos.registro_operadores.operador.dao import OperadorDAO
+    from modulos.registro_operadores.operador.servicio import OperadorService
+    from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
+    from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
+
+    operador_dao = OperadorDAO(db_session_factory)
+    habilitacion_service = HabilitacionService(HabilitacionDAO(db_session_factory))
+    inscripcion_service = InscripcionService(InscripcionDAO(db_session_factory))
+    domicilio_service = DomicilioOperativoService(DomicilioOperativoDAO(db_session_factory))
+    requisito_service = RequisitoInscripcionService(RequisitoInscripcionDAO(db_session_factory))
+
+    return OperadorService(
+        operador_dao,
+        persona_service=persona_service,
+        habilitacion_service=habilitacion_service,
+        inscripcion_service=inscripcion_service,
+        domicilio_service=domicilio_service,
+        requisito_service=requisito_service,
+    )

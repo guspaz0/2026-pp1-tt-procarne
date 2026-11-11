@@ -10,8 +10,8 @@ from fastapi.testclient import TestClient
 
 from modulos.registro_operadores.dao import (
     Certificado,
-    ROCCAOperador,
-    ROCCAOperadorDAO,
+    Operador,
+    OperadorDAO,
 )
 from modulos.registro_operadores.enums import (
     CategoriaOperador,
@@ -21,10 +21,10 @@ from modulos.registro_operadores.enums import (
 )
 from modulos.registro_operadores.schema import (
     CertificadoIn,
-    ROCCAOperadorIn,
+    OperadorIn,
 )
 from modulos.registro_operadores.controlador import crear_router
-from modulos.registro_operadores.servicio import ROCCAOperadorService
+from modulos.registro_operadores.servicio import OperadorService
 
 
 # ---------------------------------------------------------------------------
@@ -33,14 +33,33 @@ from modulos.registro_operadores.servicio import ROCCAOperadorService
 
 @pytest.fixture()
 def operador_service(db_session_factory, persona_service):
-    dao = ROCCAOperadorDAO(db_session_factory)
-    return ROCCAOperadorService(dao, persona_service=persona_service)
+    from modulos.registro_operadores.certificado.dao import CertificadoDAO
+    from modulos.registro_operadores.certificado.servicio import CertificadoService
+    from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
+    from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
+    from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
+    from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
+    from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
+    from modulos.registro_operadores.inscripcion.servicio import InscripcionService
+    from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
+    from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
+
+    dao = OperadorDAO(db_session_factory)
+    return OperadorService(
+        dao,
+        persona_service=persona_service,
+        habilitacion_service=HabilitacionService(HabilitacionDAO(db_session_factory)),
+        inscripcion_service=InscripcionService(InscripcionDAO(db_session_factory)),
+        domicilio_service=DomicilioOperativoService(DomicilioOperativoDAO(db_session_factory)),
+        requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(db_session_factory)),
+        certificado_service=CertificadoService(CertificadoDAO(db_session_factory)),
+    )
 
 
 @pytest.fixture()
 def operador_activo(operador_service):
     """Crea un operador y lo pone ACTIVO manualmente."""
-    data = ROCCAOperadorIn(
+    data = OperadorIn(
         cuit="30-12345678-9",
         razon_social="TEST ACTIVO S.A.",
         tipo=TipoOperador.FRIGORIFICO.value,
@@ -55,7 +74,7 @@ def operador_activo(operador_service):
 @pytest.fixture()
 def operador_pendiente(operador_service):
     """Crea un operador que queda PENDIENTE (default)."""
-    data = ROCCAOperadorIn(
+    data = OperadorIn(
         cuit="30-98765432-1",
         razon_social="TEST PENDIENTE S.A.",
         tipo=TipoOperador.FRIGORIFICO.value,
@@ -149,8 +168,8 @@ class TestCertificadoVigente:
         assert vigente.numero_certificado == "F-102-002"
 
     def test_operador_no_existe(self, operador_service):
-        from modulos.registro_operadores.servicio import ROCCAOperadorError
-        with pytest.raises(ROCCAOperadorError):
+        from modulos.registro_operadores.servicio import OperadorError
+        with pytest.raises(OperadorError):
             operador_service.obtener_certificado_vigente(99999)
 
 
@@ -158,12 +177,37 @@ class TestCertificadoVigente:
 # B7.4 — RBAC: crear_certificado requiere rol + estado ACTIVO
 # ---------------------------------------------------------------------------
 
+
+def crear_router_completo(operador_service):
+    """Construye el router del módulo con todos los servicios inyectados.
+
+    Reutiliza los servicios delegados del operador_service (habilitación,
+    inscripción, domicilio, requisito, certificado) para no tener que
+    reconstruirlos en cada test.
+    """
+    from modulos.registro_operadores.actividad_economica.dao import CatalogoActividadesDAO
+    from modulos.registro_operadores.controlador import crear_router
+    from modulos.registro_operadores.operador.dao import OperadorDAO
+
+    session_factory = operador_service._dao._session_factory
+    catalogo_dao = CatalogoActividadesDAO(session_factory)
+    return crear_router(
+        operador_service=operador_service,
+        habilitacion_service=operador_service._habilitacion_service,
+        inscripcion_service=operador_service._inscripcion_service,
+        catalogo_actividades_dao=catalogo_dao,
+        certificado_service=operador_service._certificado_service,
+        domicilio_service=operador_service._domicilio_service,
+        requisito_service=operador_service._requisito_service,
+        adjunto_service=None,
+    )
+
 class TestRBACCertificados:
 
     def _app(self, operador_service):
         from modulos.registro_operadores.controlador import crear_router
         app = FastAPI()
-        app.include_router(crear_router(operador_service))
+        app.include_router(crear_router_completo(operador_service))
         return TestClient(app)
 
     def test_crear_certificado_requiere_rol(self, operador_activo, operador_service):
@@ -188,7 +232,7 @@ class TestRBACCertificados:
             request.state.user = {"user_metadata": {"rol": "supervisor"}}
             return await call_next(request)
 
-        app.include_router(crear_router(operador_service))
+        app.include_router(crear_router_completo(operador_service))
         client = TestClient(app)
 
         data = {
@@ -209,7 +253,7 @@ class TestRBACCertificados:
             request.state.user = {"user_metadata": {"rol": "supervisor"}}
             return await call_next(request)
 
-        app.include_router(crear_router(operador_service))
+        app.include_router(crear_router_completo(operador_service))
         client = TestClient(app)
 
         data = {
@@ -240,7 +284,7 @@ class TestEstadoPendiente:
             request.state.user = {"user_metadata": {"rol": "supervisor"}}
             return await call_next(request)
 
-        app.include_router(crear_router(operador_service))
+        app.include_router(crear_router_completo(operador_service))
         return TestClient(app)
 
     def test_activar_operador_pendiente(self, operador_pendiente, operador_service):
@@ -299,7 +343,7 @@ class TestEndpointCertificadoVigente:
     def _app(self, operador_service):
         from modulos.registro_operadores.controlador import crear_router
         app = FastAPI()
-        app.include_router(crear_router(operador_service))
+        app.include_router(crear_router_completo(operador_service))
         return TestClient(app)
 
     def test_no_existe(self, operador_activo, operador_service):
@@ -330,7 +374,7 @@ class TestPDFBase64:
         """GET /certificado.pdf devuelve JSON con pdf_base64."""
         from modulos.registro_operadores.controlador import crear_router
         app = FastAPI()
-        app.include_router(crear_router(operador_service))
+        app.include_router(crear_router_completo(operador_service))
         client = TestClient(app)
 
         r = client.get(f"/api/registro-operadores/{operador_activo.id}/certificado.pdf")

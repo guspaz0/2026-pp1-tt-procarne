@@ -30,7 +30,6 @@ from core.persona.controlador import crear_router as crear_router_persona
 from core.persona.dao import PersonaDAO
 from core.persona.servicio import PersonaService
 from core.storage.insforge import InsforgeStorage
-from modulos.registro_operadores.adjunto_dao import AdjuntoOperadorDAO
 from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
 
 # Sprint actual: solo Módulo I (Registro de Operadores)
@@ -205,7 +204,6 @@ class RoccaApp:
         # Catálogos genéricos compartidos (core)
         persona_dao = PersonaDAO(db_dao.obtener_sesion)
         adjunto_persona_dao = AdjuntoPersonaDAO(db_dao.obtener_sesion)
-        adjunto_operador_dao = AdjuntoOperadorDAO(db_dao.obtener_sesion)
         storage: InsforgeStorage | None = getattr(self.app.state, "storage", None)
         persona_service = PersonaService(
             persona_dao,
@@ -224,8 +222,6 @@ class RoccaApp:
         registro = RegistroOperadoresModulo(
             db_dao,
             persona_dao=persona_dao,
-            persona_service=persona_service,
-            adjunto_dao=adjunto_operador_dao,
             storage=storage,
         )
         registro.registrar(self.app)

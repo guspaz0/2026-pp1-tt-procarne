@@ -15,7 +15,7 @@
  */
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useLoginMutation, useSignupMutation } from "../store/authApi";
+import { useLoginMutation, useSignupMutation } from "../store/api";
 import { setSesion } from "../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { TextField } from "../components/shared/FormField";

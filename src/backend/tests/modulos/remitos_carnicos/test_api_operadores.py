@@ -19,7 +19,7 @@ def api_client(db_engine):
     from core.mercaderia.dao import MercaderiaDAO
     from core.mercaderia.servicio import MercaderiaService
     from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
-    from modulos.remitos_carnicos.operador.dao import OperadorDAO
+    from modulos.remitos_carnicos.operador.dao import RemitoOperadorDAO
     from modulos.remitos_carnicos.remito.dao import RemitoCarnicoDAO
     from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoService
     from sqlalchemy.orm import sessionmaker
@@ -48,7 +48,7 @@ def api_client(db_engine):
         session.commit()
 
     # Componer el módulo
-    operador_dao = OperadorDAO(dao.obtener_sesion)
+    operador_dao = RemitoOperadorDAO(dao.obtener_sesion)
     mercaderia_dao = MercaderiaDAO(dao.obtener_sesion)
     remito_dao = RemitoCarnicoDAO(dao.obtener_sesion)
     remito_service = RemitoCarnicoService(remito_dao, operador_dao, mercaderia_dao)

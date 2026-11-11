@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "ROCCA — ProCarne Test Suite",
-    "description": "Suite de pruebas Postman de la API REST de ROCCA (ProCarne) — Sistema Provincial de Trazabilidad Cárnica de Santiago del Estero.\n\nGenerada a partir de los controladores reales implementados en src/backend/app/:\n- /api/auth (Autenticación — BFF con InsForge como IdP)\n- /api/registro-operadores (Módulo I — Registro Provincial de Operadores)\n- /api/remitos-carnicos (Módulo — Remitos Electrónicos Cárnicos)\n- /api/trazabilidad (Módulo II — Trazabilidad Comercial)\n- /api/fiscalizacion (Módulo III — Fiscalización)\n\nCada request replica un endpoint implementado con su schema Pydantic (In/Out) y sus aserciones. Se asume una BD con el seed mínimo de los tests (ver fixtures).\n\n**Auth**: Los endpoints de /api/auth/login y /api/auth/signup fijan cookies HttpOnly (rocca_access_token, rocca_refresh_token). Para probar los endpoints protegidos, ejecutar login primero y habilitar \"Send cookies\" en la configuración de la colección.",
+    "description": "ROCCA — Control de la Cadena Cárnica SDE\n\n## Flujo de autenticación\n1. `POST /api/auth/login` → setea cookies HttpOnly (access_token + refresh_token)\n2. Todas las rutas protegidas requieren la cookie `access_token`\n3. `POST /api/auth/refresh` → rota el access token\n4. `POST /api/auth/logout` → borra cookies + revoca refresh en InsForge\n\n## Módulo I — Registro de Operadores\n- **CRUD operadores**: alta, listado con filtros, detalle\n- **Ciclo de vida**: PENDIENTE → ACTIVO → SUSPENDIDO → BAJADO (endpoints supervisor)\n- **Certificados F102**: creación, suspensión, reactivación, PDF base64, certificado vigente\n- **Adjuntos**: upload base64 de documentos (persona + operador), validación de tipo/requisito\n- **Requisitos**: matriz por categoría, checklist de cumplimiento\n- **Habilitaciones / Inscripciones / Domicilios operativos**\n\n## Variables\n- `base_url`: URL del backend (default: http://localhost:8000)\n",
     "schema": "https://schema.postman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -845,6 +845,562 @@
               }
             }
           }
+        }
+      ]
+    },
+    {
+      "name": "Certificados F102",
+      "item": [
+        {
+          "name": "Certificado vigente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/certificado-vigente",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "certificado-vigente"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Certificado PDF (base64)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/certificado.pdf",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "certificado.pdf"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar certificados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/certificados",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "certificados"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear certificado (supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/certificados",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "certificados"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero_certificado\": \"F-102-0001\",\n  \"fecha_emision\": \"2025-01-15T00:00:00Z\",\n  \"fecha_vencimiento\": \"2026-01-15T00:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener certificado por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/certificados/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "certificados",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Suspender certificado (supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/certificados/1/suspender",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "certificados",
+                "1",
+                "suspender"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivar certificado (supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/certificados/1/reactivar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "certificados",
+                "1",
+                "reactivar"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ciclo de vida operador",
+      "item": [
+        {
+          "name": "Activar operador (supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/activar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "activar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Suspender operador (supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/suspender",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "suspender"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivar operador (supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/reactivar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "reactivar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bajar operador (supervisor)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/bajar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "bajar"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Adjuntos",
+      "item": [
+        {
+          "name": "Persona",
+          "item": [
+            {
+              "name": "Subir adjunto persona",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/personas/1/adjuntos",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "personas",
+                    "1",
+                    "adjuntos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"CUIL\",\n  \"nombre_archivo\": \"cuil.pdf\",\n  \"content_type\": \"application/pdf\",\n  \"data_base64\": \"JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwgL0xlbmd0aSAzNSBLIC9UeXBlIC9TdHJlYW0gL0ZpbHRlciAvRmxhdGVEZWNvZGUgPj4Kc3RyZWFtCnicpVXLKgwoVCSPiU/EzOS8k9h0LgI4gYBA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Listar adjuntos persona",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/personas/1/adjuntos",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "personas",
+                    "1",
+                    "adjuntos"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "URL de descarga adjunto",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/personas/1/adjuntos/1/url",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "personas",
+                    "1",
+                    "adjuntos",
+                    "1",
+                    "url"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Eliminar adjunto persona",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/personas/1/adjuntos/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "personas",
+                    "1",
+                    "adjuntos",
+                    "1"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Operador",
+          "item": [
+            {
+              "name": "Subir adjunto operador",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "registro-operadores",
+                    "1",
+                    "adjuntos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"requisito\": \"habilitacion_municipal\",\n  \"nombre_archivo\": \"habilitacion.pdf\",\n  \"content_type\": \"application/pdf\",\n  \"data_base64\": \"JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwgL0xlbmd0aSAzNSBLIC9UeXBlIC9TdHJlYW0gL0ZpbHRlciAvRmxhdGVEZWNvZGUgPj4Kc3RyZWFtCnicpVXLKgwoVCSPiU/EzOS8k9h0LgI4gYBA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Listar adjuntos operador",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "registro-operadores",
+                    "1",
+                    "adjuntos"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "URL de descarga adjunto",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos/1/url",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "registro-operadores",
+                    "1",
+                    "adjuntos",
+                    "1",
+                    "url"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Eliminar adjunto operador",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "registro-operadores",
+                    "1",
+                    "adjuntos",
+                    "1"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Requisitos de inscripción",
+      "item": [
+        {
+          "name": "Catálogo de requisitos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/catalogo/requisitos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "catalogo",
+                "requisitos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Requisitos del operador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/requisitos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "requisitos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Requisitos pendientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/requisitos/pendientes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "requisitos",
+                "pendientes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Marcar requisito cumplido",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/1/requisitos/1?cumplido=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "1",
+                "requisitos",
+                "1"
+              ],
+              "query": [
+                {
+                  "key": "cumplido",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },

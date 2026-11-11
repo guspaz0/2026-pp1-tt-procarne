@@ -8,29 +8,35 @@ from .categoria import (
     CategoriaOperador,
     CategoriaOperadorDAO,
 )
-from .dao import Operador as OperadorORM
-from .dao import OperadorDAO
-from .entidad import Destinatario, Depositario, Operador, ParticipanteRemito, Titular, Transportista
-from .schema import OperadorIn, OperadorOut
-from .servicio import OperadorError, OperadorService
+from .dao import OperadorORM, RemitoOperadorDAO
+from .entidad import (
+    Destinatario,
+    Depositario,
+    ParticipanteRemito,
+    RemitoOperador,
+    Titular,
+    Transportista,
+)
+from .schema import RemitoOperadorIn, RemitoOperadorOut
+from .servicio import RemitoOperadorError, RemitoOperadorService
 
 __all__ = [
-    "Operador",
+    "RemitoOperador",
     "ParticipanteRemito",
     "Titular",
     "Depositario",
     "Destinatario",
     "Transportista",
     "OperadorORM",
-    "OperadorDAO",
+    "RemitoOperadorDAO",
     "Actividad",
     "ActividadDAO",
     "CategoriaAfip",
     "CategoriaAfipDAO",
     "CategoriaOperador",
     "CategoriaOperadorDAO",
-    "OperadorIn",
-    "OperadorOut",
-    "OperadorService",
-    "OperadorError",
+    "RemitoOperadorIn",
+    "RemitoOperadorOut",
+    "RemitoOperadorService",
+    "RemitoOperadorError",
 ]

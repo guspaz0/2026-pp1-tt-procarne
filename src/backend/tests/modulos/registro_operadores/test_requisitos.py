@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from modulos.registro_operadores.dao import ROCCAOperadorDAO
+from modulos.registro_operadores.dao import OperadorDAO
 from modulos.registro_operadores.enums import (
     CategoriaOperador,
     EstadoRegistral,
@@ -12,30 +12,46 @@ from modulos.registro_operadores.enums import (
     RequisitoGeneralOperador,
     TipoOperador,
 )
-from modulos.registro_operadores.schema import ROCCAOperadorIn
+from modulos.registro_operadores.schema import OperadorIn
 from modulos.registro_operadores.servicio import (
     REQUISITOS_ESPECIFICOS_POR_CATEGORIA,
     REQUISITOS_GENERALES,
-    ROCCAOperadorError,
-    ROCCAOperadorService,
+    OperadorError,
+    OperadorService,
 )
 
 
 @pytest.fixture()
 def operador_dao(db_session_factory):
-    return ROCCAOperadorDAO(db_session_factory)
+    return OperadorDAO(db_session_factory)
 
 
 @pytest.fixture()
-def operador_service(operador_dao, persona_service):
-    return ROCCAOperadorService(operador_dao, persona_service=persona_service)
+def operador_service(operador_dao, persona_service, session_factory):
+    from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
+    from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
+    from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
+    from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
+    from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
+    from modulos.registro_operadores.inscripcion.servicio import InscripcionService
+    from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
+    from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
+
+    return OperadorService(
+        operador_dao,
+        persona_service=persona_service,
+        habilitacion_service=HabilitacionService(HabilitacionDAO(session_factory)),
+        inscripcion_service=InscripcionService(InscripcionDAO(session_factory)),
+        domicilio_service=DomicilioOperativoService(DomicilioOperativoDAO(session_factory)),
+        requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(session_factory)),
+    )
 
 
 class TestCategorias:
     """Tests de la gestión de categorías de operador."""
 
     def test_crear_operador_con_categoria_sala_desposte(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="SALA DE DESPOSTE TEST",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -45,7 +61,7 @@ class TestCategorias:
         assert resultado.categoria == "SALA_DE_DESPOSTE"
 
     def test_crear_operador_con_categoria_carniceria(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30222222222",
             razon_social="CARNICERIA LA BUENA",
             tipo=TipoOperador.CARNICERIA.value,
@@ -55,7 +71,7 @@ class TestCategorias:
         assert resultado.categoria == "CARNICERIAS"
 
     def test_crear_operador_con_categoria_transportista(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30333333333",
             razon_social="TRANSPORTES DEL SUR",
             tipo=TipoOperador.TRANSPORTE.value,
@@ -65,7 +81,7 @@ class TestCategorias:
         assert resultado.categoria == "TRANSPONEDOR"
 
     def test_crear_operador_sin_categoria(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30444444444",
             razon_social="OPERADOR SIN CATEGORIA",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -74,13 +90,13 @@ class TestCategorias:
         assert resultado.categoria is None
 
     def test_crear_operador_categoria_invalida(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30555555555",
             razon_social="OPERADOR INVALIDO",
             tipo=TipoOperador.FRIGORIFICO.value,
             categoria="CATEGORIA_INEXISTENTE",
         )
-        with pytest.raises(ROCCAOperadorError, match="Categoría inválida"):
+        with pytest.raises(OperadorError, match="Categoría inválida"):
             operador_service.crear_operador(data)
 
     def test_listar_filtrar_por_categoria(self, operador_service):
@@ -90,7 +106,7 @@ class TestCategorias:
             CategoriaOperador.SALA_DE_DESPOSTE,
         ]):
             operador_service.crear_operador(
-                ROCCAOperadorIn(
+                OperadorIn(
                     cuit=f"3066666666{i}",
                     razon_social=f"OP {cat.value}",
                     tipo=TipoOperador.FRIGORIFICO.value,
@@ -107,7 +123,7 @@ class TestCategorias:
 
     def test_listar_filtrar_por_categoria_y_tipo(self, operador_service):
         operador_service.crear_operador(
-            ROCCAOperadorIn(
+            OperadorIn(
                 cuit="30777777770",
                 razon_social="FRIGO CARNICERIA",
                 tipo=TipoOperador.CARNICERIA.value,
@@ -115,7 +131,7 @@ class TestCategorias:
             )
         )
         operador_service.crear_operador(
-            ROCCAOperadorIn(
+            OperadorIn(
                 cuit="30777777771",
                 razon_social="FRIGO SALA",
                 tipo=TipoOperador.FRIGORIFICO.value,
@@ -135,7 +151,7 @@ class TestRequisitos:
     """Tests de la gestión de requisitos de inscripción."""
 
     def test_requisitos_generales_creados_al_alta(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30888888880",
             razon_social="TEST REQUISITOS",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -159,7 +175,7 @@ class TestRequisitos:
         }
 
     def test_requisitos_especificos_por_categoria_carniceria(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30888888881",
             razon_social="CARNICERIA TEST",
             tipo=TipoOperador.CARNICERIA.value,
@@ -173,7 +189,7 @@ class TestRequisitos:
         assert len(especificos) == 3
 
     def test_requisitos_especificos_por_categoria_transportista(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30888888882",
             razon_social="TRANSPORTES TEST",
             tipo=TipoOperador.TRANSPORTE.value,
@@ -187,7 +203,7 @@ class TestRequisitos:
         assert len(especificos) == 0
 
     def test_requisitos_sin_categoria(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30888888883",
             razon_social="SIN CATEGORIA",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -200,7 +216,7 @@ class TestRequisitos:
         assert all(r.es_general for r in requisitos)
 
     def test_actualizar_requisito_cumplido(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30999999990",
             razon_social="TEST ACTUALIZAR",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -215,7 +231,7 @@ class TestRequisitos:
         assert actualizado.fecha_cumplimiento is not None
 
     def test_actualizar_requisito_no_cumplido(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30999999991",
             razon_social="TEST NO CUMPLIDO",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -230,7 +246,7 @@ class TestRequisitos:
         assert actualizado.fecha_cumplimiento is None
 
     def test_requisitos_pendientes(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30999999992",
             razon_social="TEST PENDIENTES",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -250,14 +266,14 @@ class TestRequisitos:
         assert len(pendientes) == 6
 
     def test_requisito_no_existente(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30999999993",
             razon_social="TEST ERROR",
             tipo=TipoOperador.FRIGORIFICO.value,
         )
         creado = operador_service.crear_operador(data)
 
-        with pytest.raises(ROCCAOperadorError, match="No existe el requisito"):
+        with pytest.raises(OperadorError, match="No existe el requisito"):
             operador_service.actualizar_requisito(creado.id, 99999, cumplido=True)
 
     def test_catalogo_requisitos(self, operador_service):

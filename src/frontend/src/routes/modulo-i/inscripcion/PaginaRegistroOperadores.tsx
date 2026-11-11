@@ -8,7 +8,7 @@
 import { FormularioF102 } from "./FormularioF102";
 import type { FormF102 } from "../../../store/formF102Slice";
 import { setAltaMensaje } from "../../../store/operadoresSlice";
-import { useListarQuery, useRegistrarMutation } from "../../../store/operadoresApi";
+import { useListarQuery, useRegistrarMutation } from "../../../store/api";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { ModuloILayout } from "../ModuloILayout";
 

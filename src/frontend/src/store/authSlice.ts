@@ -11,31 +11,17 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Usuario } from "../types";
 
-const KEY_USUARIO = "rocca_usuario";
-
-function leerUsuario(): Usuario | null {
-  try {
-    const raw = localStorage.getItem(KEY_USUARIO);
-    return raw ? (JSON.parse(raw) as Usuario) : null;
-  } catch {
-    return null;
-  }
-}
-
-function guardarUsuario(usuario: Usuario | null) {
-  try {
-    if (usuario) localStorage.setItem(KEY_USUARIO, JSON.stringify(usuario));
-    else localStorage.removeItem(KEY_USUARIO);
-  } catch {
-    /* localStorage puede no estar disponible */
-  }
-}
+/**
+ * El usuario NO se persiste en localStorage: se obtiene siempre de
+ * `/api/auth/me` (que valida la cookie). Esto evita el problema de
+ * "usuario fantasma" al hacer refresh con la cookie expirada.
+ */
 
 export interface AuthState {
   usuario: Usuario | null;
 }
 
-const initialState: AuthState = { usuario: leerUsuario() };
+const initialState: AuthState = { usuario: null };
 
 export const authSlice = createSlice({
   name: "auth",
@@ -43,11 +29,9 @@ export const authSlice = createSlice({
   reducers: {
     setSesion: (state, action: PayloadAction<{ usuario: Usuario | null }>) => {
       state.usuario = action.payload.usuario;
-      guardarUsuario(action.payload.usuario);
     },
     cerrarSesion: (state) => {
       state.usuario = null;
-      guardarUsuario(null);
     },
   },
 });

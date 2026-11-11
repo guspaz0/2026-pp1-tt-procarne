@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Operador } from "../types";
-import { operadoresApi } from "./operadoresApi";
+import { operadoresApi } from "./api";
 import type { RootState } from "./store";
 
 /**

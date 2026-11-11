@@ -8,7 +8,7 @@
  * son los operadores que lo comparten).
  */
 import { IconBuildings, IconUser } from "../../../components/shared/Icons";
-import { useListarQuery } from "../../../store/operadoresApi";
+import { useListarQuery } from "../../../store/api";
 import type { Operador } from "../../../types";
 import { ModuloILayout } from "../ModuloILayout";
 

@@ -10,7 +10,7 @@ Casos de uso:
 from __future__ import annotations
 
 from modulos.remitos_carnicos.enums import EstadoRemito
-from modulos.remitos_carnicos.operador.dao import OperadorDAO
+from modulos.remitos_carnicos.operador.dao import RemitoOperadorDAO
 from modulos.remitos_carnicos.remito.dao import RemitoCarnico, RemitoCarnicoDAO, RenglonRemito
 from modulos.remitos_carnicos.remito.schema import RemitoCarnicoIn, RemitoCarnicoOut
 from modulos.remitos_carnicos.remito.validacion import ValidadorRemito
@@ -27,7 +27,7 @@ class RemitoCarnicoService:
     def __init__(
         self,
         dao: RemitoCarnicoDAO,
-        operador_dao: OperadorDAO,
+        operador_dao: RemitoOperadorDAO,
         mercaderia_dao: MercaderiaDAO,
         validador: ValidadorRemito | None = None,
     ) -> None:

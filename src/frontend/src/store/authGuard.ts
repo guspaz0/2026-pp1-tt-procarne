@@ -8,41 +8,41 @@
  * Esto permite que el usuario sea redirigido automáticamente sin necesidad
  * de que haga clic en "Salir": si la cookie desaparece o expira, la próxima
  * llamada a la API devuelve 401 y el guard actúa.
+ *
+ * IMPORTANTE: Este módulo NO importa `store` ni `operadoresApi` directamente
+ * para evitar circular imports (store → operadoresApi → authGuard → store).
+ * En su lugar, usa callbacks registrados vía `registerAuthGuard`.
  */
 
 import type { BaseQueryFn } from "@reduxjs/toolkit/query";
 import type { NavigateFunction } from "react-router-dom";
 
-/** Callback registrado por AppRoutes para redirigir a /login. */
+/** Callbacks registrados por AppRoutes para evitar circular imports. */
 let _navigate: NavigateFunction | null = null;
-
-/** Callback registrado por AppRoutes para limpiar el estado de auth. */
-let _onAuthExpired: (() => void) | null = null;
+let _onAuth401: (() => void) | null = null;
 
 /**
- * Registra el navigate y el callback de limpieza.
- * Se llama una vez desde AppRoutes (useEffect).
+ * Registra el navigate y el handler de 401.
+ * Se llama una vez desde AppRoutes (useEffect) o desde el módulo que
+ * tiene acceso a `store` y `operadoresApi` sin crear ciclos.
  */
-export function registerAuthGuard(navigate: NavigateFunction, onAuthExpired: () => void) {
+export function registerAuthGuard(
+  navigate: NavigateFunction,
+  onAuth401?: () => void,
+) {
   _navigate = navigate;
-  _onAuthExpired = onAuthExpired;
-}
-
-/**
- * Limpia el estado de auth y redirige a /login.
- * Se usa internamente por el baseQuery wrapper.
- */
-function handleAuth401() {
-  _onAuthExpired?.();
-  _navigate?.("/login", { replace: true });
+  if (onAuth401) {
+    _onAuth401 = onAuth401;
+  }
 }
 
 /**
  * BaseQuery con detección de 401 global.
  *
- * Si la respuesta es 401 (y no es un endpoint de auth como /login o /signup),
- * limpia la sesión y redirige a /login. La respuesta 401 se propaga
- * normalmente para que el componente pueda manejarla si lo necesita.
+ * Si la respuesta es 401 (y no es un endpoint de auth que lo espera),
+ * invoca el handler registrado (que limpia el store y redirige).
+ * La respuesta 401 se propaga normalmente para que el componente
+ * pueda manejarla si lo necesita.
  */
 export function baseQueryWithAuth(
   baseQuery: BaseQueryFn,
@@ -57,7 +57,8 @@ export function baseQueryWithAuth(
       const isAuthEndpoint = url?.includes("/auth/login") || url?.includes("/auth/signup");
 
       if (status === 401 && !isAuthEndpoint) {
-        handleAuth401();
+        // Invocar el handler registrado (limpia store + redirige).
+        _onAuth401?.();
       }
     }
 

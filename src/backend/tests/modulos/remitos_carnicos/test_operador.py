@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from modulos.remitos_carnicos.operador.dao import Operador, OperadorDAO
-from modulos.remitos_carnicos.operador.schema import OperadorIn, OperadorOut
-from modulos.remitos_carnicos.operador.servicio import OperadorError, OperadorService
+from modulos.remitos_carnicos.operador.dao import OperadorORM, RemitoOperadorDAO
+from modulos.remitos_carnicos.operador.schema import RemitoOperadorIn, RemitoOperadorOut
+from modulos.remitos_carnicos.operador.servicio import RemitoOperadorError, RemitoOperadorService
 from core.persona.dao import Persona
 
 
 @pytest.fixture()
 def operador_service(operador_dao):
-    return OperadorService(operador_dao)
+    return RemitoOperadorService(operador_dao)
 
 
 @pytest.fixture()
@@ -47,9 +47,9 @@ class TestOperadorDAO:
 
     def test_obtener_por_persona(self, operador_dao, seed_persona):
         op = operador_dao.crear(persona_id=seed_persona)
-        obtenido = operador_dao.obtener_por_persona(seed_persona)
-        assert obtenido is not None
-        assert obtenido.id == op.id
+        obtenidos = operador_dao.obtener_por_persona(seed_persona)
+        assert len(obtenidos) == 1
+        assert obtenidos[0].id == op.id
 
     def test_listar(self, operador_dao, session_factory):
         # Crear dos personas
@@ -72,19 +72,19 @@ class TestOperadorService:
     """Tests del servicio de operadores."""
 
     def test_crear_operador(self, operador_service, seed_persona):
-        data = OperadorIn(persona_id=seed_persona)
+        data = RemitoOperadorIn(persona_id=seed_persona)
         resultado = operador_service.crear_operador(data)
         assert resultado.id is not None
         assert resultado.persona_id == seed_persona
 
     def test_crear_operador_duplicado(self, operador_service, seed_persona):
-        data = OperadorIn(persona_id=seed_persona)
+        data = RemitoOperadorIn(persona_id=seed_persona)
         operador_service.crear_operador(data)
-        with pytest.raises(OperadorError):
+        with pytest.raises(RemitoOperadorError):
             operador_service.crear_operador(data)
 
     def test_obtener_por_id(self, operador_service, seed_persona):
-        data = OperadorIn(persona_id=seed_persona)
+        data = RemitoOperadorIn(persona_id=seed_persona)
         creado = operador_service.crear_operador(data)
         obtenido = operador_service.obtener_por_id(creado.id)
         assert obtenido is not None
@@ -100,8 +100,8 @@ class TestOperadorService:
             session.refresh(p1)
             session.refresh(p2)
 
-        operador_service.crear_operador(OperadorIn(persona_id=p1.id))
-        operador_service.crear_operador(OperadorIn(persona_id=p2.id))
+        operador_service.crear_operador(RemitoOperadorIn(persona_id=p1.id))
+        operador_service.crear_operador(RemitoOperadorIn(persona_id=p2.id))
 
         operadores = operador_service.listar()
         assert len(operadores) == 2

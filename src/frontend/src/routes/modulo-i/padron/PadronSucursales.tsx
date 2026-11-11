@@ -15,7 +15,7 @@ import {
   selectItems,
   selectOperadoresFiltrados,
 } from "../../../store/operadoresSlice";
-import { useListarQuery } from "../../../store/operadoresApi";
+import { useListarQuery } from "../../../store/api";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 
 // ---------------------------------------------------------------------------

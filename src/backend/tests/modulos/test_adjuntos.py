@@ -21,9 +21,12 @@ from core.persona.dao import Persona, PersonaDAO
 from core.persona.servicio import PersonaError, PersonaService
 from configs.dao import crear_dao
 from modulos.registro_operadores.adjunto_dao import AdjuntoOperadorDAO
-from modulos.registro_operadores.dao import ROCCAOperador, ROCCAOperadorDAO
+from modulos.registro_operadores.dao import Operador, OperadorDAO
 from modulos.registro_operadores.enums import CategoriaOperador
-from modulos.registro_operadores.servicio import ROCCAOperadorError, ROCCAOperadorService
+from modulos.registro_operadores.servicio import OperadorError, OperadorService
+from modulos.registro_operadores.adjunto_operador.servicio import AdjuntoOperadorService
+from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
+from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
 
 
 # ---------------------------------------------------------------------------
@@ -47,9 +50,19 @@ def persona_service(db):
 
 @pytest.fixture
 def operador_service(db):
-    dao = ROCCAOperadorDAO(db.obtener_sesion)
+    """AdjuntoOperadorService (nueva API modularizada) con su DAO de operador.
+
+    El test usa ``subir``/``listar``/``validar_requisito_para_categoria`` y
+    ``_storage`` de :class:`AdjuntoOperadorService`.
+    """
+    dao_operador = OperadorDAO(db.obtener_sesion)
     adjunto_dao = AdjuntoOperadorDAO(db.obtener_sesion)
-    return ROCCAOperadorService(dao, adjunto_dao=adjunto_dao, storage=None)
+    requisito_dao = RequisitoInscripcionDAO(db.obtener_sesion)
+    requisito_service = RequisitoInscripcionService(requisito_dao)
+    return AdjuntoOperadorService(
+        adjunto_dao, storage=None, operador_dao=dao_operador,
+        requisito_service=requisito_service,
+    )
 
 
 @pytest.fixture
@@ -77,9 +90,8 @@ def _crear_operador(db, categoria=CategoriaOperador.SALA_DE_DESPOSTE.value):
         p = Persona(tipo="juridica", tipo_documento="CUIT", identificador="30-12345678-9", nombre="Empresa SA")
         s.add(p)
         s.commit()
-        op = ROCCAOperador(
+        op = Operador(
             persona_id=p.id,
-            cuit="3012345678901",
             razon_social="Empresa SA",
             tipo="empresa",
             categoria=categoria,
@@ -193,8 +205,8 @@ class TestOperadorAdjuntos:
         operador_service._storage = mock_storage
         op_id = _crear_operador(db, CategoriaOperador.SALA_DE_DESPOSTE.value)
 
-        with pytest.raises(ROCCAOperadorError, match="no corresponde"):
-            asyncio.run(operador_service.subir_adjunto_operador(
+        with pytest.raises(OperadorError, match="no corresponde"):
+            asyncio.run(operador_service.subir(
                 operador_id=op_id, requisito="libreta_sanitaria",
                 filename="libro.pdf", content_type="application/pdf",
                 size=100, data=b"x" * 100,
@@ -205,38 +217,38 @@ class TestOperadorAdjuntos:
         operador_service._storage = mock_storage
         op_id = _crear_operador(db, CategoriaOperador.SALA_DE_DESPOSTE.value)
 
-        result = asyncio.run(operador_service.subir_adjunto_operador(
+        result = asyncio.run(operador_service.subir(
             operador_id=op_id, requisito="habilitacion_municipal",
             filename="habilitacion.pdf", content_type="application/pdf",
             size=100, data=b"x" * 100,
         ))
-        assert result["requisito"] == "habilitacion_municipal"
-        assert result["operador_id"] == op_id
+        assert result.requisito == "habilitacion_municipal"
+        assert result.operador_id == op_id
 
     def test_listar_adjuntos_operador(self, operador_service, db, mock_storage):
         """Lista adjuntos de un operador."""
         operador_service._storage = mock_storage
         op_id = _crear_operador(db, CategoriaOperador.SALA_DE_DESPOSTE.value)
 
-        asyncio.run(operador_service.subir_adjunto_operador(
+        asyncio.run(operador_service.subir(
             operador_id=op_id, requisito="habilitacion_municipal",
             filename="hab.pdf", content_type="application/pdf",
             size=100, data=b"x" * 100,
         ))
-        asyncio.run(operador_service.subir_adjunto_operador(
+        asyncio.run(operador_service.subir(
             operador_id=op_id, requisito="afip_ultimo_pago",
             filename="afip.jpg", content_type="image/jpeg",
             size=100, data=b"x" * 100,
         ))
 
-        adjuntos = operador_service.listar_adjuntos_operador(op_id)
+        adjuntos = operador_service.listar(op_id)
         assert len(adjuntos) == 2
 
     def test_operador_no_existe(self, operador_service, db, mock_storage):
         """Operador inexistente."""
         operador_service._storage = mock_storage
-        with pytest.raises(ROCCAOperadorError, match="No existe"):
-            asyncio.run(operador_service.subir_adjunto_operador(
+        with pytest.raises(OperadorError, match="No existe"):
+            asyncio.run(operador_service.subir(
                 operador_id=99999, requisito="afip_ultimo_pago",
                 filename="afip.jpg", content_type="image/jpeg",
                 size=100, data=b"x" * 100,
@@ -263,16 +275,16 @@ class TestOperadorAdjuntos:
         op_id = _crear_operador(db, CategoriaOperador.TRANSPONEDOR.value)
 
         # General: OK
-        result = asyncio.run(operador_service.subir_adjunto_operador(
+        result = asyncio.run(operador_service.subir(
             operador_id=op_id, requisito="afip_ultimo_pago",
             filename="afip.jpg", content_type="image/jpeg",
             size=100, data=b"x" * 100,
         ))
-        assert result["requisito"] == "afip_ultimo_pago"
+        assert result.requisito == "afip_ultimo_pago"
 
         # Específico de otra categoría: NO
-        with pytest.raises(ROCCAOperadorError, match="no corresponde"):
-            asyncio.run(operador_service.subir_adjunto_operador(
+        with pytest.raises(OperadorError, match="no corresponde"):
+            asyncio.run(operador_service.subir(
                 operador_id=op_id, requisito="habilitacion_municipal",
                 filename="hab.pdf", content_type="application/pdf",
                 size=100, data=b"x" * 100,

@@ -11,10 +11,12 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { useMeQuery } from "./store/authApi";
+import { useMeQuery } from "./store/api";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { cerrarSesion, setSesion } from "./store/authSlice";
 import { registerAuthGuard } from "./store/authGuard";
+import { operadoresApi } from "./store/api";
+import { store } from "./store/store";
 import { PaginaLogin } from "./routes/PaginaLogin";
 import { PaginaInicio } from "./routes/PaginaInicio";
 import { PaginaRegistroOperadores } from "./routes/modulo-i/inscripcion/PaginaRegistroOperadores";
@@ -83,10 +85,17 @@ export function AppRoutes() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  // Registra el guard de auth: cualquier 401 en la API limpia la sesión
-  // y redirige a /login automáticamente.
+  // Registra el guard de auth: cualquier 401 en la API limpia la sesión,
+  // resetea el cache de RTK Query y redirige a /login automáticamente.
   useEffect(() => {
-    registerAuthGuard(navigate, () => dispatch(cerrarSesion()));
+    registerAuthGuard(navigate, () => {
+      // 1. Limpiar el estado de auth (usuario).
+      store.dispatch(cerrarSesion());
+      // 2. Resetear el cache de RTK Query (padron, jerarquia, etc.).
+      operadoresApi.util.resetApiState();
+      // 3. Redirigir a /login.
+      navigate("/login", { replace: true });
+    });
   }, [navigate, dispatch]);
 
   return (

@@ -4,27 +4,43 @@ from __future__ import annotations
 
 import pytest
 
-from modulos.registro_operadores.dao import ROCCAOperadorDAO
+from modulos.registro_operadores.dao import OperadorDAO
 from modulos.registro_operadores.enums import EstadoRegistral, TipoOperador
 from modulos.registro_operadores.schema import (
     DomicilioOperativoIn,
     HabilitacionIn,
     InscripcionIn,
-    ROCCAOperadorIn,
+    OperadorIn,
 )
-from modulos.registro_operadores.servicio import ROCCAOperadorError, ROCCAOperadorService
+from modulos.registro_operadores.servicio import OperadorError, OperadorService
 
 
 @pytest.fixture()
 def operador_dao(db_session_factory):
     """DAO de operadores."""
-    return ROCCAOperadorDAO(db_session_factory)
+    return OperadorDAO(db_session_factory)
 
 
 @pytest.fixture()
-def operador_service(operador_dao, persona_service):
-    """Servicio de operadores."""
-    return ROCCAOperadorService(operador_dao, persona_service=persona_service)
+def operador_service(operador_dao, persona_service, session_factory):
+    """Servicio de operadores con sus servicios delegados inyectados."""
+    from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
+    from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
+    from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
+    from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
+    from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
+    from modulos.registro_operadores.inscripcion.servicio import InscripcionService
+    from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
+    from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
+
+    return OperadorService(
+        operador_dao,
+        persona_service=persona_service,
+        habilitacion_service=HabilitacionService(HabilitacionDAO(session_factory)),
+        inscripcion_service=InscripcionService(InscripcionDAO(session_factory)),
+        domicilio_service=DomicilioOperativoService(DomicilioOperativoDAO(session_factory)),
+        requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(session_factory)),
+    )
 
 
 def crear_rocca_operador_test(session, cuit: str, razon_social: str, tipo: str = "FRIGORIFICO") -> int:
@@ -34,7 +50,7 @@ def crear_rocca_operador_test(session, cuit: str, razon_social: str, tipo: str =
     titular con el CUIT del operador.
     """
     from core.persona.dao import Persona
-    from modulos.registro_operadores.dao import ROCCAOperador
+    from modulos.registro_operadores.dao import Operador
     from datetime import datetime, timezone
 
     persona = (
@@ -52,8 +68,7 @@ def crear_rocca_operador_test(session, cuit: str, razon_social: str, tipo: str =
         session.add(persona)
         session.flush()
 
-    op = ROCCAOperador(
-        cuit=cuit,
+    op = Operador(
         razon_social=razon_social,
         tipo=tipo,
         persona_id=persona.id,
@@ -65,11 +80,11 @@ def crear_rocca_operador_test(session, cuit: str, razon_social: str, tipo: str =
     return op.id
 
 
-class TestROCCAOperadorService:
+class TestOperadorService:
     """Tests del servicio de operadores."""
 
     def test_crear_operador(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -80,18 +95,21 @@ class TestROCCAOperadorService:
         assert resultado.tipo == "FRIGORIFICO"
         assert resultado.estado_registral == "PENDIENTE"
 
-    def test_crear_operador_duplicado(self, operador_service):
-        data = ROCCAOperadorIn(
+    def test_crear_operador_misma_persona(self, operador_service):
+        """Crear dos operadores con el mismo CUIT es válido: misma persona, dos sucursales."""
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
             tipo=TipoOperador.FRIGORIFICO.value,
         )
-        operador_service.crear_operador(data)
-        with pytest.raises(ROCCAOperadorError):
-            operador_service.crear_operador(data)
+        primero = operador_service.crear_operador(data)
+        segundo = operador_service.crear_operador(data)
+        # Mismo CUIT → misma persona, pero dos operadores distintos
+        assert primero.id != segundo.id
+        assert primero.persona_id == segundo.persona_id
 
     def test_obtener_por_cuit(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -104,7 +122,7 @@ class TestROCCAOperadorService:
     def test_listar(self, operador_service):
         for i in range(3):
             operador_service.crear_operador(
-                ROCCAOperadorIn(
+                OperadorIn(
                     cuit=f"3011111111{i}",
                     razon_social=f"OPERADOR {i}",
                     tipo=TipoOperador.FRIGORIFICO.value,
@@ -115,17 +133,17 @@ class TestROCCAOperadorService:
 
     def test_listar_filtrar_por_tipo(self, operador_service):
         operador_service.crear_operador(
-            ROCCAOperadorIn(cuit="30111111111", razon_social="FRIGORIFICO", tipo=TipoOperador.FRIGORIFICO.value)
+            OperadorIn(cuit="30111111111", razon_social="FRIGORIFICO", tipo=TipoOperador.FRIGORIFICO.value)
         )
         operador_service.crear_operador(
-            ROCCAOperadorIn(cuit="30111111112", razon_social="CARNICERIA", tipo=TipoOperador.CARNICERIA.value)
+            OperadorIn(cuit="30111111112", razon_social="CARNICERIA", tipo=TipoOperador.CARNICERIA.value)
         )
         resultado = operador_service.listar(tipo=TipoOperador.FRIGORIFICO.value)
         assert len(resultado) == 1
         assert resultado[0].tipo == "FRIGORIFICO"
 
     def test_cambiar_estado(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -135,7 +153,7 @@ class TestROCCAOperadorService:
         assert resultado.estado_registral == "SUSPENDIDO"
 
     def test_agregar_habilitacion(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -149,7 +167,7 @@ class TestROCCAOperadorService:
         assert habilitacion.estado == "ACTIVO"
 
     def test_agregar_inscripcion(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
             tipo=TipoOperador.FRIGORIFICO.value,
@@ -163,7 +181,7 @@ class TestROCCAOperadorService:
         assert inscripcion.numero_inscripcion == "ROCCA-001"
 
     def test_agregar_domicilio_operativo(self, operador_service):
-        data = ROCCAOperadorIn(
+        data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
             tipo=TipoOperador.FRIGORIFICO.value,
