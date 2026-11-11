@@ -22,9 +22,9 @@ export function PageHeader({
       {/* Breadcrumb + título */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
-          <span className="rounded bg-rocca-rojo-pastel px-2 py-0.5 text-[10px] font-bold tracking-wide text-rocca-rojo-oscuro">
+          {/*<span className="rounded bg-rocca-rojo-pastel px-2 py-0.5 text-[10px] font-bold tracking-wide text-rocca-rojo-oscuro">
             MÓDULO I • PROCARNE OFICIAL
-          </span>
+          </span>*/}
           <span className="text-[12px] text-rocca-texto-apagado">
             Dirección General de Agricultura y Ganadería de Santiago del Estero
           </span>
@@ -47,7 +47,7 @@ export function PageHeader({
           className="flex items-center gap-1.5 rounded-lg border border-rocca-aviso-borde bg-rocca-aviso-fondo px-3 py-2 text-[12px] font-bold text-[#78350f] transition-colors hover:bg-[#fef3c7]"
         >
           <IconCamera size={15} className="text-[#b45309]" />
-          Ver Cartón F 102 Original (Foto)
+          Ver Cartón F 102 Original
         </button>
       </div>
     </div>

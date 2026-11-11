@@ -6,7 +6,6 @@
 
 resource "vercel_project" "api" {
   name = var.vercel_project_name
-  framework = "fastapi"
 
   root_directory = "src/backend"
 }

@@ -7,6 +7,7 @@ Incluye:
 - CRUD de certificados (con RBAC supervisor/admin para crear/suspender).
 - ``GET /{operador_id}/certificado-vigente`` — certificado válido.
 - ``GET /{operador_id}/certificado.pdf`` — generación de PDF (F102).
+- ``GET /{operador_id}/carton-f102.pdf`` — Formulario F102 mockeado (estático).
 """
 
 from __future__ import annotations
@@ -65,51 +66,6 @@ def crear_router(servicio: CertificadoService,
         if cert is None:
             raise HTTPException(status_code=404, detail="No hay certificado válido para este operador")
         return cert
-
-    # ------------------------------------------------------------------
-    # Certificado de operador (PDF)
-    # ------------------------------------------------------------------
-
-    @router.get("/{operador_id}/certificado.pdf")
-    def certificado_operador(operador_id: int):
-        """Genera y devuelve el Certificado de Operador en PDF.
-
-        Usa el certificado vigente como fuente de datos si existe;
-        si no, usa los datos del operador directamente.
-        Devuelve el PDF como base64 en JSON.
-        """
-        operador = operador_service.obtener(operador_id)
-        if operador is None:
-            raise HTTPException(status_code=404, detail=f"No existe un operador con id {operador_id}")
-
-        # Intentar obtener el certificado vigente como fuente de datos
-        try:
-            cert_vigente = servicio.obtener_vigente(operador_id)
-        except OperadorError:
-            cert_vigente = None
-
-        habilitaciones = habilitacion_service.listar(operador_id) if habilitacion_service else []
-        inscripciones = inscripcion_service.listar(operador_id) if inscripcion_service else []
-
-        from core.pdfme.certificado_operador import (
-            CertificadoOperadorPDF,
-            construir_certificado_data,
-        )
-
-        # __file__ = .../app/modulos/registro_operadores/certificado/controlador.py
-        # parents[0]=certificado, [1]=registro_operadores, [2]=modulos, [3]=app
-        template_path = Path(__file__).resolve().parents[3] / "core" / "pdfme" / "template-certificado-operador.json"
-        generador = CertificadoOperadorPDF(template_path)
-        data = construir_certificado_data(operador_service, operador, habilitaciones, inscripciones)
-        pdf_bytes = generador.generar(data)
-
-        pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
-        nombre = f"certificado-f102-{cert_vigente.numero_certificado}.pdf" if cert_vigente else f"certificado-operador-{operador_id}.pdf"
-        return {
-            "pdf_base64": pdf_b64,
-            "nombre_archivo": nombre,
-            "content_type": "application/pdf",
-        }
 
     # ------------------------------------------------------------------
     # Certificados (CRUD)

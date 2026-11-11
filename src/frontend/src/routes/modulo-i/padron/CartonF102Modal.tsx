@@ -1,31 +1,11 @@
 /**
- * Modal de detalle del Cartón F 102 — muestra los datos del operador
- * en formato de cartón provincial.
+ * Modal de detalle del Cartón F 102 — muestra el PDF del formulario
+ * oficial de inscripción provincial (mockeado desde el backend).
  */
-import { useEffect } from "react";
-import { IconCamera, IconCheck, IconDownload } from "../../../components/shared/Icons";
+import { useEffect, useState } from "react";
+import { IconCamera, IconDownload } from "../../../components/shared/Icons";
+import { useObtenerCartonF102Query } from "../../../store/api";
 import type { Operador } from "../../../types";
-
-const CATEGORIA_LABEL: Record<string, string> = {
-  CARNICERIAS: "Carnicería Minorista",
-  CAMARAS_FRIGORIFICAS: "Frigorífico / Ciclo I",
-  SALA_DE_DESPOSTE: "Despostadero / Ciclo II",
-  FABRICA_DE_CHACINADOS: "Matarife Abastecedor",
-  DISTRIBUIDOR: "Distribuidor Mayorista",
-  TRANSPONEDOR: "Transportista de Carnes",
-  SUPERMERCADO: "Carnicería Minorista",
-};
-
-function Campo({ label, valor }: { label: string; valor: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-bold uppercase tracking-wide text-rocca-texto-apagado">
-        {label}
-      </span>
-      <span className="text-[13px] font-semibold text-[#0f172a]">{valor}</span>
-    </div>
-  );
-}
 
 export function CartonF102Modal({
   operador,
@@ -34,6 +14,28 @@ export function CartonF102Modal({
   operador: Operador;
   onClose: () => void;
 }) {
+  const [urlPdf, setUrlPdf] = useState<string | null>(null);
+
+  const { data, isLoading, isError } = useObtenerCartonF102Query(operador.id, {
+    skip: false,
+  });
+
+  // Cuando llega el PDF base64, lo convierte a una URL de objeto para el <iframe>.
+  useEffect(() => {
+    if (data?.fileContents) {
+      const byteCharacters = atob(data.fileContents);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: data.contentType || "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      setUrlPdf(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [data?.fileContents, data?.contentType]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -43,7 +45,14 @@ export function CartonF102Modal({
   }, [onClose]);
 
   const numero = String(100000 + operador.id);
-  const estadoOk = (operador.estado_registral || "").toUpperCase().includes("ACTIVO");
+
+  const descargar = () => {
+    if (!urlPdf) return;
+    const a = document.createElement("a");
+    a.href = urlPdf;
+    a.download = data?.fileDownloadName || `F102-${numero}.pdf`;
+    a.click();
+  };
 
   return (
     <div
@@ -54,7 +63,7 @@ export function CartonF102Modal({
       aria-label={`Cartón F 102 ${numero}`}
     >
       <div
-        className="w-full max-w-[640px] overflow-hidden rounded-xl bg-white shadow-2xl"
+        className="flex h-[90vh] w-full max-w-[800px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -82,55 +91,39 @@ export function CartonF102Modal({
           </button>
         </div>
 
-        {/* Cuerpo */}
-        <div className="flex flex-col gap-5 p-5">
-          {/* Estado */}
-          <div
-            className={`flex items-center gap-2 rounded-lg px-4 py-3 ${
-              estadoOk
-                ? "bg-[#d1fae5] text-[#065f46]"
-                : "bg-[#fee2e2] text-[#991b1b]"
-            }`}
-          >
-            <IconCheck size={16} />
-            <span className="text-[13px] font-bold">
-              {estadoOk ? "Habilitado" : operador.estado_registral}
-            </span>
-            {estadoOk && (
-              <span className="ml-auto rounded bg-white/60 px-2 py-0.5 text-[10px] font-medium">
-                Sello Verde
-              </span>
-            )}
-          </div>
+        {/* Cuerpo: PDF */}
+        <div className="flex-1 overflow-hidden bg-[#e2e8f0]">
+          {isLoading && (
+            <div className="flex h-full items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="size-8 animate-spin rounded-full border-4 border-rocca-rojo border-t-transparent" />
+                <span className="text-[13px] font-medium text-rocca-texto-suave">
+                  Generando Cartón F 102…
+                </span>
+              </div>
+            </div>
+          )}
 
-          {/* Datos en grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <Campo label="Razón Social" valor={operador.razon_social} />
-            <Campo label="CUIT" valor={operador.cuit} />
-            <Campo label="Categoría" valor={CATEGORIA_LABEL[operador.categoria ?? ""] ?? operador.categoria ?? "—"} />
-            <Campo label="Tipo" valor={operador.tipo} />
-            <Campo label="Domicilio Comercial" valor={operador.domicilio_comercial ?? "—"} />
-            <Campo label="Teléfono" valor={operador.telefono ?? "—"} />
-            <Campo label="Email" valor={operador.email ?? "—"} />
-          </div>
+          {isError && (
+            <div className="flex h-full items-center justify-center">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <span className="text-[14px] font-bold text-rocca-error">
+                  Error al generar el Cartón F 102
+                </span>
+                <span className="text-[12px] text-rocca-texto-apagado">
+                  Verificá la conexión con el servidor.
+                </span>
+              </div>
+            </div>
+          )}
 
-          {/* Fechas */}
-          <div className="flex items-center gap-6 border-t border-rocca-borde pt-4 text-[11px] text-rocca-texto-apagado">
-            <span>
-              Alta:{" "}
-              <strong className="text-rocca-azul-oscuro">
-                {operador.alta_fecha
-                  ? new Date(operador.alta_fecha).toLocaleDateString("es-AR")
-                  : "—"}
-              </strong>
-            </span>
-            <span>
-              Creado:{" "}
-              <strong className="text-rocca-azul-oscuro">
-                {new Date(operador.creado_en).toLocaleDateString("es-AR")}
-              </strong>
-            </span>
-          </div>
+          {urlPdf && (
+            <iframe
+              src={urlPdf}
+              title={`Cartón F 102 ${numero}`}
+              className="h-full w-full border-0"
+            />
+          )}
         </div>
 
         {/* Footer */}
@@ -144,7 +137,9 @@ export function CartonF102Modal({
           </button>
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-rocca-rojo px-4 py-2 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
+            onClick={descargar}
+            disabled={!urlPdf}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rocca-rojo px-4 py-2 text-[12px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             <IconDownload size={14} />
             Descargar PDF

@@ -226,7 +226,7 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
           <p className="max-w-[560px] text-[12px] text-[#cbd5e1]">
             Registra la Persona (Física/Jurídica), su establecimiento/sucursal,
             sus categorías cárnicas con requisitos de papeleo, y genera el
-            cartón F 102 con su N° Inscripto.
+            cartón F102 con su N° Inscripto.
           </p>
         </div>
         <button
@@ -234,7 +234,7 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
           className="flex shrink-0 items-center gap-2 rounded-lg bg-rocca-aviso px-4 py-2.5 text-[12px] font-bold text-[#020617] transition-opacity hover:opacity-90"
         >
           <IconUpload size={15} />
-          Cargar Datos del Cartón Original (La Norita)
+          Cargar Datos de un operador
         </button>
       </div>
 
@@ -250,22 +250,20 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
             <button
               type="button"
               onClick={() => set("personaExistente", false)}
-              className={`px-3 py-1.5 text-[12px] font-semibold transition-colors ${
-                !form.personaExistente
-                  ? "bg-rocca-rojo text-white"
-                  : "bg-white text-rocca-texto-suave"
-              }`}
+              className={`px-3 py-1.5 text-[12px] font-semibold transition-colors ${!form.personaExistente
+                ? "bg-rocca-rojo text-white"
+                : "bg-white text-rocca-texto-suave"
+                }`}
             >
               Nueva Persona
             </button>
             <button
               type="button"
               onClick={() => set("personaExistente", true)}
-              className={`border-l border-rocca-borde-input px-3 py-1.5 text-[12px] font-semibold transition-colors ${
-                form.personaExistente
-                  ? "bg-rocca-rojo text-white"
-                  : "bg-white text-rocca-texto-suave"
-              }`}
+              className={`border-l border-rocca-borde-input px-3 py-1.5 text-[12px] font-semibold transition-colors ${form.personaExistente
+                ? "bg-rocca-rojo text-white"
+                : "bg-white text-rocca-texto-suave"
+                }`}
             >
               Persona Existente (+ Sucursal)
             </button>
@@ -391,17 +389,15 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
                 key={c.id}
                 type="button"
                 onClick={() => toggleCategoria(c.id)}
-                className={`flex flex-col gap-1.5 rounded-xl border p-3 text-left transition-colors ${
-                  activa
-                    ? "border-rocca-rojo bg-rocca-rojo-claro"
-                    : "border-rocca-borde bg-white"
-                }`}
+                className={`flex flex-col gap-1.5 rounded-xl border p-3 text-left transition-colors ${activa
+                  ? "border-rocca-rojo bg-rocca-rojo-claro"
+                  : "border-rocca-borde bg-white"
+                  }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span
-                    className={`text-[13px] font-semibold ${
-                      activa ? "text-rocca-texto" : "text-rocca-texto-medio"
-                    }`}
+                    className={`text-[13px] font-semibold ${activa ? "text-rocca-texto" : "text-rocca-texto-medio"
+                      }`}
                   >
                     {c.nombre}
                   </span>
@@ -448,17 +444,15 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
             return (
               <div
                 key={r.id}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${
-                  cumplido
-                    ? "border border-rocca-exito-borde bg-rocca-exito-claro/80"
-                    : "border border-rocca-borde bg-white"
-                }`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${cumplido
+                  ? "border border-rocca-exito-borde bg-rocca-exito-claro/80"
+                  : "border border-rocca-borde bg-white"
+                  }`}
               >
                 <Checkbox checked={cumplido} onChange={() => toggleRequisito(r.id)} />
                 <span
-                  className={`flex-1 text-[12px] font-medium ${
-                    cumplido ? "text-rocca-exito-texto" : "text-rocca-texto-medio"
-                  }`}
+                  className={`flex-1 text-[12px] font-medium ${cumplido ? "text-rocca-exito-texto" : "text-rocca-texto-medio"
+                    }`}
                 >
                   {r.nombre}
                 </span>

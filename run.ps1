@@ -22,10 +22,16 @@ $env:ROCCA_DATABASE_URL = if ($env:ROCCA_DATABASE_URL) { $env:ROCCA_DATABASE_URL
 # ------------------------------------------------------------------
 # 0. Liberar puertos ocupados por procesos anteriores
 # ------------------------------------------------------------------
-foreach ($port in @(8000, 5173)) {
-    $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+foreach ($port in @(8001, 5173)) {
+    $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
     if ($conns) {
-        $conns | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+        $pids = $conns | Select-Object -ExpandProperty OwningProcess -Unique
+        foreach ($procId in $pids) {
+            Write-Host "    Matando proceso $procId en puerto $port..."
+            taskkill /F /PID $procId 2>$null | Out-Null
+            Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
+        }
+        Start-Sleep -Seconds 1
     }
 }
 
@@ -69,9 +75,9 @@ if (-not $NoBuild) {
 }
 
 # ------------------------------------------------------------------
-# 3. Backend FastAPI (uvicorn) en :8000
+# 3. Backend FastAPI (uvicorn) en :8001
 # ------------------------------------------------------------------
-Write-Host "==> [3/4] Levantando backend FastAPI en http://localhost:8000 ..."
+Write-Host "==> [3/4] Levantando backend FastAPI en http://localhost:8001 ..."
 
 # Activar venv de Windows
 $VENV_ACTIVATE = Join-Path $BACKEND ".venv\Scripts\Activate.ps1"
@@ -83,13 +89,13 @@ if (-not (Test-Path '$VENV_ACTIVATE')) {
     python -m venv .venv
 }
 . '$VENV_ACTIVATE'
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 "@
 
 $BACKEND_JOB = Start-Job -ScriptBlock ([scriptblock]::Create($backendScript))
 
 # ------------------------------------------------------------------
-# 4. Frontend Vite dev en :5173 (proxy /api -> :8000)
+# 4. Frontend Vite dev en :5173 (proxy /api -> :8001)
 # ------------------------------------------------------------------
 Write-Host "==> [4/4] Levantando frontend Vite en http://localhost:5173 ..."
 $FRONTEND_JOB = Start-Job -ScriptBlock {
@@ -103,8 +109,8 @@ $FRONTEND_JOB = Start-Job -ScriptBlock {
 # ------------------------------------------------------------------
 Write-Host ""
 Write-Host "  PostgreSQL: localhost:5432 (gusta/rocca)"
-Write-Host "  Backend:    http://localhost:8000  (API + frontend compilado)"
-Write-Host "  Frontend:   http://localhost:5173  (Vite dev, proxy /api -> :8000)"
+Write-Host "  Backend:    http://localhost:8001  (API + frontend compilado)"
+Write-Host "  Frontend:   http://localhost:5173  (Vite dev, proxy /api -> :8001)"
 Write-Host ""
 Write-Host "  Ctrl+C para detener todo."
 Write-Host ""

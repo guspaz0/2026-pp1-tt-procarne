@@ -239,9 +239,9 @@ export function PadronSucursales() {
                           <span className="text-[14px] font-black leading-tight text-[#0f172a]">
                             {String(100000 + o.id)}
                           </span>
-                          <span className="text-[10px] font-bold text-rocca-rojo">
-                            FORMULARIO F 102
-                          </span>
+                          {/* <span className="text-[10px] font-bold text-rocca-rojo"> */}
+                          {/*   FORMULARIO F 102 */}
+                          {/* </span> */}
                         </div>
                       </td>
 
@@ -304,7 +304,7 @@ export function PadronSucursales() {
                           className="inline-flex items-center gap-1.5 rounded-md bg-rocca-rojo px-3 py-1.5 text-[11px] font-bold text-white transition-opacity hover:opacity-90"
                         >
                           <IconCamera size={13} />
-                          Ver Cartón F 102
+                          Ver F102
                         </button>
                       </td>
                     </tr>

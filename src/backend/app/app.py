@@ -15,6 +15,19 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Cargar .env desde la raíz del repo (o desde el directorio actual si existe).
+# En producción (Vercel) las vars ya están en el entorno; esto solo ayuda en dev local.
+_env_candidates = [
+    Path(__file__).resolve().parents[3] / ".env",  # repo root
+    Path.cwd() / ".env",
+]
+for _p in _env_candidates:
+    if _p.exists():
+        load_dotenv(_p, override=False)  # no sobreescribir vars ya definidas
+        break
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -225,6 +238,70 @@ class RoccaApp:
             storage=storage,
         )
         registro.registrar(self.app)
+
+        # Endpoint F102 (fallback local: invoca Node.js subprocess).
+        # En Vercel, el frontend llama directamente a la Serverless Function
+        # /api/f102/:id (Node.js), así que este endpoint solo se usa en dev.
+        @self.app.get("/api/f102")
+        def generar_f102(id: int):
+            import subprocess
+            import json as json_mod
+            import base64 as b64
+            from datetime import datetime, timedelta
+
+            backend_dir = Path(__file__).resolve().parents[1]
+            script_path = backend_dir / "generar_f102.mjs"
+            if not script_path.exists():
+                raise HTTPException(status_code=500, detail=f"Script no encontrado: {script_path}")
+
+            payload = {
+                "numero_operador": str(100000 + id),
+                "apellido_y_nombre": "OLIVEIRA DANIEL ALBERTO",
+                "nombre_establecimiento": "LA NORITA",
+                "razon_social": "LA NORITA S.R.L.",
+                "cuit": "23-30917912-9",
+                "domicilio": "JOSE BENJAMIN ABALOS N. 4582, B. ALMIRANTE BROWN, S.D.E.",
+                "tipo_carne": "CARNICERIAS",
+                "fecha_inscripcion": datetime(2025, 3, 10).isoformat(),
+                "fecha_vencimiento": datetime(2026, 3, 10).isoformat(),
+                "actividades": [
+                    ["922210", "Carniceria Minorista"],
+                    ["463110", "Comercializacion de carnes y chacinados"],
+                ],
+                "inscripciones": [
+                    ["PRINCIPAL", "10/03/2025"],
+                ],
+            }
+
+            try:
+                result = subprocess.run(
+                    ["node", str(script_path)],
+                    input=json_mod.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                    capture_output=True,
+                    timeout=30,
+                    cwd=str(backend_dir),
+                )
+            except subprocess.TimeoutExpired:
+                raise HTTPException(status_code=500, detail="Timeout generando PDF F102")
+            except FileNotFoundError:
+                raise HTTPException(status_code=500, detail="Node.js no encontrado en PATH")
+
+            if result.returncode != 0:
+                stderr = result.stderr.decode("utf-8", errors="replace")[:500]
+                raise HTTPException(status_code=500, detail=f"Error generando PDF: {stderr}")
+
+            pdf_bytes = result.stdout
+            if not pdf_bytes.startswith(b"%PDF"):
+                raise HTTPException(status_code=500, detail="El script no devolvió un PDF válido")
+
+            return {
+                "fileContents": b64.b64encode(pdf_bytes).decode("ascii"),
+                "contentType": "application/pdf",
+                "fileDownloadName": f"F102-{100000 + id}.pdf",
+                "lastModified": None,
+                "entityTag": None,
+                "enableRangeProcessing": False,
+            }
 
         # --- Módulos fuera del scope del sprint actual (comentados) ---
         # mercaderia_dao = MercaderiaDAO(db_dao.obtener_sesion)

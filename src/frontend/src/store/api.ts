@@ -10,6 +10,15 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { Operador, OperadorIn, LoginResult, Usuario } from "../types";
 import { baseQueryWithAuth } from "./authGuard";
 
+export type FileTangoInfo = {
+  fileContents: string;
+  contentType: string;
+  fileDownloadName: string;
+  lastModified: string | null;
+  entityTag: string | null;
+  enableRangeProcessing: boolean;
+};
+
 /**
  * BaseQuery con detección de 401 global.
  * Las cookies de sesión (InsForge tokens) se envían automáticamente por el
@@ -59,6 +68,13 @@ export const operadoresApi = createApi({
       }),
       invalidatesTags: [{ type: "Operador", id: "LIST" }],
     }),
+    /**
+     * Obtiene el Cartón F 102 (formulario mockeado) como PDF base64.
+     * Usa la Vercel Serverless Function (Node.js + pdfme) directamente.
+     */
+    obtenerCartonF102: builder.query<FileTangoInfo, number>({
+      query: (id) => `/f102?id=${id}`,
+    }),
   }),
 });
 
@@ -100,5 +116,5 @@ export const authApi = operadoresApi.injectEndpoints({
 });
 
 // Re-exportar hooks para compatibilidad con imports existentes
-export const { useListarQuery, useObtenerQuery, useRegistrarMutation } = operadoresApi;
+export const { useListarQuery, useObtenerQuery, useRegistrarMutation, useObtenerCartonF102Query } = operadoresApi;
 export const { useLoginMutation, useSignupMutation, useMeQuery, useLogoutMutation } = authApi;

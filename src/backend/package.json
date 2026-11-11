@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "API REST para el sistema de gestión de remitos electrónicos cárnicos, con un\r módulo genérico de datos compartidos (personas y mercaderías) que sirve de\r base a los módulos de negocio.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@pdfme/common": "^6.2.8",
+    "@pdfme/generator": "^6.2.8",
+    "@pdfme/pdf-lib": "^6.2.8",
+    "@pdfme/schemas": "^6.2.8"
+  }
+}
