@@ -29,6 +29,7 @@ Además, el organismo cuenta con un área de fiscalización, que actúa de maner
 ### 1.2 Estructura organizativa relevante
 
 El Ministerio de Producción posee múltiples áreas con incumbencias dispares. El proyecto ROCCA se enmarca estrictamente en la **Dirección General de Agricultura y Ganadería**, a través del programa **ProCarne Fiscalización**.
+Tienen un departamento de Cómputos en el sexto piso de la torre de calle andes. Se desconoce el organigrama.
 
 **Actores del sistema:**
 
