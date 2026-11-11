@@ -14,7 +14,7 @@ from modulos.remitos_carnicos.operador.categoria import (
     Situcion,
     SitucionDAO,
 )
-from modulos.remitos_carnicos.operador.dao import Operador
+from modulos.remitos_carnicos.operador.dao import OperadorORM
 from core.persona.dao import Persona
 
 
@@ -53,7 +53,7 @@ def seed_operador(session_factory):
         session.commit()
         session.refresh(persona)
 
-        op = Operador(persona_id=persona.id)
+        op = OperadorORM(persona_id=persona.id)
         session.add(op)
         session.commit()
         session.refresh(op)

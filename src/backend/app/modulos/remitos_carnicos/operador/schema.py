@@ -8,14 +8,14 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class OperadorIn(BaseModel):
-    """DTO de entrada para crear un operador."""
+class RemitoOperadorIn(BaseModel):
+    """DTO de entrada para crear un operador de remitos."""
 
     persona_id: int = Field(..., description="ID de la persona asociada")
 
 
-class OperadorOut(BaseModel):
-    """DTO de salida de un operador."""
+class RemitoOperadorOut(BaseModel):
+    """DTO de salida de un operador de remitos."""
 
     id: int
     persona_id: int

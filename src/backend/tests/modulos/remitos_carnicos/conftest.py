@@ -17,7 +17,7 @@ from tests.fixtures import db_engine, db_session_factory, db_dao  # noqa: F401
 # Importar todos los modelos para que Base.metadata los conozca
 from core.persona.dao import Persona
 from core.mercaderia.dao import Mercaderia, MercaderiaDAO
-from modulos.remitos_carnicos.operador.dao import Operador, OperadorDAO
+from modulos.remitos_carnicos.operador.dao import OperadorORM, RemitoOperadorDAO
 from modulos.remitos_carnicos.operador.categoria import (
     Actividad,
     ActividadDAO,
@@ -52,7 +52,7 @@ def session_factory(db_session_factory):
 @pytest.fixture()
 def operador_dao(session_factory):
     """DAO de operadores."""
-    return OperadorDAO(session_factory)
+    return RemitoOperadorDAO(session_factory)
 
 
 @pytest.fixture()
@@ -103,9 +103,9 @@ def _crear_persona_juridica(session, cuit: str, nombre: str) -> Persona:
     return persona
 
 
-def _crear_operador(session, persona_id: int) -> Operador:
+def _crear_operador(session, persona_id: int) -> OperadorORM:
     """Crea un operador referenciando a una persona."""
-    op = Operador(
+    op = OperadorORM(
         persona_id=persona_id,
     )
     session.add(op)
@@ -130,7 +130,7 @@ def obtener_operador_id_por_cuit(session, cuit: str) -> int:
     if persona is None:
         raise ValueError(f"No existe persona con CUIT {cuit}")
     op = (
-        session.query(Operador)
+        session.query(OperadorORM)
         .filter_by(persona_id=persona.id)
         .first()
     )

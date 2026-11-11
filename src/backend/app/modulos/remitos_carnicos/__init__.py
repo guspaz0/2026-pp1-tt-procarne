@@ -25,12 +25,12 @@ Estructura::
 
 from .enums import CasoRemito, EstadoRemito, TipoMovimiento, UnidadMedida
 from .operador import (
-    Operador,
-    OperadorDAO,
-    OperadorError,
-    OperadorIn,
-    OperadorOut,
-    OperadorService,
+    RemitoOperador,
+    RemitoOperadorDAO,
+    RemitoOperadorError,
+    RemitoOperadorIn,
+    RemitoOperadorOut,
+    RemitoOperadorService,
 )
 from .remito import (
     RemitoCarnico,
@@ -50,12 +50,12 @@ __all__ = [
     "TipoMovimiento",
     "UnidadMedida",
     # Operador
-    "Operador",
-    "OperadorDAO",
-    "OperadorIn",
-    "OperadorOut",
-    "OperadorService",
-    "OperadorError",
+    "RemitoOperador",
+    "RemitoOperadorDAO",
+    "RemitoOperadorIn",
+    "RemitoOperadorOut",
+    "RemitoOperadorService",
+    "RemitoOperadorError",
     # Remito
     "RemitoCarnico",
     "RemitoCarnicoDAO",

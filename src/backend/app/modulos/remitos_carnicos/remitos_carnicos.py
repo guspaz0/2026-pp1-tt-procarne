@@ -13,8 +13,8 @@ from core.contracts import PersonaDAO as PersonaDAOProtocol
 from core.mercaderia.servicio import MercaderiaService
 from core.persona.servicio import PersonaService
 from modulos.remitos_carnicos.controlador import crear_router
-from modulos.remitos_carnicos.operador.dao import OperadorDAO
-from modulos.remitos_carnicos.operador.servicio import OperadorService
+from modulos.remitos_carnicos.operador.dao import RemitoOperadorDAO
+from modulos.remitos_carnicos.operador.servicio import RemitoOperadorService
 from modulos.remitos_carnicos.remito.dao import RemitoCarnicoDAO
 from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoService
 
@@ -41,11 +41,11 @@ class RemitosCarnicosModulo:
         self._mercaderia_service = mercaderia_service
 
         # DAOs del módulo
-        self._operador_dao = OperadorDAO(db_dao.obtener_sesion)
+        self._operador_dao = RemitoOperadorDAO(db_dao.obtener_sesion)
         self._remito_dao = RemitoCarnicoDAO(db_dao.obtener_sesion)
 
         # Servicios del módulo
-        self._operador_service = OperadorService(self._operador_dao)
+        self._operador_service = RemitoOperadorService(self._operador_dao)
         self._remito_service = RemitoCarnicoService(
             self._remito_dao,
             self._operador_dao,

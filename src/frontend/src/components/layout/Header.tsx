@@ -4,7 +4,7 @@
  * y subtítulo. A la derecha, el usuario logueado (email) con botón "Salir".
  */
 import { useNavigate } from "react-router-dom";
-import { useLogoutMutation } from "../../store/authApi";
+import { useLogoutMutation } from "../../store/api";
 import { cerrarSesion } from "../../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 
@@ -23,7 +23,9 @@ export function Header() {
       // Mejor esfuerzo: aunque el sign-out remoto falle, limpiamos local.
     }
     dispatch(cerrarSesion());
-    navigate("/", { replace: true });
+    // Refrescar la página para limpiar todo el estado (cache de RTK Query,
+    // slices, etc.) y evitar que persistan datos tras el logout.
+    window.location.href = "/";
   }
 
   return (

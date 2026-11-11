@@ -2,7 +2,7 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
 import operadoresReducer from "./operadoresSlice";
 import formF102Reducer from "./formF102Slice";
-import { operadoresApi } from "./operadoresApi";
+import { operadoresApi } from "./api";
 
 /**
  * Root reducer combinado. Se separa de la creación del store para poder

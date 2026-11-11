@@ -8,6 +8,7 @@ Run from ``src/backend``::
 
 from __future__ import annotations
 
+from dotenv import load_dotenv
 import os
 import sys
 from logging.config import fileConfig
@@ -22,6 +23,9 @@ from alembic import context
 # ``modulos`` can be imported as top-level packages.
 # ---------------------------------------------------------------------------
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(str(_BACKEND_DIR.parent / ".env"))
+
 _APP_DIR = str(_BACKEND_DIR / "app")
 if _APP_DIR not in sys.path:
     sys.path.insert(0, _APP_DIR)

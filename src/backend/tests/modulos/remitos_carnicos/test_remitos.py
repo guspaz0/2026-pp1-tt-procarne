@@ -7,7 +7,7 @@ from decimal import Decimal
 
 import pytest
 
-from modulos.remitos_carnicos.operador.dao import Operador
+from modulos.remitos_carnicos.operador.dao import OperadorORM
 from core.mercaderia.dao import Mercaderia
 from modulos.remitos_carnicos.remito.dao import RemitoCarnico, RenglonRemito
 from modulos.remitos_carnicos.remito.servicio import RemitoCarnicoService, RemitoCarnicoError

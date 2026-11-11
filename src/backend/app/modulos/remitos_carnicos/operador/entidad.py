@@ -9,8 +9,8 @@ from __future__ import annotations
 from modulos.remitos_carnicos.base import Entidad
 
 
-class Operador(Entidad):
-    """Operador de la cadena cárnica.
+class RemitoOperador(Entidad):
+    """Operador de la cadena cárnica (entidad de dominio de remitos).
 
     Campos:
         persona_id: referencia a la persona (física o jurídica).

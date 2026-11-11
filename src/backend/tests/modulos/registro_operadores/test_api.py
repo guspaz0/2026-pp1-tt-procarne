@@ -93,14 +93,15 @@ class TestAPIRegistroOperadores:
         assert body["cuit"] == "30222222222"
         assert body["estado_registral"] == "PENDIENTE"
 
-    def test_crear_operador_duplicado(self, api_client):
+    def test_crear_operador_misma_persona(self, api_client):
+        """Crear otro operador con el mismo CUIT es válido (misma persona, otra sucursal)."""
         data = {
             "cuit": "30111111111",
-            "razon_social": "DUPLICADO",
+            "razon_social": "SUCURSAL 2",
             "tipo": "FRIGORIFICO",
         }
         r = api_client.post("/api/registro-operadores", json=data)
-        assert r.status_code == 400
+        assert r.status_code == 201
 
     def test_obtener_operador(self, api_client):
         r = api_client.get("/api/registro-operadores/1")
