@@ -35,7 +35,6 @@ PUBLIC_PATHS = {
     "/api/auth/refresh",
     "/api/auth/logout",
     "/api/health",
-    "/api/f102",
     "/docs",
     "/docs/oauth2-redirect",
     "/openapi.json",

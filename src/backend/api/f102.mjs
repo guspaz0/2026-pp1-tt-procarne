@@ -16,6 +16,29 @@ import { generate } from "@pdfme/generator";
 import { rectangle, line, table, image, text } from "@pdfme/schemas";
 import { TEMPLATE_JSON, LOGOS } from "./f102_data.mjs";
 
+const COOKIE_ACCESS = "rocca_access_token";
+
+/**
+ * Valida el token de acceso contra InsForge.
+ * Devuelve true si el token es válido, false si no.
+ */
+async function validarToken(token) {
+  if (!token) return false;
+  const insforgeUrl = process.env.INSFORGE_URL;
+  if (!insforgeUrl) return false; // Sin config, rechazar.
+  try {
+    const resp = await fetch(`${insforgeUrl}/api/auth/sessions/current`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!resp.ok) return false;
+    const data = await resp.json();
+    return !!data.user;
+  } catch {
+    return false;
+  }
+}
+
 function fmtFecha(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -29,6 +52,27 @@ function fmtFecha(iso) {
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.status(405).json({ detail: "Método no permitido" });
+    return;
+  }
+
+  // --- Autenticación: validar cookie de sesión ---
+  const cookies = req.headers.cookie || "";
+  const token = cookies
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${COOKIE_ACCESS}=`))
+    ?.split("=")
+    .slice(1)
+    .join("=");
+
+  if (!token) {
+    res.status(401).json({ detail: "Authentication required" });
+    return;
+  }
+
+  const usuarioValido = await validarToken(token);
+  if (!usuarioValido) {
+    res.status(401).json({ detail: "Sesión inválida o vencida" });
     return;
   }
 
