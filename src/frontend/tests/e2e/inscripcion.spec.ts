@@ -101,4 +101,3 @@ test.describe("Guard de autenticación", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 });
-});

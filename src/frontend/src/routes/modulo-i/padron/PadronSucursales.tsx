@@ -145,7 +145,7 @@ export function PadronSucursales() {
             Padrón de Operadores
           </h2>
           <p className="text-[12px] text-rocca-texto-suave">
-            {operadores.length} establecimientos registrados • listado por sucursal
+            {filtrados.length} establecimientos registrados • listado por sucursal
           </p>
         </div>
         <div className="flex w-full items-center gap-2 lg:w-auto">

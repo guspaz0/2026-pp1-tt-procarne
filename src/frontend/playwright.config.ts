@@ -18,8 +18,9 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 10_000 },
   fullyParallel: true,
+  testMatch: /.*\.spec\.ts/,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "html",
+  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: "http://localhost:5173",
     trace: "retain-on-failure",
@@ -39,7 +40,16 @@ export default defineConfig({
     {
       name: "chromium",
       testIgnore: /auth\.setup\.ts$/,
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // El headless shell del sandbox está incompleto (sin ICU: icudtl.dat
+        // no found) y la cache de browsers (~/Library/Caches/ms-playwright)
+        // no es legible desde el sandbox. Se usa el Edge instalado vía
+        // `channel` (resuelve la app por nombre, sin leer la cache).
+        // IMPORTANTE: cerrá Edge antes de correr (el profile queda bloqueado
+        // por ProcessSingleton si hay una instancia abierta).
+        channel: "msedge",
+      },
     },
   ],
   webServer: {

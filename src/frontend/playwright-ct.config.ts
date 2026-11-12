@@ -7,8 +7,8 @@
  * Uso:
  *   npx playwright test -c playwright-ct.config.ts
  *
- * Los specs CT viven en src/ (testMatch *.ct.spec.tsx). El entry point de CT
- * es `playwright/index.tsx` (beforeMount con Provider + worker.start).
+ * Los specs CT viven en tests/ (testMatch *.ct.spec.tsx). El entry point de CT
+ * es `tests/playwright/index.tsx` (beforeMount con Provider + worker.start).
  *
  * NOTA sobre versiones: @playwright/experimental-ct-core trae su propio
  * Vite 8 + @vitejs/plugin-react 6.x, así que el app debe correr sobre Vite 6+
@@ -19,7 +19,7 @@ import { defineConfig, devices } from "@playwright/experimental-ct-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  testDir: "./src",
+  testDir: "./tests",
   testMatch: "**/*.ct.spec.tsx",
   use: {
     ctPort: 3100,
@@ -33,5 +33,19 @@ export default defineConfig({
       plugins: [tailwindcss()],
     },
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // El bundle de headless shell del sandbox está incompleto (sin ICU) y
+        // cdn.playwright.dev está bloqueado por allowlist. Se usa el Edge
+        // instalado en la máquina; sobreescribir con CHROMIUM_EXECUTABLE_PATH
+        // o dejarlo vacío para el Chromium de Playwright (máquina normal).
+        executablePath:
+          process.env.CHROMIUM_EXECUTABLE_PATH ||
+          "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+      },
+    },
+  ],
 });
