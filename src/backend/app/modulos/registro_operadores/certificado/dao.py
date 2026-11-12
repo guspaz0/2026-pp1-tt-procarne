@@ -37,6 +37,9 @@ class Certificado(Base):
     )
 
     operador: Mapped["Operador"] = relationship(back_populates="certificados")
+    actividades: Mapped[list["CertificadoActividad"]] = relationship(
+        back_populates="certificado", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Certificado {self.numero_certificado} operador={self.operador_id} estado={self.estado}>"
@@ -53,8 +56,17 @@ class CertificadoDAO:
               tipo_certificado: str = "HABILITACION",
               fecha_vencimiento: datetime | None = None,
               actividades_economicas: str | None = None,
-              observaciones: str | None = None) -> Certificado:
-        """Crea y persiste un certificado."""
+              observaciones: str | None = None,
+              actividad_ids: list[int] | None = None) -> Certificado:
+        """Crea y persiste un certificado.
+
+        ``actividad_ids`` son los ids del catálogo (``actividades_economicas``)
+        que habilita el certificado; se guardan en la tabla asociativa
+        ``certificado_actividades``. ``actividades_economicas`` (texto) se
+        conserva como resumen denormalizado para el PDF.
+        """
+        from modulos.registro_operadores.asociaciones import CertificadoActividad
+
         with self._session_factory() as session:
             cert = Certificado(
                 operador_id=operador_id,
@@ -66,9 +78,25 @@ class CertificadoDAO:
                 observaciones=observaciones,
             )
             session.add(cert)
+            session.flush()  # asigna cert.id
+            for aid in (actividad_ids or []):
+                session.add(CertificadoActividad(certificado_id=cert.id, actividad_id=aid))
             session.commit()
             session.refresh(cert)
             return cert
+
+    def listar_actividad_ids(self, certificado_id: int) -> list[int]:
+        """Devuelve los ids de actividades que habilita un certificado."""
+        from modulos.registro_operadores.asociaciones import CertificadoActividad
+
+        with self._session_factory() as session:
+            rows = (
+                session.query(CertificadoActividad.actividad_id)
+                .filter_by(certificado_id=certificado_id)
+                .order_by(CertificadoActividad.actividad_id)
+                .all()
+            )
+            return [r[0] for r in rows]
 
     def obtener(self, certificado_id: int) -> Certificado | None:
         """Obtiene un certificado por su id, o ``None``."""

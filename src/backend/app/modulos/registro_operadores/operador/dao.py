@@ -63,6 +63,9 @@ class Operador(Base):
     adjuntos: Mapped[list["AdjuntoOperador"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
+    actividades: Mapped[list["OperadorActividad"]] = relationship(
+        back_populates="operador", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Operador id={self.id} persona_id={self.persona_id} tipo={self.tipo} categoria={self.categoria}>"

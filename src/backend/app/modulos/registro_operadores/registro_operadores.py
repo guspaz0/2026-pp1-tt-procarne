@@ -12,6 +12,10 @@ from core.contracts import PersonaDAO as PersonaDAOProtocol
 from core.persona.dao import PersonaDAO
 from core.persona.servicio import PersonaService
 from core.storage.insforge import InsforgeStorage
+from modulos.registro_operadores.asociaciones import (  # noqa: F401  (registrar modelos N:M)
+    CertificadoActividad,
+    OperadorActividad,
+)
 from modulos.registro_operadores.adjunto_operador.dao import AdjuntoOperadorDAO
 from modulos.registro_operadores.adjunto_operador.servicio import AdjuntoOperadorService
 from modulos.registro_operadores.actividad_economica.dao import CatalogoActividadesDAO

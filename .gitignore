@@ -21,3 +21,4 @@ docs/procarne/establecimientos.xlsx
 deploy/backend/
 src/backend/app/static/static/
 src/backend/app/static/index.html
+node_modules/

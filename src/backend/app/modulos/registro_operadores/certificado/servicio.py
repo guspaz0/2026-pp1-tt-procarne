@@ -62,19 +62,25 @@ class CertificadoService:
             return (venc, emision)
 
         vigente = max(certs, key=_sort_key)
-        return CertificadoOut.from_certificado(vigente)
+        return self._to_out(vigente)
 
     def listar(self, operador_id: int) -> list[CertificadoOut]:
         """Lista los certificados de un operador (con estado efectivo calculado)."""
         certs = self._dao.listar_por_operador(operador_id)
-        return [CertificadoOut.from_certificado(c) for c in certs]
+        return [self._to_out(c) for c in certs]
 
     def obtener(self, operador_id: int, certificado_id: int) -> CertificadoOut:
         """Obtiene un certificado específico (con estado efectivo calculado)."""
         cert = self._dao.obtener(certificado_id)
         if cert is None or cert.operador_id != operador_id:
             raise OperadorError(f"No existe el certificado {operador_id}/{certificado_id}")
-        return CertificadoOut.from_certificado(cert)
+        return self._to_out(cert)
+
+    def _to_out(self, cert) -> CertificadoOut:
+        """Convierte un ORM a DTO resolviendo las actividades (N:M)."""
+        return CertificadoOut.from_certificado(
+            cert, actividad_ids=self._dao.listar_actividad_ids(cert.id)
+        )
 
     def suspender(self, operador_id: int, certificado_id: int,
                   data: CertificadoSuspenderIn) -> CertificadoOut:
@@ -139,5 +145,6 @@ class CertificadoService:
             fecha_vencimiento=data.fecha_vencimiento,
             actividades_economicas=data.actividades_economicas,
             observaciones=data.observaciones,
+            actividad_ids=data.actividad_ids,
         )
-        return CertificadoOut.from_certificado(cert)
+        return self._to_out(cert)

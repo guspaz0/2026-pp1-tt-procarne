@@ -73,6 +73,8 @@ class ActividadEconomica(Base):
 
     grupo: Mapped["GrupoActividad"] = relationship()
     subgrupo: Mapped[Optional["SubgrupoActividad"]] = relationship()
+    operadores: Mapped[list["OperadorActividad"]] = relationship(back_populates="actividad")
+    certificados: Mapped[list["CertificadoActividad"]] = relationship(back_populates="actividad")
 
     def __repr__(self) -> str:
         return f"<ActividadEconomica {self.codigo} {self.descripcion[:40]}>"

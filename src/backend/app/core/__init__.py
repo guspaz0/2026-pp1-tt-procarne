@@ -16,15 +16,18 @@ from .contracts import MercaderiaRef
 from .contracts import PersonaDAO as PersonaDAOProtocol
 from .contracts import PersonaRef
 from .enums import TipoPersona
-from .mercaderia import (
-    Mercaderia,
-    Mercaderia as MercaderiaORM,
-    MercaderiaDAO,
-    MercaderiaError,
-    MercaderiaIn,
-    MercaderiaOut,
-    MercaderiaService,
-)
+# ``mercaderias_genericas`` aún no está implementado (Módulo II/III). Se
+# descomenta al reactivar el módulo; mientras tanto NO se importa el ORM para
+# que Alembic no detecte la tabla como "a agregar".
+# from .mercaderia import (
+#     Mercaderia,
+#     Mercaderia as MercaderiaORM,
+#     MercaderiaDAO,
+#     MercaderiaError,
+#     MercaderiaIn,
+#     MercaderiaOut,
+#     MercaderiaService,
+# )
 from .persona import (
     Persona,
     Persona as PersonaORM,

@@ -17,7 +17,8 @@ class CertificadoIn(BaseModel):
     tipo_certificado: str = Field("HABILITACION", description="Tipo: HABILITACION, INSCRIPCION, etc.")
     fecha_emision: datetime = Field(..., description="Fecha de emisión")
     fecha_vencimiento: Optional[datetime] = Field(None, description="Fecha de vencimiento")
-    actividades_economicas: Optional[str] = Field(None, description="Códigos/descripciones de actividades económicas")
+    actividades_economicas: Optional[str] = Field(None, description="Resumen (denormalizado) de actividades económicas, para el PDF")
+    actividad_ids: Optional[list[int]] = Field(None, description="Ids del catálogo de actividades que habilita el certificado (N:M)")
     observaciones: Optional[str] = Field(None, description="Observaciones")
 
 
@@ -42,6 +43,7 @@ class CertificadoOut(BaseModel):
     fecha_emision: datetime
     fecha_vencimiento: Optional[datetime]
     actividades_economicas: Optional[str]
+    actividad_ids: list[int] = Field(default_factory=list, description="Ids del catálogo de actividades que habilita el certificado")
     observaciones: Optional[str]
     estado: str
     estado_efectivo: str = ""
@@ -50,11 +52,14 @@ class CertificadoOut(BaseModel):
     model_config = {"from_attributes": True}
 
     @classmethod
-    def from_certificado(cls, cert) -> "CertificadoOut":
+    def from_certificado(cls, cert, actividad_ids: list[int] | None = None) -> "CertificadoOut":
         """Construye el DTO calculando el estado efectivo.
 
         Si el certificado está ACTIVO pero su fecha_vencimiento ya pasó,
         el estado efectivo se reporta como VENCIDO.
+
+        ``actividad_ids`` son los ids del catálogo que habilita el certificado
+        (N:M); se pasan desde el servicio vía el DAO.
         """
         estado = cert.estado
         estado_efectivo = estado
@@ -74,6 +79,7 @@ class CertificadoOut(BaseModel):
             fecha_emision=cert.fecha_emision,
             fecha_vencimiento=cert.fecha_vencimiento,
             actividades_economicas=cert.actividades_economicas,
+            actividad_ids=actividad_ids or [],
             observaciones=cert.observaciones,
             estado=estado,
             estado_efectivo=estado_efectivo,
