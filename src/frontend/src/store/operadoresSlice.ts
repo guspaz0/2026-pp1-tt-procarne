@@ -63,7 +63,7 @@ export const selectOperadoresFiltrados = (state: RootState): Operador[] => {
   return items.filter(
     (o) =>
       o.razon_social.toLowerCase().includes(q) ||
-      o.cuit.toLowerCase().includes(q) ||
+      (o.cuit ?? "").toLowerCase().includes(q) ||
       (o.domicilio_comercial ?? "").toLowerCase().includes(q),
   );
 };
@@ -83,7 +83,8 @@ export const selectGruposPorPersona = (state: RootState): GrupoPersona[] => {
   const items = selectItems(state);
   const porCuit = new Map<string, Operador[]>();
   for (const op of items) {
-    const clave = op.cuit.toUpperCase();
+    // cuit puede ser null (persona sin CUIT cargado): se agrupa bajo una clave estable.
+    const clave = (op.cuit ?? `op-${op.id}`).toUpperCase();
     const lista = porCuit.get(clave) ?? [];
     lista.push(op);
     porCuit.set(clave, lista);

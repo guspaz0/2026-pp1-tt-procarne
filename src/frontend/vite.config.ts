@@ -15,7 +15,7 @@ export default defineConfig({
   server: {
     // En dev, Vite proxy-kea la API al backend Python (uvicorn en :8000).
     proxy: {
-      "/api": "http://localhost:8001",
+      "/api": "http://127.0.0.1:8000",
     },
   },
 });

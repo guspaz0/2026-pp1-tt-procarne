@@ -21,7 +21,7 @@ function agruparPorCuit(operadores: Operador[]): [string, Operador[]][] {
   // Object.groupBy (ES2024) devuelve un objeto plano Record<K, T[]>.
   const porCuit = Object.groupBy(
     operadores,
-    (o: Operador) => o.cuit.toUpperCase(),
+    (o: Operador) => (o.cuit ?? `op-${o.id}`).toUpperCase(),
   ) as Record<string, Operador[]>;
 
   return Object.entries(porCuit)
