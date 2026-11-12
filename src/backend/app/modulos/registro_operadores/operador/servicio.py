@@ -23,16 +23,10 @@ class OperadorService:
     """Servicio de negocio de operadores de la cadena cárnica."""
 
     def __init__(self, dao: OperadorDAO, persona_service=None,
-                 habilitacion_service=None, inscripcion_service=None,
-                 domicilio_service=None, requisito_service=None,
+                 requisito_service=None,
                  certificado_service=None, catalogo_actividades_dao=None) -> None:
         self._dao = dao
         self._persona_service = persona_service
-        # Servicios delegados (opcional): permiten mantener la API pública
-        # del servicio monolítico antiguo sin romper importaciones/tests.
-        self._habilitacion_service = habilitacion_service
-        self._inscripcion_service = inscripcion_service
-        self._domicilio_service = domicilio_service
         self._requisito_service = requisito_service
         self._certificado_service = certificado_service
         self._catalogo_actividades_dao = catalogo_actividades_dao
@@ -72,6 +66,14 @@ class OperadorService:
             categoria=data.categoria,
         )
 
+        # Cargar la relación persona ANTES de que el DAO cierre la sesión.
+        # ``operadores.persona`` es lazy-load; si se accede después del
+        # ``session.close()`` del DAO, lanza ``DetachedInstanceError``.
+        try:
+            _persona = operador.persona  # noqa: F841 — fuerza el lazy load
+        except Exception:
+            pass
+
         # Crear los requisitos (generales + específicos) con estado "no cumplido"
         self._crear_requisitos_iniciales(operador.id, data.categoria)
 
@@ -88,9 +90,16 @@ class OperadorService:
 
     def _to_out(self, operador) -> OperadorOut:
         """Convierte un ORM a DTO resolviendo las actividades (N:M)."""
-        out = OperadorOut.model_validate(operador)
-        out.actividad_ids = self._dao.listar_actividad_ids(operador.id)
-        return out
+        # ``from_attributes`` solo extrae campos en ``model_fields``; la relación
+        # ``persona`` no es un campo del DTO, así que se pasa explícitamente para
+        # que ``_inferir_cuit`` pueda leer ``persona.identificador``.
+        attrs = {k: getattr(operador, k, None) for k in OperadorOut.model_fields}
+        attrs["actividad_ids"] = self._dao.listar_actividad_ids(operador.id)
+        try:
+            attrs["persona"] = operador.persona
+        except Exception:
+            pass
+        return OperadorOut.model_validate(attrs)
 
     def obtener(self, operador_id: int) -> OperadorOut | None:
         """Busca un operador por su id."""
@@ -132,30 +141,6 @@ class OperadorService:
     # ------------------------------------------------------------------
     # Delegación a servicios por entidad (API pública del servicio antiguo)
     # ------------------------------------------------------------------
-
-    def agregar_habilitacion(self, operador_id: int, data) -> "HabilitacionOut":
-        """Agrega una habilitación (delega en :class:`HabilitacionService`)."""
-        if self._habilitacion_service is None:
-            raise OperadorError("HabilitacionService no configurado")
-        return self._habilitacion_service.agregar(operador_id, data)
-
-    def listar_habilitaciones(self, operador_id: int) -> list["HabilitacionOut"]:
-        """Lista las habilitaciones de un operador."""
-        if self._habilitacion_service is None:
-            raise OperadorError("HabilitacionService no configurado")
-        return self._habilitacion_service.listar(operador_id)
-
-    def agregar_inscripcion(self, operador_id: int, data) -> "InscripcionOut":
-        """Agrega una inscripción (delega en :class:`InscripcionService`)."""
-        if self._inscripcion_service is None:
-            raise OperadorError("InscripcionService no configurado")
-        return self._inscripcion_service.agregar(operador_id, data)
-
-    def agregar_domicilio_operativo(self, operador_id: int, data) -> "DomicilioOperativoOut":
-        """Agrega un domicilio operativo (delega en :class:`DomicilioOperativoService`)."""
-        if self._domicilio_service is None:
-            raise OperadorError("DomicilioOperativoService no configurado")
-        return self._domicilio_service.agregar(operador_id, data)
 
     def listar_requisitos(self, operador_id: int) -> list["RequisitoInscripcionOut"]:
         """Lista los requisitos de un operador."""

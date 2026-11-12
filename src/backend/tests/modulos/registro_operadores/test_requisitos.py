@@ -28,21 +28,12 @@ def operador_dao(db_session_factory):
 
 @pytest.fixture()
 def operador_service(operador_dao, persona_service, session_factory):
-    from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
-    from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
-    from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
-    from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
-    from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
-    from modulos.registro_operadores.inscripcion.servicio import InscripcionService
     from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
     from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
 
     return OperadorService(
         operador_dao,
         persona_service=persona_service,
-        habilitacion_service=HabilitacionService(HabilitacionDAO(session_factory)),
-        inscripcion_service=InscripcionService(InscripcionDAO(session_factory)),
-        domicilio_service=DomicilioOperativoService(DomicilioOperativoDAO(session_factory)),
         requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(session_factory)),
     )
 

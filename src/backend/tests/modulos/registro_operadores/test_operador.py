@@ -7,9 +7,6 @@ import pytest
 from modulos.registro_operadores.dao import OperadorDAO
 from modulos.registro_operadores.enums import EstadoRegistral, TipoOperador
 from modulos.registro_operadores.schema import (
-    DomicilioOperativoIn,
-    HabilitacionIn,
-    InscripcionIn,
     OperadorIn,
 )
 from modulos.registro_operadores.servicio import OperadorError, OperadorService
@@ -24,21 +21,12 @@ def operador_dao(db_session_factory):
 @pytest.fixture()
 def operador_service(operador_dao, persona_service, session_factory):
     """Servicio de operadores con sus servicios delegados inyectados."""
-    from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
-    from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
-    from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
-    from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
-    from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
-    from modulos.registro_operadores.inscripcion.servicio import InscripcionService
     from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
     from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
 
     return OperadorService(
         operador_dao,
         persona_service=persona_service,
-        habilitacion_service=HabilitacionService(HabilitacionDAO(session_factory)),
-        inscripcion_service=InscripcionService(InscripcionDAO(session_factory)),
-        domicilio_service=DomicilioOperativoService(DomicilioOperativoDAO(session_factory)),
         requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(session_factory)),
     )
 
@@ -152,49 +140,4 @@ class TestOperadorService:
         resultado = operador_service.cambiar_estado(creado.id, EstadoRegistral.SUSPENDIDO)
         assert resultado.estado_registral == "SUSPENDIDO"
 
-    def test_agregar_habilitacion(self, operador_service):
-        data = OperadorIn(
-            cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
-        )
-        creado = operador_service.crear_operador(data)
-        habilitacion = operador_service.agregar_habilitacion(
-            creado.id,
-            HabilitacionIn(actividad="FAENA BOVINA"),
-        )
-        assert habilitacion.actividad == "FAENA BOVINA"
-        assert habilitacion.estado == "ACTIVO"
 
-    def test_agregar_inscripcion(self, operador_service):
-        data = OperadorIn(
-            cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
-        )
-        creado = operador_service.crear_operador(data)
-        inscripcion = operador_service.agregar_inscripcion(
-            creado.id,
-            InscripcionIn(tipo="PRINCIPAL", numero_inscripcion="ROCCA-001"),
-        )
-        assert inscripcion.tipo == "PRINCIPAL"
-        assert inscripcion.numero_inscripcion == "ROCCA-001"
-
-    def test_agregar_domicilio_operativo(self, operador_service):
-        data = OperadorIn(
-            cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
-        )
-        creado = operador_service.crear_operador(data)
-        domicilio = operador_service.agregar_domicilio_operativo(
-            creado.id,
-            DomicilioOperativoIn(
-                direccion="Av. Siempreviva 742",
-                localidad="Springfield",
-                provincia="BA",
-                es_principal=True,
-            ),
-        )
-        assert domicilio.direccion == "Av. Siempreviva 742"
-        assert domicilio.es_principal is True

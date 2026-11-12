@@ -16,12 +16,6 @@ from modulos.registro_operadores.certificado.dto import (
     CertificadoOut,
     CertificadoSuspenderIn,
 )
-from modulos.registro_operadores.domicilio_operativo.dto import (
-    DomicilioOperativoIn,
-    DomicilioOperativoOut,
-)
-from modulos.registro_operadores.habilitacion.dto import HabilitacionIn, HabilitacionOut
-from modulos.registro_operadores.inscripcion.dto import InscripcionIn, InscripcionOut
 from modulos.registro_operadores.operador.dto import OperadorIn, OperadorOut
 from modulos.registro_operadores.requisito_inscripcion.dto import (
     RequisitoInscripcionIn,
@@ -34,13 +28,7 @@ __all__ = [
     "CertificadoIn",
     "CertificadoOut",
     "CertificadoSuspenderIn",
-    "DomicilioOperativoIn",
-    "DomicilioOperativoOut",
     "GrupoActividadOut",
-    "HabilitacionIn",
-    "HabilitacionOut",
-    "InscripcionIn",
-    "InscripcionOut",
     "RequisitoInscripcionIn",
     "RequisitoInscripcionOut",
     "OperadorIn",

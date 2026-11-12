@@ -35,13 +35,13 @@ class PersonaDAO(Protocol):
         ...
 
 
-@runtime_checkable
-class MercaderiaDAO(Protocol):
-    """Interfaz mínima para acceso al catálogo de mercaderías."""
+# @runtime_checkable
+# class MercaderiaDAO(Protocol):
+#     """Interfaz mínima para acceso al catálogo de mercaderías."""
 
-    def obtener_por_codigo_afip(self, codigo: str):
-        """Devuelve la mercadería con el código AFIP dado, o ``None``."""
-        ...
+#     def obtener_por_codigo_afip(self, codigo: str):
+#         """Devuelve la mercadería con el código AFIP dado, o ``None``."""
+#         ...
 
 
 class PersonaRef:
@@ -54,10 +54,10 @@ class PersonaRef:
         self.nombre = nombre
 
 
-class MercaderiaRef:
-    """Referencia inmutable a una mercadería (para transferir entre módulos)."""
+# class MercaderiaRef:
+#     """Referencia inmutable a una mercadería (para transferir entre módulos)."""
 
-    def __init__(self, id: int, codigo: str, descripcion: str) -> None:
-        self.id = id
-        self.codigo = codigo
-        self.descripcion = descripcion
+#     def __init__(self, id: int, codigo: str, descripcion: str) -> None:
+#         self.id = id
+#         self.codigo = codigo
+#         self.descripcion = descripcion

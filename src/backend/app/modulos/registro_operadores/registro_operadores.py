@@ -22,12 +22,6 @@ from modulos.registro_operadores.actividad_economica.dao import CatalogoActivida
 from modulos.registro_operadores.certificado.dao import CertificadoDAO
 from modulos.registro_operadores.certificado.servicio import CertificadoService
 from modulos.registro_operadores.controlador import crear_router
-from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
-from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
-from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
-from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
-from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
-from modulos.registro_operadores.inscripcion.servicio import InscripcionService
 from modulos.registro_operadores.operador.dao import OperadorDAO
 from modulos.registro_operadores.operador.servicio import OperadorService
 from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
@@ -57,19 +51,13 @@ class RegistroOperadoresModulo:
 
         # DAOs por entidad
         self._operador_dao = OperadorDAO(db_dao.obtener_sesion)
-        self._habilitacion_dao = HabilitacionDAO(db_dao.obtener_sesion)
-        self._inscripcion_dao = InscripcionDAO(db_dao.obtener_sesion)
         self._catalogo_dao = CatalogoActividadesDAO(db_dao.obtener_sesion)
         self._certificado_dao = CertificadoDAO(db_dao.obtener_sesion)
-        self._domicilio_dao = DomicilioOperativoDAO(db_dao.obtener_sesion)
         self._requisito_dao = RequisitoInscripcionDAO(db_dao.obtener_sesion)
         self._adjunto_dao = adjunto_dao or AdjuntoOperadorDAO(db_dao.obtener_sesion)
 
         # Servicios por entidad
-        self._habilitacion_service = HabilitacionService(self._habilitacion_dao)
-        self._inscripcion_service = InscripcionService(self._inscripcion_dao)
         self._certificado_service = CertificadoService(self._certificado_dao)
-        self._domicilio_service = DomicilioOperativoService(self._domicilio_dao)
         self._requisito_service = RequisitoInscripcionService(self._requisito_dao)
         self._adjunto_service = AdjuntoOperadorService(
             self._adjunto_dao,
@@ -77,14 +65,9 @@ class RegistroOperadoresModulo:
             operador_dao=self._operador_dao,
             requisito_service=self._requisito_service,
         )
-        # El servicio de operador delega en los servicios de las demás
-        # entidades (mantén la API pública del servicio monolítico antiguo).
         self._operador_service = OperadorService(
             self._operador_dao,
             persona_service=self._persona_service,
-            habilitacion_service=self._habilitacion_service,
-            inscripcion_service=self._inscripcion_service,
-            domicilio_service=self._domicilio_service,
             requisito_service=self._requisito_service,
             certificado_service=self._certificado_service,
             catalogo_actividades_dao=self._catalogo_dao,
@@ -94,11 +77,8 @@ class RegistroOperadoresModulo:
         """Registra el router del módulo en la aplicación."""
         router = crear_router(
             operador_service=self._operador_service,
-            habilitacion_service=self._habilitacion_service,
-            inscripcion_service=self._inscripcion_service,
             catalogo_actividades_dao=self._catalogo_dao,
             certificado_service=self._certificado_service,
-            domicilio_service=self._domicilio_service,
             requisito_service=self._requisito_service,
             adjunto_service=self._adjunto_service,
         )

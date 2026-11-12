@@ -5,11 +5,8 @@ Compone los routers por entidad DAO. Cada router hijo recibe el prefijo
 que antes (``/api/registro-operadores/{operador_id}/...``).
 
 - :mod:`...operador.controlador` — CRUD + ciclo de vida del operador.
-- :mod:`...habilitacion.controlador` — habilitaciones de operador.
-- :mod:`...inscripcion.controlador` — inscripciones de operador.
 - :mod:`...actividad_economica.controlador` — catálogo de actividades (solo DAO).
 - :mod:`...certificado.controlador` — certificados F102 + PDF.
-- :mod:`...domicilio_operativo.controlador` — domicilios operativos.
 - :mod:`...requisito_inscripcion.controlador` — requisitos + catálogo.
 - :mod:`...adjunto_operador.controlador` — adjuntos (documentos) de operador.
 """
@@ -27,15 +24,6 @@ from modulos.registro_operadores.actividad_economica.controlador import (
 from modulos.registro_operadores.certificado.controlador import (
     crear_router as crear_router_certificados,
 )
-from modulos.registro_operadores.domicilio_operativo.controlador import (
-    crear_router as crear_router_domicilios,
-)
-from modulos.registro_operadores.habilitacion.controlador import (
-    crear_router as crear_router_habilitaciones,
-)
-from modulos.registro_operadores.inscripcion.controlador import (
-    crear_router as crear_router_inscripciones,
-)
 from modulos.registro_operadores.operador.controlador import (
     crear_router as crear_router_operadores,
 )
@@ -48,11 +36,8 @@ PREFIX = "/api/registro-operadores"
 
 def crear_router(
     operador_service,
-    habilitacion_service,
-    inscripcion_service,
     catalogo_actividades_dao,
     certificado_service,
-    domicilio_service,
     requisito_service,
     adjunto_service,
 ) -> APIRouter:
@@ -63,8 +48,6 @@ def crear_router(
     """
     router = APIRouter()
 
-    # Cada router hijo lleva el prefijo del módulo para que las rutas queden
-    # en el espacio esperado: /api/registro-operadores/{operador_id}/...
     router.include_router(
         crear_router_catalogo_actividades(catalogo_actividades_dao, prefix=PREFIX)
     )
@@ -75,19 +58,8 @@ def crear_router(
         crear_router_certificados(
             certificado_service,
             operador_service=operador_service,
-            habilitacion_service=habilitacion_service,
-            inscripcion_service=inscripcion_service,
             prefix=PREFIX,
         )
-    )
-    router.include_router(
-        crear_router_habilitaciones(habilitacion_service, operador_service=operador_service, prefix=PREFIX)
-    )
-    router.include_router(
-        crear_router_inscripciones(inscripcion_service, operador_service=operador_service, prefix=PREFIX)
-    )
-    router.include_router(
-        crear_router_domicilios(domicilio_service, operador_service=operador_service, prefix=PREFIX)
     )
     router.include_router(
         crear_router_requisitos(requisito_service, prefix=PREFIX)

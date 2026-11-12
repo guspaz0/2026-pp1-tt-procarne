@@ -120,34 +120,4 @@ class TestAPIRegistroOperadores:
         assert r.status_code == 200
         assert r.json()["estado_registral"] == "SUSPENDIDO"
 
-    def test_agregar_habilitacion(self, api_client):
-        data = {"actividad": "FAENA BOVINA"}
-        r = api_client.post("/api/registro-operadores/1/habilitaciones", json=data)
-        assert r.status_code == 201
-        assert r.json()["actividad"] == "FAENA BOVINA"
 
-    def test_listar_habilitaciones(self, api_client):
-        api_client.post(
-            "/api/registro-operadores/1/habilitaciones",
-            json={"actividad": "FAENA BOVINA"},
-        )
-        r = api_client.get("/api/registro-operadores/1/habilitaciones")
-        assert r.status_code == 200
-        assert len(r.json()) == 1
-
-    def test_agregar_inscripcion(self, api_client):
-        data = {"tipo": "PRINCIPAL", "numero_inscripcion": "ROCCA-001"}
-        r = api_client.post("/api/registro-operadores/1/inscripciones", json=data)
-        assert r.status_code == 201
-        assert r.json()["numero_inscripcion"] == "ROCCA-001"
-
-    def test_agregar_domicilio_operativo(self, api_client):
-        data = {
-            "direccion": "Av. Siempreviva 742",
-            "localidad": "Springfield",
-            "provincia": "BA",
-            "es_principal": True,
-        }
-        r = api_client.post("/api/registro-operadores/1/domicilios-operativos", json=data)
-        assert r.status_code == 201
-        assert r.json()["direccion"] == "Av. Siempreviva 742"

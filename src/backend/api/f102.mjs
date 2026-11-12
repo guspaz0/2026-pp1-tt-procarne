@@ -40,13 +40,18 @@ async function validarToken(token) {
 }
 
 function fmtFecha(iso) {
-  if (!iso) return "";
+  if (!iso) return "Sin vencimiento";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return day + "/" + month + "/" + year;
+}
+
+// Texto no vacío para campos requeridos del template (pdfme rechaza "").
+function t(v) {
+  return v && String(v).trim() !== "" ? String(v) : "-";
 }
 
 export default async function handler(req, res) {
@@ -116,13 +121,13 @@ export default async function handler(req, res) {
     while (filasInsc.length < 3) filasInsc.push(["", ""]);
 
     const input = {
-      operador_numero: datos.numero_operador,
-      APELLIDO_Y_NOMBRE: datos.apellido_y_nombre,
-      NOMBRE_ESTABLECIMIENO: datos.nombre_establecimiento,
-      RAZON_SOCIAL: datos.razon_social,
-      CUIT: datos.cuit,
-      DOMICILIO: datos.domicilio,
-      TIPO_CARNE_COMERCIALIZADA: datos.tipo_carne,
+      operador_numero: t(datos.numero_operador),
+      APELLIDO_Y_NOMBRE: t(datos.apellido_y_nombre),
+      NOMBRE_ESTABLECIMIENO: t(datos.nombre_establecimiento),
+      RAZON_SOCIAL: t(datos.razon_social),
+      CUIT: t(datos.cuit),
+      DOMICILIO: t(datos.domicilio),
+      TIPO_CARNE_COMERCIALIZADA: t(datos.tipo_carne),
       Fecha_de_inscripcion_operador: fmtFecha(datos.fecha_inscripcion),
       Fecha_vencimiento_certificado: fmtFecha(datos.fecha_vencimiento),
       tabla_actividades: filasAct,

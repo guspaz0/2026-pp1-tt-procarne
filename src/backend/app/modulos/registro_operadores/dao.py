@@ -4,11 +4,8 @@ El código antiguo importaba todos los modelos y DAOs desde este módulo.
 Ahora cada entidad vive en su propia carpeta (patrón DAO modular):
 
 - :mod:`modulos.registro_operadores.operador`
-- :mod:`modulos.registro_operadores.habilitacion`
-- :modulos.registro_operadores.inscripcion`
 - :mod:`modulos.registro_operadores.actividad_economica`
 - :mod:`modulos.registro_operadores.certificado`
-- :mod:`modulos.registro_operadores.domicilio_operativo`
 - :mod:`modulos.registro_operadores.requisito_inscripcion`
 - :mod:`modulos.registro_operadores.adjunto_operador`
 
@@ -27,12 +24,6 @@ from modulos.registro_operadores.actividad_economica.dao import (
     SubgrupoActividad,
 )
 from modulos.registro_operadores.certificado.dao import Certificado, CertificadoDAO
-from modulos.registro_operadores.domicilio_operativo.dao import (
-    DomicilioOperativo,
-    DomicilioOperativoDAO,
-)
-from modulos.registro_operadores.habilitacion.dao import Habilitacion, HabilitacionDAO
-from modulos.registro_operadores.inscripcion.dao import Inscripcion, InscripcionDAO
 from modulos.registro_operadores.operador.dao import Operador, OperadorDAO
 from modulos.registro_operadores.requisito_inscripcion.dao import (
     RequisitoInscripcion,
@@ -46,13 +37,7 @@ __all__ = [
     "CatalogoActividadesDAO",
     "Certificado",
     "CertificadoDAO",
-    "DomicilioOperativo",
-    "DomicilioOperativoDAO",
     "GrupoActividad",
-    "Habilitacion",
-    "HabilitacionDAO",
-    "Inscripcion",
-    "InscripcionDAO",
     "RequisitoInscripcion",
     "RequisitoInscripcionDAO",
     "Operador",

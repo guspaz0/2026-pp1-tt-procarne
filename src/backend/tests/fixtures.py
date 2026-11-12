@@ -65,9 +65,7 @@ def api_client(db_engine):
     """Cliente HTTP de test con la BD en memoria inyectada."""
     from fastapi.testclient import TestClient
     from fastapi import FastAPI
-    from core.mercaderia.dao import MercaderiaDAO
-    from core.mercaderia.servicio import MercaderiaService
-    from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
+    from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
 
     app = FastAPI(title="ROCCA Test")
     dao = SQLiteDAO("sqlite://")
@@ -76,15 +74,9 @@ def api_client(db_engine):
         autocommit=False, autoflush=False, expire_on_commit=False, bind=db_engine
     )
 
-    # El catálogo genérico de mercaderías se compone aquí (orquestador de test).
-    mercaderia_dao = MercaderiaDAO(dao.obtener_sesion)
-    mercaderia_service = MercaderiaService(mercaderia_dao)
-
-    modulo = RemitosCarnicosModulo(
-        dao,
-        mercaderia_dao=mercaderia_dao,
-        mercaderia_service=mercaderia_service,
-    )
+    # Sprint actual: solo Módulo I (Registro de Operadores). Los demás módulos
+    # (remitos, trazabilidad, fiscalización) están desactivados en app.py.
+    modulo = RegistroOperadoresModulo(dao)
     modulo.registrar(app)
 
     @app.get("/api/health")

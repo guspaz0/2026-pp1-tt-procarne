@@ -53,15 +53,7 @@ class Operador(Base):
     certificados: Mapped[list["Certificado"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
-    domicilios_operativos: Mapped[list["DomicilioOperativo"]] = relationship(
-        back_populates="operador", cascade="all, delete-orphan"
-    )
-    habilitaciones: Mapped[list["Habilitacion"]] = relationship(
-        back_populates="operador", cascade="all, delete-orphan"
-    )
-    inscripciones: Mapped[list["Inscripcion"]] = relationship(
-        back_populates="operador", cascade="all, delete-orphan"
-    )
+
 
 
 class OperadorDAO:
@@ -75,9 +67,15 @@ class OperadorDAO:
     # ------------------------------------------------------------------
 
     def obtener_por_id(self, operador_id: int) -> Optional[Operador]:
-        """Busca un operador por su id."""
+        """Busca un operador por su id (con la relación persona cargada)."""
+        from sqlalchemy.orm import joinedload
         with self._session_factory() as session:
-            return session.get(Operador, operador_id)
+            return (
+                session.query(Operador)
+                .options(joinedload(Operador.persona))
+                .filter(Operador.id == operador_id)
+                .first()
+            )
 
     def obtener_por_cuit(self, cuit: str) -> Optional[Operador]:
         """Busca un operador por el CUIT de su persona titular.
@@ -105,8 +103,9 @@ class OperadorDAO:
                estado_registral: Optional[str] = None,
                categoria: Optional[str] = None) -> list[Operador]:
         """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
+        from sqlalchemy.orm import joinedload
         with self._session_factory() as session:
-            stmt = select(Operador)
+            stmt = select(Operador).options(joinedload(Operador.persona))
             if tipo is not None:
                 stmt = stmt.where(Operador.tipo == tipo)
             if estado_registral is not None:
@@ -125,7 +124,8 @@ class OperadorDAO:
               telefono: Optional[str] = None,
               email: Optional[str] = None,
               categoria: Optional[str] = None) -> Operador:
-        """Crea y persiste un operador."""
+        """Crea y persiste un operador (con la relación persona cargada)."""
+        from sqlalchemy.orm import joinedload
         with self._session_factory() as session:
             op = Operador(
                 persona_id=persona_id,
@@ -140,7 +140,14 @@ class OperadorDAO:
             )
             session.add(op)
             session.commit()
-            session.refresh(op)
+            # Recargar con joinedload para que la relación persona esté en __dict__
+            # y no falle el lazy load cuando la sesión se cierre.
+            op = (
+                session.query(Operador)
+                .options(joinedload(Operador.persona))
+                .filter(Operador.id == op.id)
+                .first()
+            )
             return op
 
     def actualizar(self, operador_id: int, **kwargs) -> Optional[Operador]:

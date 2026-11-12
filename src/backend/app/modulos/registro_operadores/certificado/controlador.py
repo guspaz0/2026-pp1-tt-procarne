@@ -45,8 +45,7 @@ def _require_operador_activo(servicio: OperadorService, operador_id: int) -> Non
 
 def crear_router(servicio: CertificadoService,
                  operador_service: OperadorService,
-                 habilitacion_service=None,
-                 inscripcion_service=None, prefix: str = "") -> APIRouter:
+                 prefix: str = "") -> APIRouter:
     """Crea el router API de certificados de operador."""
     router = APIRouter(prefix=prefix, tags=["Registro de Operadores"])
 

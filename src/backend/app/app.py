@@ -309,6 +309,10 @@ class RoccaApp:
             tipo_carne = op.categoria or ""
             fecha_inscrip = (cert.fecha_emision if cert else op.alta_fecha) or datetime.now()
             fecha_venc = cert.fecha_vencimiento if (cert and cert.fecha_vencimiento) else None
+            # Si no hay fecha de vencimiento (certificado sin vencimiento o sin
+            # certificado) se usa una fecha lejana: pdfme rechaza inputs vacíos
+            # en campos requeridos del template F102.
+            fecha_venc_disp = fecha_venc or (datetime.now() + timedelta(days=365 * 100))
 
             payload = {
                 "numero_operador": str(100000 + id),
@@ -319,7 +323,7 @@ class RoccaApp:
                 "domicilio": domicilio,
                 "tipo_carne": tipo_carne,
                 "fecha_inscripcion": fecha_inscrip.isoformat(),
-                "fecha_vencimiento": fecha_venc.isoformat() if fecha_venc else None,
+                "fecha_vencimiento": fecha_venc_disp.isoformat(),
                 "actividades": actividades,
                 "inscripciones": [["PRINCIPAL", fecha_inscrip.strftime("%d/%m/%Y")]],
             }

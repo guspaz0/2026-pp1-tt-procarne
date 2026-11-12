@@ -11,8 +11,6 @@ Contiene:
 
 from .base import Entidad
 from .contracts import DatabaseDAO as DatabaseDAOProtocol
-from .contracts import MercaderiaDAO as MercaderiaDAOProtocol
-from .contracts import MercaderiaRef
 from .contracts import PersonaDAO as PersonaDAOProtocol
 from .contracts import PersonaRef
 from .enums import TipoPersona
@@ -52,16 +50,7 @@ __all__ = [
     "PersonaOut",
     "PersonaService",
     "PersonaError",
-    "Mercaderia",
-    "MercaderiaORM",
-    "MercaderiaDAO",
-    "MercaderiaIn",
-    "MercaderiaOut",
-    "MercaderiaService",
-    "MercaderiaError",
     "DatabaseDAOProtocol",
     "PersonaDAOProtocol",
-    "MercaderiaDAOProtocol",
     "PersonaRef",
-    "MercaderiaRef",
 ]

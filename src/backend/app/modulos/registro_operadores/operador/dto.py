@@ -64,11 +64,16 @@ class OperadorOut(BaseModel):
 
         El CUIT no se guarda en ``operadores``: vive en
         ``personas.identificador``. Si el input es un objeto ORM con la
-        relación ``persona`` cargada, se extrae el identificador. Si la
-        relación no está cargada (lazy load en instancia desvinculada),
-        se deja el CUIT en ``None``.
+        relación ``persona`` cargada, se extrae el identificador. Si el
+        input es un dict que contiene una relación ``persona``, también
+        se extrae. Si la relación no está cargada, se deja en ``None``.
         """
         if isinstance(data, dict):
+            persona = data.get("persona")
+            if persona is not None:
+                identificador = getattr(persona, "identificador", None)
+                if identificador is not None:
+                    data["cuit"] = identificador
             return data
         try:
             persona = data.persona

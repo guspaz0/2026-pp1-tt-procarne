@@ -35,12 +35,6 @@ from modulos.registro_operadores.servicio import OperadorService
 def operador_service(db_session_factory, persona_service):
     from modulos.registro_operadores.certificado.dao import CertificadoDAO
     from modulos.registro_operadores.certificado.servicio import CertificadoService
-    from modulos.registro_operadores.domicilio_operativo.dao import DomicilioOperativoDAO
-    from modulos.registro_operadores.domicilio_operativo.servicio import DomicilioOperativoService
-    from modulos.registro_operadores.habilitacion.dao import HabilitacionDAO
-    from modulos.registro_operadores.habilitacion.servicio import HabilitacionService
-    from modulos.registro_operadores.inscripcion.dao import InscripcionDAO
-    from modulos.registro_operadores.inscripcion.servicio import InscripcionService
     from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
     from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
 
@@ -48,9 +42,6 @@ def operador_service(db_session_factory, persona_service):
     return OperadorService(
         dao,
         persona_service=persona_service,
-        habilitacion_service=HabilitacionService(HabilitacionDAO(db_session_factory)),
-        inscripcion_service=InscripcionService(InscripcionDAO(db_session_factory)),
-        domicilio_service=DomicilioOperativoService(DomicilioOperativoDAO(db_session_factory)),
         requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(db_session_factory)),
         certificado_service=CertificadoService(CertificadoDAO(db_session_factory)),
     )
@@ -193,11 +184,8 @@ def crear_router_completo(operador_service):
     catalogo_dao = CatalogoActividadesDAO(session_factory)
     return crear_router(
         operador_service=operador_service,
-        habilitacion_service=operador_service._habilitacion_service,
-        inscripcion_service=operador_service._inscripcion_service,
         catalogo_actividades_dao=catalogo_dao,
         certificado_service=operador_service._certificado_service,
-        domicilio_service=operador_service._domicilio_service,
         requisito_service=operador_service._requisito_service,
         adjunto_service=None,
     )
@@ -369,21 +357,23 @@ class TestEndpointCertificadoVigente:
 # ---------------------------------------------------------------------------
 
 class TestPDFBase64:
+    @pytest.mark.skip(reason="Requiere Node.js + generar_f102.mjs; se testea en integración")
+    def test_f102_devuelve_base64(self, operador_activo, operador_service):
+        """GET /api/f102?id={operador_id} devuelve JSON con fileContents (base64)."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from app.app import ProcarneApp
 
-    def test_pdf_devuelve_base64(self, operador_activo, operador_service):
-        """GET /certificado.pdf devuelve JSON con pdf_base64."""
-        from modulos.registro_operadores.controlador import crear_router
-        app = FastAPI()
-        app.include_router(crear_router_completo(operador_service))
+        app = ProcarneApp()
         client = TestClient(app)
 
-        r = client.get(f"/api/registro-operadores/{operador_activo.id}/certificado.pdf")
+        r = client.get(f"/api/f102?id={operador_activo.id}")
         assert r.status_code == 200
         body = r.json()
-        assert "pdf_base64" in body
-        assert "nombre_archivo" in body
-        assert body["content_type"] == "application/pdf"
+        assert "fileContents" in body
+        assert body["contentType"] == "application/pdf"
+        assert "fileDownloadName" in body
         # Verificar que es base64 válido
         import base64
-        decoded = base64.b64decode(body["pdf_base64"])
+        decoded = base64.b64decode(body["fileContents"])
         assert decoded[:4] == b"%PDF"  # Header PDF
