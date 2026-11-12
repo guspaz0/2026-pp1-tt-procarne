@@ -41,8 +41,8 @@ Para detener, `Ctrl+C`.
 
 ### URLs
 
-| Servicio                           | URL                              |
-| ---------------------------------- | -------------------------------- |
+| Servicio                           | URL                                |
+| ---------------------------------- | ---------------------------------- |
 | Backend (API + frontend compilado) | <http://localhost:8000>            |
 | Frontend dev (Vite + HMR)          | <http://localhost:5173>            |
 | API health check                   | <http://localhost:8000/api/health> |
@@ -84,4 +84,4 @@ pnpm build
 
 ## Scope actual (Sprint 1)
 
-Solo el **Módulo I (Registro de Operadores)** está activo. Los demás módulos (II–VII) están comentados en `app/app.py` y sus rutas muestran un placeholder "No implementado".
+Solo el **Módulo I (Registro de Operadores)** está /Users/gusta/Downloads/cuase.pdf/Users/gusta/Downloads/cuase.pdfactivo. Los demás módulos (II–VII) están comentados en `app/app.py` y sus rutas muestran un placeholder "No implementado".
