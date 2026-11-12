@@ -254,23 +254,74 @@ class RoccaApp:
             if not script_path.exists():
                 raise HTTPException(status_code=500, detail=f"Script no encontrado: {script_path}")
 
+            # --- Datos reales del operador (antes eran hardcodeados) ---
+            from modulos.registro_operadores.operador.dao import Operador
+            from modulos.registro_operadores.certificado.dao import Certificado
+            from modulos.registro_operadores.asociaciones import (
+                OperadorActividad, CertificadoActividad,
+            )
+            from modulos.registro_operadores.actividad_economica.dao import ActividadEconomica
+            from core.persona.dao import Persona
+
+            with db_dao.obtener_sesion() as session:
+                op = session.get(Operador, id)
+                if op is None:
+                    raise HTTPException(status_code=404, detail=f"Operador {id} no encontrado")
+                persona = session.get(Persona, op.persona_id) if op.persona_id else None
+
+                # Certificado vigente (el más reciente activo)
+                cert = (
+                    session.query(Certificado)
+                    .filter(Certificado.operador_id == id)
+                    .order_by(Certificado.fecha_emision.desc())
+                    .first()
+                )
+
+                # Actividades del operador (N:M) → [codigo, descripcion]
+                ops = (
+                    session.query(OperadorActividad, ActividadEconomica)
+                    .join(ActividadEconomica, OperadorActividad.actividad_id == ActividadEconomica.id)
+                    .filter(OperadorActividad.operador_id == id)
+                    .order_by(ActividadEconomica.codigo)
+                    .all()
+                )
+                actividades_op = [[a.codigo, a.descripcion] for _, a in ops]
+
+                # Actividades del certificado (N:M), si existe
+                actividades_cert: list[list[str]] = []
+                if cert is not None:
+                    cts = (
+                        session.query(CertificadoActividad, ActividadEconomica)
+                        .join(ActividadEconomica, CertificadoActividad.actividad_id == ActividadEconomica.id)
+                        .filter(CertificadoActividad.certificado_id == cert.id)
+                        .order_by(ActividadEconomica.codigo)
+                        .all()
+                    )
+                    actividades_cert = [[a.codigo, a.descripcion] for _, a in cts]
+
+            # F102 es el certificado: las actividades del formulario son las del
+            # certificado vigente; si no hay certificado, las del operador.
+            actividades = actividades_cert or actividades_op
+
+            cuit = persona.identificador if persona else ""
+            nombre = persona.nombre.upper() if persona else ""
+            domicilio = op.domicilio_comercial or (persona.domicilio if persona else None) or ""
+            tipo_carne = op.categoria or ""
+            fecha_inscrip = (cert.fecha_emision if cert else op.alta_fecha) or datetime.now()
+            fecha_venc = cert.fecha_vencimiento if (cert and cert.fecha_vencimiento) else None
+
             payload = {
                 "numero_operador": str(100000 + id),
-                "apellido_y_nombre": "OLIVEIRA DANIEL ALBERTO",
-                "nombre_establecimiento": "LA NORITA",
-                "razon_social": "LA NORITA S.R.L.",
-                "cuit": "23-30917912-9",
-                "domicilio": "JOSE BENJAMIN ABALOS N. 4582, B. ALMIRANTE BROWN, S.D.E.",
-                "tipo_carne": "CARNICERIAS",
-                "fecha_inscripcion": datetime(2025, 3, 10).isoformat(),
-                "fecha_vencimiento": datetime(2026, 3, 10).isoformat(),
-                "actividades": [
-                    ["922210", "Carniceria Minorista"],
-                    ["463110", "Comercializacion de carnes y chacinados"],
-                ],
-                "inscripciones": [
-                    ["PRINCIPAL", "10/03/2025"],
-                ],
+                "apellido_y_nombre": nombre,
+                "nombre_establecimiento": op.razon_social or "",
+                "razon_social": op.razon_social or "",
+                "cuit": cuit,
+                "domicilio": domicilio,
+                "tipo_carne": tipo_carne,
+                "fecha_inscripcion": fecha_inscrip.isoformat(),
+                "fecha_vencimiento": fecha_venc.isoformat() if fecha_venc else None,
+                "actividades": actividades,
+                "inscripciones": [["PRINCIPAL", fecha_inscrip.strftime("%d/%m/%Y")]],
             }
 
             try:
