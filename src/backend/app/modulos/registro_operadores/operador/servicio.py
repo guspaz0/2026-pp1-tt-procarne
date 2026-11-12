@@ -78,11 +78,11 @@ class OperadorService:
         self._crear_requisitos_iniciales(operador.id, data.categoria)
 
         # Guardar las actividades económicas del catálogo (N:M).
-        # ``actividad_ids`` son ids directos; ``codigo_afip`` son códigos del
-        # catálogo (AFIP) que se resuelven a ids. Se combinan ambos.
+        # ``actividad_ids`` son ids directos; ``codigo_dgr`` son códigos del
+        # catálogo (DGR) que se resuelven a ids. Se combinan ambos.
         ids: list[int] = list(data.actividad_ids or [])
-        if data.codigo_afip and self._catalogo_actividades_dao is not None:
-            ids.extend(self._catalogo_actividades_dao.resolver_ids_por_codigos(data.codigo_afip))
+        if data.codigo_dgr and self._catalogo_actividades_dao is not None:
+            ids.extend(self._catalogo_actividades_dao.resolver_ids_por_codigos(data.codigo_dgr))
         if ids:
             self._dao.asignar_actividades(operador.id, ids)
 

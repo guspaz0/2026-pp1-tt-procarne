@@ -24,6 +24,7 @@ from modulos.registro_operadores.actividad_economica.dao import (
     ActividadEconomica,
     GrupoActividad,
     SubgrupoActividad,
+    SubSubgrupoActividad,
 )
 from modulos.registro_operadores.certificado.dao import Certificado, CertificadoDAO
 from modulos.registro_operadores.controlador import crear_router
@@ -61,6 +62,7 @@ __all__ = [
     "OperadorService",
     "RegistroOperadoresModulo",
     "SubgrupoActividad",
+    "SubSubgrupoActividad",
     "TipoOperador",
     "crear_router",
 ]

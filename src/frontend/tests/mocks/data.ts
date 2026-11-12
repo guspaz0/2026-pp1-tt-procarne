@@ -77,12 +77,12 @@ export const OPERADORES_MOCK: Operador[] = [
 
 /** Catálogo de actividades económicas (códigos AFIP). */
 export const ACTIVIDADES_MOCK = [
-  { id: 1, codigo: "922210", nombre: "Carnicería Minorista", alicuota: 0.5 },
-  { id: 2, codigo: "101120", nombre: "Despostadero / Ciclo II", alicuota: 0.7 },
-  { id: 3, codigo: "101111", nombre: "Frigorífico / Ciclo I", alicuota: 0.9 },
-  { id: 4, codigo: "463120", nombre: "Matarife Abastecedor", alicuota: 0.6 },
-  { id: 5, codigo: "463110", nombre: "Distribuidor Mayorista", alicuota: 0.6 },
-  { id: 6, codigo: "492110", nombre: "Transportista de Carnes", alicuota: 0.4 },
+  { id: 1, codigo: "922210", nombre: "Carnicería Minorista" },
+  { id: 2, codigo: "101120", nombre: "Despostadero / Ciclo II" },
+  { id: 3, codigo: "101111", nombre: "Frigorífico / Ciclo I" },
+  { id: 4, codigo: "463120", nombre: "Matarife Abastecedor" },
+  { id: 5, codigo: "463110", nombre: "Distribuidor Mayorista" },
+  { id: 6, codigo: "492110", nombre: "Transportista de Carnes" },
 ];
 
 /**
@@ -117,3 +117,66 @@ export const OPERADOR_IN_MOCK: OperadorIn = {
   categoria: "CARNICERIAS",
   codigo_afip: ["922210"],
 };
+
+/* ------------------------------------------------------------------ */
+/* Localidades (API de georreferenciación datos.gob.ar)                */
+/* ------------------------------------------------------------------ */
+
+/** Localidades mockeadas para el endpoint externo `GET /localidades`. */
+export const LOCALIDADES_MOCK = [
+  {
+    id: "11001",
+    nombre: "Villaguay",
+    provincia: { id: "11", nombre: "Entre Ríos" },
+    departamento: { id: "1101", nombre: "Villaguay" },
+    municipio: { id: "110101", nombre: "Villaguay" },
+    localidad_censal: { id: "11010101", nombre: "Villaguay" },
+    categoria: "Localidad simple (LS)",
+    centroide: { lat: -31.42, lon: -59.23 },
+  },
+  {
+    id: "11002",
+    nombre: "Villaguay Norte",
+    provincia: { id: "11", nombre: "Entre Ríos" },
+    departamento: { id: "1101", nombre: "Villaguay" },
+    municipio: { id: "110101", nombre: "Villaguay" },
+    localidad_censal: { id: "11010102", nombre: "Villaguay Norte" },
+    categoria: "Localidad simple (LS)",
+    centroide: { lat: -31.43, lon: -59.24 },
+  },
+  {
+    id: "12001",
+    nombre: "Concordia",
+    provincia: { id: "11", nombre: "Entre Ríos" },
+    departamento: { id: "12", nombre: "Concordia" },
+    municipio: { id: "1201", nombre: "Concordia" },
+    localidad_censal: { id: "120101", nombre: "Concordia" },
+    categoria: "Localidad simple con entidad (LSE)",
+    centroide: { lat: -31.31, lon: -58.03 },
+  },
+];
+
+/** Departamentos mockeados para el endpoint externo `GET /departamentos`. */
+export const DEPARTAMENTOS_MOCK = [
+  {
+    id: "9401",
+    nombre: "Capital",
+    nombre_completo: "Departamento Capital",
+    provincia: { id: "94", nombre: "Santiago del Estero" },
+    categoria: "Departamento",
+  },
+  {
+    id: "9402",
+    nombre: "Avellaneda",
+    nombre_completo: "Departamento Avellaneda",
+    provincia: { id: "94", nombre: "Santiago del Estero" },
+    categoria: "Departamento",
+  },
+  {
+    id: "9403",
+    nombre: "Belgrano",
+    nombre_completo: "Departamento Belgrano",
+    provincia: { id: "94", nombre: "Santiago del Estero" },
+    categoria: "Departamento",
+  },
+];

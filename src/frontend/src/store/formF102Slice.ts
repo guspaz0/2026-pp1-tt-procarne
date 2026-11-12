@@ -17,6 +17,8 @@ export type FormF102 = {
   email: string;
   nombreEstablecimiento: string;
   departamento: string;
+  /** Localidad seleccionada desde la API de georreferenciación (datos.gob.ar). */
+  localidad: string;
   domicilio: string;
   habilitacionSanitaria: string;
   categorias: string[];
@@ -36,6 +38,7 @@ export const FORM_INICIAL: FormF102 = {
   nombreEstablecimiento: "",
   // Se rellena en `resetearFormulario` con el primer departamento disponible.
   departamento: "",
+  localidad: "",
   domicilio: "",
   habilitacionSanitaria: "",
   categorias: [],

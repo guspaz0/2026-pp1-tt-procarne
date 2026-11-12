@@ -15,6 +15,8 @@ import { http, HttpResponse } from "msw";
 import {
   OPERADORES_MOCK,
   ACTIVIDADES_MOCK,
+  LOCALIDADES_MOCK,
+  DEPARTAMENTOS_MOCK,
   crearOperadorMock,
 } from "./data";
 import type { Operador, OperadorIn } from "../../src/types";
@@ -147,6 +149,41 @@ export function createHandlers(options: HandlerOptions = {}) {
 
     // POST /api/auth/logout
     http.post("/api/auth/logout", () => new HttpResponse(null, { status: 204 })),
+
+    // GET https://apis.datos.gob.ar/georef/api/v2.0/localidades — API pública
+    // de georreferenciación (datos.gob.ar). Se intercepta por URL absoluta
+    // porque el baseQuery de georefApi usa ese origen (no /api).
+    http.get("https://apis.datos.gob.ar/georef/api/v2.0/localidades", async ({ request }) => {
+      await wait(options.delayMs);
+      const url = new URL(request.url);
+      const nombre = (url.searchParams.get("nombre") ?? "").toLowerCase();
+      const filtradas = LOCALIDADES_MOCK.filter((l) =>
+        l.nombre.toLowerCase().includes(nombre),
+      );
+      return json({
+        cantidad: filtradas.length,
+        total: filtradas.length,
+        inicio: 0,
+        localidades: filtradas,
+      });
+    }),
+
+    // GET https://apis.datos.gob.ar/georef/api/v2.0/departamentos — API pública
+    // de georreferenciación (datos.gob.ar).
+    http.get("https://apis.datos.gob.ar/georef/api/v2.0/departamentos", async ({ request }) => {
+      await wait(options.delayMs);
+      const url = new URL(request.url);
+      const nombre = (url.searchParams.get("nombre") ?? "").toLowerCase();
+      const filtrados = DEPARTAMENTOS_MOCK.filter((d) =>
+        d.nombre.toLowerCase().includes(nombre),
+      );
+      return json({
+        cantidad: filtrados.length,
+        total: filtrados.length,
+        inicio: 0,
+        departamentos: filtrados,
+      });
+    }),
   ];
 }
 

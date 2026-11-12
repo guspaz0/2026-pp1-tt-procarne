@@ -26,8 +26,12 @@ async function validarToken(token) {
   if (!token) return false;
   const insforgeUrl = process.env.INSFORGE_URL;
   if (!insforgeUrl) return false; // Sin config, rechazar.
+  // Normaliza la base: INSFORGE_URL puede terminar en "/" (p. ej.
+  // "https://x.insforge.app/") y concatenar "/api/..." daría doble barra
+  // ("//api/...") → 404. Removemos la barra final antes de armar la URL.
+  const base = insforgeUrl.replace(/\/+$/, "");
   try {
-    const resp = await fetch(`${insforgeUrl}/api/auth/sessions/current`, {
+    const resp = await fetch(`${base}/api/auth/sessions/current`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     });

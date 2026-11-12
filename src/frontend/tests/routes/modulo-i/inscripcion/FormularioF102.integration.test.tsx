@@ -47,16 +47,13 @@ describe("Integración · Formulario F 102", () => {
     store = setupStore();
   });
 
-  it("al montar, el select de Departamento se rellena con el primer valor", async () => {
+  it("al montar, el campo de Departamento (combobox georef) arranca vacío", async () => {
     mount(store);
-    const dep = screen.getByLabelText(/Departamento Provincial/i) as HTMLSelectElement;
-    // El effect dispara resetearFormulario(Capital, SdeE) → el select se actualiza.
-    await waitFor(() => {
-      expect(dep.value).toBe("Capital, Santiago del Estero");
-    });
-    expect(store.getState().formF102.form.departamento).toBe(
-      "Capital, Santiago del Estero",
-    );
+    // El departamento ya no es un <select> hardcodeado: es un combobox
+    // alimentado por la API de georreferenciación. Arranca vacío.
+    const dep = screen.getByLabelText(/^Departamento Provincial \*$/) as HTMLInputElement;
+    expect(dep).toHaveValue("");
+    expect(store.getState().formF102.form.departamento).toBe("");
   });
 
   it("escribir en un campo dispatchea setCampo (DOM y store se sincronizan)", async () => {
@@ -149,6 +146,83 @@ describe("Integración · Formulario F 102", () => {
     expect(enviado.titular).toBe("LA NORITA S.R.L.");
     expect(enviado.nombreEstablecimiento).toBe("LA NORITA");
     expect(enviado.categorias).toContain("CARNICERIAS");
-    expect(enviado.departamento).toBe("Capital, Santiago del Estero");
+    // El departamento ya no se pre-rellena (combobox georef); en este test no
+    // se toca, así que queda vacío.
+    expect(enviado.departamento).toBe("");
+  });
+
+  it("el campo Localidad busca en la API de georef y fija el valor al seleccionar", async () => {
+    mount(store);
+    // El label es "Localidad *"; el placeholder también contiene "localidad",
+    // así que anclamos al inicio para no coincidir con el placeholder.
+    const input = screen.getByLabelText(/^Localidad \*$/) as HTMLInputElement;
+
+    // Escribe "villaguay" → se dispara la búsqueda (debounce) contra la API.
+    await user.type(input, "villaguay");
+
+    // Aparecen los resultados del dropdown (mock de datos.gob.ar).
+    // Acotamos al listbox del combobox (los <select> del formulario también
+    // exponen role="option" en sus <option>). Hay "Villaguay" y "Villaguay
+    // Norte": tomamos la opción cuyo nombre principal es exactamente
+    // "Villaguay".
+    const listbox = await screen.findByRole("listbox");
+    const opciones = within(listbox).getAllByRole("option");
+    const opcion = opciones.find((o) =>
+      o.querySelector("span")?.textContent?.trim() === "Villaguay",
+    );
+    expect(opcion).toBeTruthy();
+    expect(opcion!).toHaveTextContent(/Entre Ríos/i);
+
+    // Selecciona la opción → el nombre completo se fija en el campo y el store.
+    await user.click(opcion);
+    await waitFor(() => {
+      expect(input).toHaveValue("Villaguay");
+    });
+    expect(store.getState().formF102.form.localidad).toBe("Villaguay");
+  });
+
+  it("el campo Localidad muestra 'sin resultados' cuando la API no devuelve nada", async () => {
+    mount(store);
+    const input = screen.getByLabelText(/^Localidad \*$/) as HTMLInputElement;
+
+    // "zzz" no coincide con ninguna localidad mockeada.
+    await user.type(input, "zzzzzz");
+    await waitFor(() => {
+      expect(screen.getByText(/Sin resultados/i)).toBeInTheDocument();
+    });
+    expect(store.getState().formF102.form.localidad).toBe("");
+  });
+
+  it("el campo Departamento busca en la API de georef y fija el valor al seleccionar", async () => {
+    mount(store);
+    const input = screen.getByLabelText(/^Departamento Provincial \*$/) as HTMLInputElement;
+
+    // Escribe "capital" → se busca contra la API de departamentos (mock).
+    await user.type(input, "capital");
+
+    // Espera a que la query resuelva y la opción "Capital" aparezca dentro del
+    // listbox del combobox (los <select> del formulario también exponen
+    // role="option").
+    const opcion = await waitFor(
+      () => {
+        const listbox = screen.queryByRole("listbox");
+        const opt = listbox
+          ? within(listbox)
+              .queryAllByRole("option")
+              .find((o) => /Capital/.test(o.textContent ?? ""))
+          : undefined;
+        if (!opt) throw new Error("option Capital aún no disponible");
+        return opt;
+      },
+      { timeout: 3000 },
+    );
+    expect(opcion).toBeTruthy();
+    expect(opcion!).toHaveTextContent(/Santiago del Estero/i);
+
+    await user.click(opcion);
+    await waitFor(() => {
+      expect(input).toHaveValue("Capital");
+    });
+    expect(store.getState().formF102.form.departamento).toBe("Capital");
   });
 });

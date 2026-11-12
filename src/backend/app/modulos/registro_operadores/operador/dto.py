@@ -28,7 +28,7 @@ class OperadorIn(BaseModel):
     telefono: Optional[str] = Field(None, description="Teléfono")
     email: Optional[str] = Field(None, description="Email")
     actividad_ids: Optional[list[int]] = Field(None, description="Ids del catálogo de actividades económicas que realiza el operador (N:M)")
-    codigo_afip: Optional[list[str]] = Field(None, description="Códigos AFIP del catálogo (actividades_economicas.codigo) que realiza el operador; se resuelven a ids")
+    codigo_dgr: Optional[list[str]] = Field(None, description="Códigos DGR del catálogo (actividades_economicas.codigo) que realiza el operador; se resuelven a ids")
 
 
 class OperadorOut(BaseModel):

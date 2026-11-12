@@ -13,6 +13,8 @@ import {
   Checkbox,
   Chip,
   SectionCard,
+  DepartamentoField,
+  LocalidadField,
   SelectField,
   TextField,
 } from "../../../components/shared/FormField";
@@ -126,46 +128,7 @@ export const REQUISITOS: Requisito[] = [
   },
 ];
 
-export const DEPARTAMENTOS_SDE = [
-  "Capital, Santiago del Estero",
-  "Avellaneda",
-  "Belgrano",
-  "Chabas",
-  "Chapulte",
-  "Departamento de la Banda",
-  "Departamento de General Güemes",
-  "Departamento de La Paz",
-  "Departamento de La Victoria",
-  "Departamento de Ledesma",
-  "Departamento de Los Chaco",
-  "Departamento de Metán",
-  "Departamento de Mosconi",
-  "Departamento de Ocampo",
-  "Departamento de Río de la Plata",
-  "Departamento de San Martín",
-  "Departamento de Santeñi",
-  "Departamento de Silveyra",
-  "Departamento de Suardi",
-  "Departamento de Urundey",
-  "Departamento de Vera",
-  "Departamento de Villegas",
-  "General Güemes",
-  "Gral. San Martín",
-  "La Banda",
-  "La Paz",
-  "La Victoria",
-  "Ledesma",
-  "Metán",
-  "Mosconi",
-  "Ocampo",
-  "San Martín",
-  "Santeñi",
-  "Silveyra",
-  "Suardi",
-  "Urundey",
-  "Vera",
-  "Villegas",
-];
+
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
@@ -182,7 +145,7 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
 
   // El formulario vive en el store; se inicializa una vez con el departamento por defecto.
   useEffect(() => {
-    dispatch(resetearFormularioAction(DEPARTAMENTOS_SDE[0]));
+    dispatch(resetearFormularioAction(""));
   }, [dispatch]);
 
   const set = <K extends keyof FormF102>(key: K, value: FormF102[K]) =>
@@ -347,12 +310,17 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
             value={form.nombreEstablecimiento}
             onChange={(v) => set("nombreEstablecimiento", v)}
           />
-          <SelectField
+          <DepartamentoField
             label="Departamento Provincial *"
             required
-            options={DEPARTAMENTOS_SDE}
             value={form.departamento}
             onChange={(v) => set("departamento", v)}
+          />
+          <LocalidadField
+            label="Localidad *"
+            required
+            value={form.localidad}
+            onChange={(v) => set("localidad", v)}
           />
           <TextField
             label="Domicilio Completo * (Calle, N° y Barrio)"

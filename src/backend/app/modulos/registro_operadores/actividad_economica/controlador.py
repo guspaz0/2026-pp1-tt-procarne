@@ -16,6 +16,7 @@ from modulos.registro_operadores.actividad_economica.dto import (
     ActividadEconomicaOut,
     GrupoActividadOut,
     SubgrupoActividadOut,
+    SubSubgrupoActividadOut,
 )
 
 
@@ -33,15 +34,29 @@ def crear_router(dao: CatalogoActividadesDAO, prefix: str = "") -> APIRouter:
         """Lista los subgrupos de actividades económicas."""
         return [SubgrupoActividadOut.model_validate(s) for s in dao.listar_subgrupos(grupo=grupo)]
 
+    @router.get("/catalogo/actividades/subsubgrupos", response_model=list[SubSubgrupoActividadOut])
+    def catalogo_subsubgrupos(
+        grupo: str | None = Query(None, description="Filtrar por grupo"),
+        subgrupo: str | None = Query(None, description="Filtrar por subgrupo"),
+    ):
+        """Lista los sub-subgrupos de actividades económicas (3.er dígito)."""
+        return [
+            SubSubgrupoActividadOut.model_validate(s)
+            for s in dao.listar_subsubgrupos(grupo=grupo, subgrupo=subgrupo)
+        ]
+
     @router.get("/catalogo/actividades", response_model=list[ActividadEconomicaOut])
     def catalogo_actividades(
         grupo: str | None = Query(None, description="Filtrar por grupo"),
         subgrupo: str | None = Query(None, description="Filtrar por subgrupo"),
+        subsubgrupo: str | None = Query(None, description="Filtrar por sub-subgrupo"),
     ):
         """Lista las actividades económicas (con alícuota)."""
         return [
             ActividadEconomicaOut.model_validate(a)
-            for a in dao.listar_actividades(grupo=grupo, subgrupo=subgrupo)
+            for a in dao.listar_actividades(
+                grupo=grupo, subgrupo=subgrupo, subsubgrupo=subsubgrupo
+            )
         ]
 
     return router

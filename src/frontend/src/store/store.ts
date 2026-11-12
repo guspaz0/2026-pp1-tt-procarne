@@ -3,6 +3,7 @@ import authReducer from "./authSlice";
 import operadoresReducer from "./operadoresSlice";
 import formF102Reducer from "./formF102Slice";
 import { operadoresApi } from "./api";
+import { georefApi } from "./georefApi";
 
 /**
  * Root reducer combinado. Se separa de la creación del store para poder
@@ -13,6 +14,7 @@ const rootReducer = combineReducers({
   operadores: operadoresReducer,
   formF102: formF102Reducer,
   [operadoresApi.reducerPath]: operadoresApi.reducer,
+  [georefApi.reducerPath]: georefApi.reducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
@@ -32,7 +34,7 @@ export function setupStore(preloadedState?: Partial<RootState>) {
     reducer: rootReducer,
     preloadedState: preloadedState as never,
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(operadoresApi.middleware),
+      getDefaultMiddleware().concat(operadoresApi.middleware, georefApi.middleware),
     devTools: true,
   });
 }
