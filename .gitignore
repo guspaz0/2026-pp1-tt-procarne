@@ -22,3 +22,4 @@ deploy/backend/
 src/backend/app/static/static/
 src/backend/app/static/index.html
 node_modules/
+src/frontend/.pw-browsers/
