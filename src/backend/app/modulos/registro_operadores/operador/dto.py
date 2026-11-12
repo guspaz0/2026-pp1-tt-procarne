@@ -27,6 +27,8 @@ class OperadorIn(BaseModel):
     domicilio_comercial: Optional[str] = Field(None, description="Domicilio comercial de esta sucursal")
     telefono: Optional[str] = Field(None, description="Teléfono")
     email: Optional[str] = Field(None, description="Email")
+    actividad_ids: Optional[list[int]] = Field(None, description="Ids del catálogo de actividades económicas que realiza el operador (N:M)")
+    codigo_afip: Optional[list[str]] = Field(None, description="Códigos AFIP del catálogo (actividades_economicas.codigo) que realiza el operador; se resuelven a ids")
 
 
 class OperadorOut(BaseModel):
@@ -51,6 +53,7 @@ class OperadorOut(BaseModel):
     creado_en: datetime
 
     cuit: Optional[str] = Field(None, description="CUIT, inferido de persona.identificador")
+    actividad_ids: list[int] = Field(default_factory=list, description="Ids del catálogo de actividades que realiza el operador (N:M)")
 
     model_config = {"from_attributes": True}
 

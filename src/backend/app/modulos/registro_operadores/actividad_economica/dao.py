@@ -124,3 +124,20 @@ class CatalogoActividadesDAO:
                 if sg:
                     q = q.filter_by(subgrupo_id=sg.id)
             return q.order_by(ActividadEconomica.codigo).all()
+
+    def resolver_ids_por_codigos(self, codigos: list[str]) -> list[int]:
+        """Devuelve los ids de las actividades cuyo ``codigo`` está en ``codigos``.
+
+        Se usa para resolver las categorías del alta (por su código AFIP) a
+        ids del catálogo, para guardarlas en ``operador_actividades``.
+        """
+        if not codigos:
+            return []
+        with self._session_factory() as session:
+            rows = (
+                session.query(ActividadEconomica.id)
+                .filter(ActividadEconomica.codigo.in_(codigos))
+                .order_by(ActividadEconomica.id)
+                .all()
+            )
+            return [r[0] for r in rows]

@@ -32,6 +32,8 @@ export interface OperadorIn {
   /** Tipo de persona: FISICA/JURIDICA, o PRODUCTOR/COMERCIALIZADOR (legacy). */
   tipo: "FISICA" | "JURIDICA" | "PRODUCTOR" | "COMERCIALIZADOR";
   categoria?: string | null;
+  /** Códigos AFIP del catálogo de actividades que realiza el operador (N:M). */
+  codigo_afip?: string[];
 }
 
 /** Usuario autenticado (modelo de InsForge, camelCase). */

@@ -34,9 +34,6 @@ class OperadorActividad(Base):
     actividad_id: Mapped[int] = mapped_column(
         ForeignKey("actividades_economicas.id", ondelete="CASCADE"), primary_key=True
     )
-    creado_en: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc), nullable=False
-    )
 
     operador: Mapped["Operador"] = relationship(back_populates="actividades")
     actividad: Mapped["ActividadEconomica"] = relationship(back_populates="operadores")

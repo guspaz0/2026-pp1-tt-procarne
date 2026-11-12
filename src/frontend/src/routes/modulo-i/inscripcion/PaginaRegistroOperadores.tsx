@@ -5,7 +5,7 @@
  * El alta se gestiona con la mutación RTK Query `registrar`, que invalida la
  * lista del padrón y expone el mensaje de resultado en el store.
  */
-import { FormularioF102 } from "./FormularioF102";
+import { FormularioF102, CATEGORIAS_CARNICAS } from "./FormularioF102";
 import type { FormF102 } from "../../../store/formF102Slice";
 import { setAltaMensaje } from "../../../store/operadoresSlice";
 import { useListarQuery, useRegistrarMutation } from "../../../store/api";
@@ -21,11 +21,16 @@ export function PaginaRegistroOperadores() {
 
   const manejarRegistrar = async (data: FormF102) => {
     try {
+      // Códigos AFIP de las actividades económicas seleccionadas (N:M).
+      const codigoAfip = data.categorias
+        .map((id) => CATEGORIAS_CARNICAS.find((c) => c.id === id)?.codigoAfip)
+        .filter((c): c is string => Boolean(c));
       const op = await registrar({
         cuit: data.cuit,
         razon_social: data.titular || data.nombreEstablecimiento,
         tipo: data.tipoPersona === "fisica" ? "PRODUCTOR" : "COMERCIALIZADOR",
         categoria: data.categorias[0] ?? null,
+        codigo_afip: codigoAfip,
         domicilio_comercial: data.domicilio,
         telefono: data.telefono,
         email: data.email,

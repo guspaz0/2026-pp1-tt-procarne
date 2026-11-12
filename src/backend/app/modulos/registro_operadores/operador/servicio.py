@@ -25,7 +25,7 @@ class OperadorService:
     def __init__(self, dao: OperadorDAO, persona_service=None,
                  habilitacion_service=None, inscripcion_service=None,
                  domicilio_service=None, requisito_service=None,
-                 certificado_service=None) -> None:
+                 certificado_service=None, catalogo_actividades_dao=None) -> None:
         self._dao = dao
         self._persona_service = persona_service
         # Servicios delegados (opcional): permiten mantener la API pública
@@ -35,6 +35,7 @@ class OperadorService:
         self._domicilio_service = domicilio_service
         self._requisito_service = requisito_service
         self._certificado_service = certificado_service
+        self._catalogo_actividades_dao = catalogo_actividades_dao
 
     # ------------------------------------------------------------------
     # Operadores
@@ -74,12 +75,27 @@ class OperadorService:
         # Crear los requisitos (generales + específicos) con estado "no cumplido"
         self._crear_requisitos_iniciales(operador.id, data.categoria)
 
-        return OperadorOut.model_validate(operador)
+        # Guardar las actividades económicas del catálogo (N:M).
+        # ``actividad_ids`` son ids directos; ``codigo_afip`` son códigos del
+        # catálogo (AFIP) que se resuelven a ids. Se combinan ambos.
+        ids: list[int] = list(data.actividad_ids or [])
+        if data.codigo_afip and self._catalogo_actividades_dao is not None:
+            ids.extend(self._catalogo_actividades_dao.resolver_ids_por_codigos(data.codigo_afip))
+        if ids:
+            self._dao.asignar_actividades(operador.id, ids)
+
+        return self._to_out(operador)
+
+    def _to_out(self, operador) -> OperadorOut:
+        """Convierte un ORM a DTO resolviendo las actividades (N:M)."""
+        out = OperadorOut.model_validate(operador)
+        out.actividad_ids = self._dao.listar_actividad_ids(operador.id)
+        return out
 
     def obtener(self, operador_id: int) -> OperadorOut | None:
         """Busca un operador por su id."""
         operador = self._dao.obtener_por_id(operador_id)
-        return OperadorOut.model_validate(operador) if operador else None
+        return self._to_out(operador) if operador else None
 
     def obtener_por_cuit(self, cuit: str) -> OperadorOut | None:
         """Busca un operador por el CUIT de su persona titular.
@@ -96,7 +112,7 @@ class OperadorService:
         operadores = self._dao.listar()
         for op in operadores:
             if op.persona_id == persona.id:
-                return OperadorOut.model_validate(op)
+                return self._to_out(op)
         return None
 
     def listar(self, tipo: str | None = None,
@@ -104,14 +120,14 @@ class OperadorService:
                categoria: str | None = None) -> list[OperadorOut]:
         """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
         operadores = self._dao.listar(tipo=tipo, estado_registral=estado_registral, categoria=categoria)
-        return [OperadorOut.model_validate(op) for op in operadores]
+        return [self._to_out(op) for op in operadores]
 
     def cambiar_estado(self, operador_id: int, estado) -> OperadorOut:
         """Cambia el estado registral de un operador."""
         operador = self._dao.actualizar_estado(operador_id, estado)
         if operador is None:
             raise OperadorError(f"No existe un operador con id {operador_id}")
-        return OperadorOut.model_validate(operador)
+        return self._to_out(operador)
 
     # ------------------------------------------------------------------
     # Delegación a servicios por entidad (API pública del servicio antiguo)
