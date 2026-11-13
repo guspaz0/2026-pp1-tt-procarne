@@ -100,25 +100,35 @@ def crear_router(servicio: CertificadoService,
         except OperadorError as e:
             raise HTTPException(status_code=404, detail=str(e))
 
-    @router.post("/{operador_id}/certificados/{certificado_id}/suspender", response_model=CertificadoOut)
-    def suspender_certificado(operador_id: int, certificado_id: int, request: Request,
-                              data: CertificadoSuspenderIn = CertificadoSuspenderIn()):
-        """Suspende un certificado (acción de supervisor).
+    @router.post("/certificados/suspender", response_model=CertificadoOut)
+    def suspender_certificado(request: Request,
+                              data: CertificadoSuspenderIn):
+        """Suspende el certificado vigente del operador (acción de supervisor).
 
-        Solo se puede suspender un certificado en estado ACTIVO.
+        El ``operador_id`` se pasa en el body (JSON). El operador no puede
+        tener dos certificados ACTIVOS simultáneos, por lo que se resuelve
+        automáticamente el certificado vigente. Solo se puede suspender un
+        certificado en estado ACTIVO.
         """
         _require_supervisor(request)
         try:
-            return servicio.suspender(operador_id, certificado_id, data)
+            return servicio.suspender(data.operador_id, None, data)
         except OperadorError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-    @router.post("/{operador_id}/certificados/{certificado_id}/reactivar", response_model=CertificadoOut)
-    def reactivar_certificado(operador_id: int, certificado_id: int, request: Request):
-        """Reactiva un certificado suspendido (acción de supervisor)."""
+    @router.post("/certificados/reactivar", response_model=CertificadoOut)
+    def reactivar_certificado(request: Request,
+                              data: CertificadoSuspenderIn):
+        """Reactiva el certificado suspendido del operador (acción de supervisor).
+
+        El ``operador_id`` se pasa en el body (JSON). Se resuelve
+        automáticamente el certificado vigente (el único que puede estar
+        SUSPENDIDO). Solo se puede reactivar un certificado en estado
+        SUSPENDIDO.
+        """
         _require_supervisor(request)
         try:
-            return servicio.reactivar(operador_id, certificado_id)
+            return servicio.reactivar(data.operador_id, None)
         except OperadorError as e:
             raise HTTPException(status_code=400, detail=str(e))
 

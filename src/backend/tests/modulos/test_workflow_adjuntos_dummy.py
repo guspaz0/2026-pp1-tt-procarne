@@ -30,7 +30,8 @@ from core.persona.adjunto_dao import AdjuntoPersonaDAO
 from core.persona.dao import Persona, PersonaDAO
 from core.persona.servicio import PersonaError, PersonaService
 from modulos.registro_operadores.adjunto_operador.dao import AdjuntoOperadorDAO
-from modulos.registro_operadores.dao import Operador, OperadorDAO
+from modulos.registro_operadores.categoria.dao import Categoria, CategoriaDAO
+from modulos.registro_operadores.operador.dao import Operador, OperadorDAO
 from modulos.registro_operadores.enums import CategoriaOperador
 from modulos.registro_operadores.errores import OperadorError
 from modulos.registro_operadores.adjunto_operador.servicio import AdjuntoOperadorService
@@ -133,9 +134,17 @@ def _crear_persona(db, tipo="fisica", doc="12345678", nombre="JUAN PEREZ") -> in
 
 
 def _crear_operador(db, persona_id: int, categoria: str) -> int:
+    """Crea el operador con su persona y categoría (``operadores.categoria_id``
+    es NOT NULL: se resuelve/crea la fila en ``categorias`` por nombre)."""
+    cat_dao = CategoriaDAO(db.obtener_sesion)
     with db.obtener_sesion() as s:
+        cat = s.query(Categoria).filter_by(nombre=categoria).first()
+        if cat is None:
+            cat = Categoria(nombre=categoria)
+            s.add(cat)
+            s.flush()
         op = Operador(persona_id=persona_id, razon_social=f"OP {categoria}", tipo="empresa",
-                      categoria=categoria, estado_registral="PENDIENTE")
+                      categoria_id=cat.id, estado_registral="PENDIENTE")
         s.add(op)
         s.commit()
         return op.id

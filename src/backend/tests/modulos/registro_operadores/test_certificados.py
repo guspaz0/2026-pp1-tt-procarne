@@ -1,379 +1,162 @@
-"""Tests B7 — Certificados F102, estado PENDIENTE, RBAC."""
+"""Tests de la API REST del Módulo I — Certificados de habilitación."""
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from modulos.registro_operadores.dao import (
-    Certificado,
-    Operador,
-    OperadorDAO,
-)
-from modulos.registro_operadores.enums import (
-    CategoriaOperador,
-    EstadoCertificado,
-    EstadoRegistral,
-    TipoOperador,
-)
-from modulos.registro_operadores.schema import (
-    CertificadoIn,
-    OperadorIn,
-)
+from modulos.registro_operadores.certificado.dao import CertificadoDAO
+from modulos.registro_operadores.certificado.servicio import CertificadoService
 from modulos.registro_operadores.controlador import crear_router
-from modulos.registro_operadores.servicio import OperadorService
+from modulos.registro_operadores.operador.dao import OperadorDAO
+from modulos.registro_operadores.operador.servicio import OperadorService
+from modulos.registro_operadores.requisito_inscripcion.dao import (
+    RequisitoInscripcionDAO,
+)
+from modulos.registro_operadores.requisito_inscripcion.servicio import (
+    RequisitoInscripcionService,
+)
 
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-@pytest.fixture()
-def operador_service(db_session_factory, persona_service):
-    from modulos.registro_operadores.certificado.dao import CertificadoDAO
-    from modulos.registro_operadores.certificado.servicio import CertificadoService
-    from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
-    from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
-
-    dao = OperadorDAO(db_session_factory)
-    return OperadorService(
-        dao,
-        persona_service=persona_service,
-        requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(db_session_factory)),
-        certificado_service=CertificadoService(CertificadoDAO(db_session_factory)),
-    )
+from .conftest import crear_operador_test
 
 
 @pytest.fixture()
-def operador_activo(operador_service):
-    """Crea un operador y lo pone ACTIVO manualmente."""
-    data = OperadorIn(
-        cuit="30-12345678-9",
-        razon_social="TEST ACTIVO S.A.",
-        tipo=TipoOperador.FRIGORIFICO.value,
-        categoria=CategoriaOperador.SALA_DE_DESPOSTE.value,
-    )
-    op = operador_service.crear_operador(data)
-    # Ponerlo ACTIVO para los tests de certificados
-    operador_service._dao.actualizar_estado(op.id, EstadoRegistral.ACTIVO)
-    return op
-
-
-@pytest.fixture()
-def operador_pendiente(operador_service):
-    """Crea un operador que queda PENDIENTE (default)."""
-    data = OperadorIn(
-        cuit="30-98765432-1",
-        razon_social="TEST PENDIENTE S.A.",
-        tipo=TipoOperador.FRIGORIFICO.value,
-        categoria=CategoriaOperador.SALA_DE_DESPOSTE.value,
-    )
-    return operador_service.crear_operador(data)
-
-
-def _crear_cert(operador_id: int, numero: str, venc: datetime | None, emision: datetime, estado: str = "ACTIVO") -> None:
-    """Helper para insertar certificados directamente en la BD."""
-    pass  # Se usa el servicio
-
-
-# ---------------------------------------------------------------------------
-# B7.1 — obtener_certificado_vigente
-# ---------------------------------------------------------------------------
-
-class TestCertificadoVigente:
-
-    def test_sin_certificados(self, operador_activo, operador_service):
-        assert operador_service.obtener_certificado_vigente(operador_activo.id) is None
-
-    def test_un_solo_certificado(self, operador_activo, operador_service):
-        data = CertificadoIn(
-            numero_certificado="F-102-001",
-            fecha_emision=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        )
-        cert = operador_service.crear_certificado(operador_activo.id, data)
-        vigente = operador_service.obtener_certificado_vigente(operador_activo.id)
-        assert vigente is not None
-        assert vigente.numero_certificado == "F-102-001"
-
-    def test_elige_max_vencimiento(self, operador_activo, operador_service):
-        # Cert 1: vence 2025
-        c1 = CertificadoIn(
-            numero_certificado="F-102-001",
-            fecha_emision=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=datetime(2025, 1, 1, tzinfo=timezone.utc),
-        )
-        # Cert 2: vence 2026 (más lejano)
-        c2 = CertificadoIn(
-            numero_certificado="F-102-002",
-            fecha_emision=datetime(2025, 6, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=datetime(2026, 6, 1, tzinfo=timezone.utc),
-        )
-        operador_service.crear_certificado(operador_activo.id, c1)
-        operador_service.crear_certificado(operador_activo.id, c2)
-        vigente = operador_service.obtener_certificado_vigente(operador_activo.id)
-        assert vigente is not None
-        assert vigente.numero_certificado == "F-102-002"
-
-    def test_ignora_relevado(self, operador_activo, operador_service):
-        # Cert 1: ACTIVO, vence 2026
-        c1 = CertificadoIn(
-            numero_certificado="F-102-001",
-            fecha_emision=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        )
-        # Cert 2: se emite antes del vencimiento de c1 → c1 pasa a RELEVADO
-        c2 = CertificadoIn(
-            numero_certificado="F-102-002",
-            fecha_emision=datetime(2025, 6, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=datetime(2027, 6, 1, tzinfo=timezone.utc),
-        )
-        operador_service.crear_certificado(operador_activo.id, c1)
-        operador_service.crear_certificado(operador_activo.id, c2)
-        vigente = operador_service.obtener_certificado_vigente(operador_activo.id)
-        assert vigente is not None
-        # c1 fue relevado, así que el vigente es c2
-        assert vigente.numero_certificado == "F-102-002"
-
-    def test_sin_vencimiento_infinito(self, operador_activo, operador_service):
-        # Cert 1: con vencimiento 2026
-        c1 = CertificadoIn(
-            numero_certificado="F-102-001",
-            fecha_emision=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        )
-        # Cert 2: sin vencimiento (None = ∞)
-        c2 = CertificadoIn(
-            numero_certificado="F-102-002",
-            fecha_emision=datetime(2025, 6, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=None,
-        )
-        operador_service.crear_certificado(operador_activo.id, c1)
-        operador_service.crear_certificado(operador_activo.id, c2)
-        vigente = operador_service.obtener_certificado_vigente(operador_activo.id)
-        assert vigente is not None
-        # Sin vencimiento = infinito → gana
-        assert vigente.numero_certificado == "F-102-002"
-
-    def test_operador_no_existe(self, operador_service):
-        from modulos.registro_operadores.servicio import OperadorError
-        with pytest.raises(OperadorError):
-            operador_service.obtener_certificado_vigente(99999)
-
-
-# ---------------------------------------------------------------------------
-# B7.4 — RBAC: crear_certificado requiere rol + estado ACTIVO
-# ---------------------------------------------------------------------------
-
-
-def crear_router_completo(operador_service):
-    """Construye el router del módulo con todos los servicios inyectados.
-
-    Reutiliza los servicios delegados del operador_service (habilitación,
-    inscripción, domicilio, requisito, certificado) para no tener que
-    reconstruirlos en cada test.
-    """
+def app(db_session_factory, persona_service):
+    """Aplicación FastAPI con el router del módulo."""
     from modulos.registro_operadores.actividad_economica.dao import CatalogoActividadesDAO
-    from modulos.registro_operadores.controlador import crear_router
-    from modulos.registro_operadores.operador.dao import OperadorDAO
 
-    session_factory = operador_service._dao._session_factory
-    catalogo_dao = CatalogoActividadesDAO(session_factory)
-    return crear_router(
+    catalogo = CatalogoActividadesDAO(db_session_factory)
+    requisito_service = RequisitoInscripcionService(RequisitoInscripcionDAO(db_session_factory))
+    certificado_service = CertificadoService(CertificadoDAO(db_session_factory))
+    operador_service = OperadorService(
+        OperadorDAO(db_session_factory),
+        persona_service=persona_service,
+        requisito_service=requisito_service,
+        certificado_service=certificado_service,
+        catalogo_actividades_dao=catalogo,
+    )
+    router = crear_router(
         operador_service=operador_service,
-        catalogo_actividades_dao=catalogo_dao,
-        certificado_service=operador_service._certificado_service,
-        requisito_service=operador_service._requisito_service,
+        catalogo_actividades_dao=catalogo,
+        certificado_service=certificado_service,
+        requisito_service=requisito_service,
         adjunto_service=None,
     )
+    application = FastAPI()
+    application.include_router(router)
 
-class TestRBACCertificados:
+    # Middleware de test: inyecta un usuario supervisor autenticado
+    # (en producción lo hace el middleware de InsForge).
+    @application.middleware("http")
+    async def _auth(request, call_next):
+        request.state.user = {"user_metadata": {"rol": "supervisor"}}
+        return await call_next(request)
 
-    def _app(self, operador_service):
-        from modulos.registro_operadores.controlador import crear_router
-        app = FastAPI()
-        app.include_router(crear_router_completo(operador_service))
-        return TestClient(app)
-
-    def test_crear_certificado_requiere_rol(self, operador_activo, operador_service):
-        """Sin rol supervisor → 403."""
-        client = self._app(operador_service)
-        data = {
-            "numero_certificado": "F-102-001",
-            "fecha_emision": "2025-01-01T00:00:00Z",
-        }
-        r = client.post(f"/api/registro-operadores/{operador_activo.id}/certificados", json=data)
-        # Sin middleware de auth, request.state.user no existe → 401
-        assert r.status_code in (401, 403)
-
-    def test_no_puede_certificar_operador_pendiente(self, operador_pendiente, operador_service):
-        """Operador PENDIENTE → 400 aunque tenga rol."""
-        # Simular rol supervisor mediante middleware
-        from fastapi import Request
-        app = FastAPI()
-
-        @app.middleware("http")
-        async def fake_auth(request: Request, call_next):
-            request.state.user = {"user_metadata": {"rol": "supervisor"}}
-            return await call_next(request)
-
-        app.include_router(crear_router_completo(operador_service))
-        client = TestClient(app)
-
-        data = {
-            "numero_certificado": "F-102-001",
-            "fecha_emision": "2025-01-01T00:00:00Z",
-        }
-        r = client.post(f"/api/registro-operadores/{operador_pendiente.id}/certificados", json=data)
-        assert r.status_code == 400
-        assert "ACTIVO" in r.json()["detail"]
-
-    def test_certificar_operador_activo(self, operador_activo, operador_service):
-        """Operador ACTIVO + rol supervisor → 201."""
-        from fastapi import Request
-        app = FastAPI()
-
-        @app.middleware("http")
-        async def fake_auth(request: Request, call_next):
-            request.state.user = {"user_metadata": {"rol": "supervisor"}}
-            return await call_next(request)
-
-        app.include_router(crear_router_completo(operador_service))
-        client = TestClient(app)
-
-        data = {
-            "numero_certificado": "F-102-001",
-            "fecha_emision": "2025-01-01T00:00:00Z",
-            "fecha_vencimiento": "2026-01-01T00:00:00Z",
-        }
-        r = client.post(f"/api/registro-operadores/{operador_activo.id}/certificados", json=data)
-        assert r.status_code == 201
-        assert r.json()["numero_certificado"] == "F-102-001"
+    return application
 
 
-# ---------------------------------------------------------------------------
-# B7.5 — Estado PENDIENTE + endpoint activar
-# ---------------------------------------------------------------------------
-
-class TestEstadoPendiente:
-
-    def test_operador_nuevo_estado_pendiente(self, operador_pendiente):
-        assert operador_pendiente.estado_registral == "PENDIENTE"
-
-    def _app_supervisor(self, operador_service):
-        from fastapi import Request
-        app = FastAPI()
-
-        @app.middleware("http")
-        async def fake_auth(request: Request, call_next):
-            request.state.user = {"user_metadata": {"rol": "supervisor"}}
-            return await call_next(request)
-
-        app.include_router(crear_router_completo(operador_service))
-        return TestClient(app)
-
-    def test_activar_operador_pendiente(self, operador_pendiente, operador_service):
-        client = self._app_supervisor(operador_service)
-        r = client.post(f"/api/registro-operadores/{operador_pendiente.id}/activar")
-        assert r.status_code == 200
-        assert r.json()["estado_registral"] == "ACTIVO"
-
-    def test_activar_operador_ya_activo(self, operador_activo, operador_service):
-        client = self._app_supervisor(operador_service)
-        r = client.post(f"/api/registro-operadores/{operador_activo.id}/activar")
-        assert r.status_code == 400
-        assert "ya está ACTIVO" in r.json()["detail"]
-
-    def test_suspender_operador_activo(self, operador_activo, operador_service):
-        client = self._app_supervisor(operador_service)
-        r = client.post(f"/api/registro-operadores/{operador_activo.id}/suspender")
-        assert r.status_code == 200
-        assert r.json()["estado_registral"] == "SUSPENDIDO"
-
-    def test_reactivar_operador_suspendido(self, operador_activo, operador_service):
-        client = self._app_supervisor(operador_service)
-        # Suspender primero
-        client.post(f"/api/registro-operadores/{operador_activo.id}/suspender")
-        # Reactivar
-        r = client.post(f"/api/registro-operadores/{operador_activo.id}/reactivar")
-        assert r.status_code == 200
-        assert r.json()["estado_registral"] == "ACTIVO"
-
-    def test_bajar_operador_activo(self, operador_activo, operador_service):
-        client = self._app_supervisor(operador_service)
-        r = client.post(f"/api/registro-operadores/{operador_activo.id}/bajar")
-        assert r.status_code == 200
-        assert r.json()["estado_registral"] == "BAJADO"
-
-    def test_no_puede_certificar_operador_suspendido(self, operador_activo, operador_service):
-        """Operador SUSPENDIDO → 400."""
-        # Suspender
-        operador_service._dao.actualizar_estado(operador_activo.id, EstadoRegistral.SUSPENDIDO)
-        client = self._app_supervisor(operador_service)
-        data = {
-            "numero_certificado": "F-102-001",
-            "fecha_emision": "2025-01-01T00:00:00Z",
-        }
-        r = client.post(f"/api/registro-operadores/{operador_activo.id}/certificados", json=data)
-        assert r.status_code == 400
-        assert "SUSPENDIDO" in r.json()["detail"]
+@pytest.fixture()
+def client(app):
+    return TestClient(app)
 
 
-# ---------------------------------------------------------------------------
-# B7.2 — Endpoint certificado-vigente
-# ---------------------------------------------------------------------------
-
-class TestEndpointCertificadoVigente:
-
-    def _app(self, operador_service):
-        from modulos.registro_operadores.controlador import crear_router
-        app = FastAPI()
-        app.include_router(crear_router_completo(operador_service))
-        return TestClient(app)
-
-    def test_no_existe(self, operador_activo, operador_service):
-        client = self._app(operador_service)
-        r = client.get(f"/api/registro-operadores/{operador_activo.id}/certificado-vigente")
-        assert r.status_code == 404
-
-    def test_con_certificado(self, operador_activo, operador_service):
-        data = CertificadoIn(
-            numero_certificado="F-102-001",
-            fecha_emision=datetime(2025, 1, 1, tzinfo=timezone.utc),
-            fecha_vencimiento=datetime(2026, 1, 1, tzinfo=timezone.utc),
+def _crear_operador_activo(db_session_factory, cuit="30111111111") -> int:
+    """Crea un operador ACTIVO (estado requerido para certificados)."""
+    with db_session_factory() as session:
+        op = crear_operador_test(
+            session, cuit, "FRIGO CERT S.A.", estado_registral="ACTIVO"
         )
-        operador_service.crear_certificado(operador_activo.id, data)
-        client = self._app(operador_service)
-        r = client.get(f"/api/registro-operadores/{operador_activo.id}/certificado-vigente")
-        assert r.status_code == 200
-        assert r.json()["numero_certificado"] == "F-102-001"
+        session.commit()
+        return op.id
 
 
-# ---------------------------------------------------------------------------
-# B7.3 — PDF base64
-# ---------------------------------------------------------------------------
+class TestAPICertificados:
+    """Tests de los endpoints de certificados."""
 
-class TestPDFBase64:
-    @pytest.mark.skip(reason="Requiere Node.js + generar_f102.mjs; se testea en integración")
-    def test_f102_devuelve_base64(self, operador_activo, operador_service):
-        """GET /api/f102?id={operador_id} devuelve JSON con fileContents (base64)."""
-        from fastapi import FastAPI
-        from fastapi.testclient import TestClient
-        from app.app import ProcarneApp
+    def test_crear_certificado(self, client, db_session_factory):
+        operador_id = _crear_operador_activo(db_session_factory)
+        payload = {
+            "numero_certificado": "F102-0001",
+            "fecha_emision": datetime.now(timezone.utc).isoformat(),
+        }
+        response = client.post(
+            f"/api/registro-operadores/{operador_id}/certificados",
+            json=payload,
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["numero_certificado"] == "F102-0001"
+        assert data["operador_id"] == operador_id
+        assert data["estado"] == "ACTIVO"
 
-        app = ProcarneApp()
-        client = TestClient(app)
+    def test_listar_certificados(self, client, db_session_factory):
+        operador_id = _crear_operador_activo(db_session_factory)
+        payload = {
+            "numero_certificado": "F102-0001",
+            "fecha_emision": datetime.now(timezone.utc).isoformat(),
+        }
+        client.post(
+            f"/api/registro-operadores/{operador_id}/certificados",
+            json=payload,
+        )
+        response = client.get(
+            f"/api/registro-operadores/{operador_id}/certificados"
+        )
+        assert response.status_code == 200
+        assert len(response.json()) == 1
 
-        r = client.get(f"/api/f102?id={operador_activo.id}")
-        assert r.status_code == 200
-        body = r.json()
-        assert "fileContents" in body
-        assert body["contentType"] == "application/pdf"
-        assert "fileDownloadName" in body
-        # Verificar que es base64 válido
-        import base64
-        decoded = base64.b64decode(body["fileContents"])
-        assert decoded[:4] == b"%PDF"  # Header PDF
+    def test_certificado_vigente(self, client, db_session_factory):
+        operador_id = _crear_operador_activo(db_session_factory)
+        payload = {
+            "numero_certificado": "F102-0001",
+            "fecha_emision": datetime.now(timezone.utc).isoformat(),
+        }
+        client.post(
+            f"/api/registro-operadores/{operador_id}/certificados",
+            json=payload,
+        )
+        response = client.get(
+            f"/api/registro-operadores/{operador_id}/certificado-vigente"
+        )
+        assert response.status_code == 200
+        assert response.json()["numero_certificado"] == "F102-0001"
+
+    def test_certificado_vigente_no_existente(self, client, db_session_factory):
+        operador_id = _crear_operador_activo(db_session_factory)
+        response = client.get(
+            f"/api/registro-operadores/{operador_id}/certificado-vigente"
+        )
+        assert response.status_code == 404
+
+    def test_operador_no_activo_no_puede_certificarse(self, client, db_session_factory):
+        """Un operador en estado PENDIENTE no puede tener certificado."""
+        with db_session_factory() as session:
+            op = crear_operador_test(
+                session, "30222222222", "FRIGO PENDIENTE", estado_registral="PENDIENTE"
+            )
+            session.commit()
+            operador_id = op.id
+        payload = {
+            "numero_certificado": "F102-0002",
+            "fecha_emision": datetime.now(timezone.utc).isoformat(),
+        }
+        response = client.post(
+            f"/api/registro-operadores/{operador_id}/certificados",
+            json=payload,
+        )
+        assert response.status_code == 400
+        assert "ACTIVO" in response.json()["detail"]
+
+    def test_operador_inexistente_404(self, client):
+        payload = {
+            "numero_certificado": "F102-0003",
+            "fecha_emision": datetime.now(timezone.utc).isoformat(),
+        }
+        response = client.post(
+            "/api/registro-operadores/99999/certificados",
+            json=payload,
+        )
+        assert response.status_code == 404

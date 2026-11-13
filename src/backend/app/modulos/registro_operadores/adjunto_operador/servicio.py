@@ -48,7 +48,10 @@ class AdjuntoOperadorService:
             raise OperadorError("Archivo excede el tamaño máximo de 10 MB")
         # Validar que el requisito corresponda a la categoría
         if self._requisito_service is not None:
-            categoria = operador.categoria or ""
+            # ``operador.categoria`` es la relación ORM (Categoria); se valida
+            # contra su ``nombre`` (el código de categoría, p. ej. SALA_DE_DESPOSTE).
+            categoria_obj = operador.categoria
+            categoria = categoria_obj.nombre if categoria_obj is not None else ""
             if not self._requisito_service.validar_requisito_para_categoria(categoria, requisito):
                 raise OperadorError(
                     f"El requisito '{requisito}' no corresponde a la categoría '{categoria}'"

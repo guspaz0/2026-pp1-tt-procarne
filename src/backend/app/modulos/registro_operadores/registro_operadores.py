@@ -16,18 +16,18 @@ from modulos.registro_operadores.asociaciones import (  # noqa: F401  (registrar
     CertificadoActividad,
     OperadorActividad,
 )
-from modulos.registro_operadores.adjunto_operador.dao import AdjuntoOperadorDAO
-from modulos.registro_operadores.adjunto_operador.servicio import AdjuntoOperadorService
+from modulos.registro_operadores.adjunto.dao import AdjuntoDAO
+from modulos.registro_operadores.adjunto.servicio import AdjuntoService
 from modulos.registro_operadores.actividad_economica.dao import CatalogoActividadesDAO
+from modulos.registro_operadores.categoria.dao import CategoriaDAO
 from modulos.registro_operadores.certificado.dao import CertificadoDAO
 from modulos.registro_operadores.certificado.servicio import CertificadoService
 from modulos.registro_operadores.controlador import crear_router
+from modulos.registro_operadores.domicilio.dao import DomicilioDAO
 from modulos.registro_operadores.operador.dao import OperadorDAO
 from modulos.registro_operadores.operador.servicio import OperadorService
-from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
-from modulos.registro_operadores.requisito_inscripcion.servicio import (
-    RequisitoInscripcionService,
-)
+from modulos.registro_operadores.requisito.dao import RequisitoDAO
+from modulos.registro_operadores.requisito.servicio import RequisitoService
 
 
 class RegistroOperadoresModulo:
@@ -53,13 +53,15 @@ class RegistroOperadoresModulo:
         self._operador_dao = OperadorDAO(db_dao.obtener_sesion)
         self._catalogo_dao = CatalogoActividadesDAO(db_dao.obtener_sesion)
         self._certificado_dao = CertificadoDAO(db_dao.obtener_sesion)
-        self._requisito_dao = RequisitoInscripcionDAO(db_dao.obtener_sesion)
-        self._adjunto_dao = adjunto_dao or AdjuntoOperadorDAO(db_dao.obtener_sesion)
+        self._categoria_dao = CategoriaDAO(db_dao.obtener_sesion)
+        self._requisito_dao = RequisitoDAO(db_dao.obtener_sesion)
+        self._domicilio_dao = DomicilioDAO(db_dao.obtener_sesion)
+        self._adjunto_dao = adjunto_dao or AdjuntoDAO(db_dao.obtener_sesion)
 
         # Servicios por entidad
         self._certificado_service = CertificadoService(self._certificado_dao)
-        self._requisito_service = RequisitoInscripcionService(self._requisito_dao)
-        self._adjunto_service = AdjuntoOperadorService(
+        self._requisito_service = RequisitoService(self._requisito_dao)
+        self._adjunto_service = AdjuntoService(
             self._adjunto_dao,
             storage=storage,
             operador_dao=self._operador_dao,

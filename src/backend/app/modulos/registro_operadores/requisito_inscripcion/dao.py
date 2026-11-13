@@ -35,7 +35,7 @@ class RequisitoInscripcion(Base):
         default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
-    operador: Mapped["Operador"] = relationship(back_populates="requisitos")
+    operador: Mapped["Operador"] = relationship(back_populates="requisitos_inscripcion")
 
     def __repr__(self) -> str:
         return f"<RequisitoInscripcion id={self.id} operador_id={self.operador_id} codigo={self.codigo} cumplido={self.cumplido}>"

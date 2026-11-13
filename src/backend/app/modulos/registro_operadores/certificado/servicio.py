@@ -82,12 +82,19 @@ class CertificadoService:
             cert, actividad_ids=self._dao.listar_actividad_ids(cert.id)
         )
 
-    def suspender(self, operador_id: int, certificado_id: int,
-                  data: CertificadoSuspenderIn) -> CertificadoOut:
-        """Suspende un certificado (acción de supervisor).
+    def suspender(self, operador_id: int, certificado_id: int | None = None,
+                  data: CertificadoSuspenderIn | None = None) -> CertificadoOut:
+        """Suspende el certificado vigente del operador (acción de supervisor).
 
-        Solo se puede suspender un certificado en estado ACTIVO.
+        Si ``certificado_id`` es ``None``, se resuelve el certificado vigente
+        (el único que puede estar ACTIVO). Solo se puede suspender un
+        certificado en estado ACTIVO.
         """
+        if certificado_id is None:
+            vigente = self.obtener_vigente(operador_id)
+            if vigente is None:
+                raise OperadorError("El operador no tiene un certificado vigente")
+            certificado_id = vigente.id
         cert = self._dao.obtener(certificado_id)
         if cert is None or cert.operador_id != operador_id:
             raise OperadorError(f"No existe el certificado {operador_id}/{certificado_id}")
@@ -98,17 +105,24 @@ class CertificadoService:
         with self._dao._session_factory() as session:
             session_cert = session.get(Certificado, certificado_id)
             session_cert.estado = EstadoCertificado.SUSPENDIDO.value
-            if data.observaciones:
+            if data is not None and data.observaciones:
                 session_cert.observaciones = (session_cert.observaciones or "") + f" | Suspendido: {data.observaciones}"
             session.commit()
         return self.obtener(operador_id, certificado_id)
 
-    def reactivar(self, operador_id: int, certificado_id: int,
+    def reactivar(self, operador_id: int, certificado_id: int | None = None,
                   data: CertificadoSuspenderIn | None = None) -> CertificadoOut:
-        """Reactiva un certificado suspendido (acción de supervisor).
+        """Reactiva el certificado suspendido del operador (acción de supervisor).
 
-        Solo se puede reactivar un certificado en estado SUSPENDIDO.
+        Si ``certificado_id`` es ``None``, se resuelve el certificado vigente
+        (el único que puede estar SUSPENDIDO). Solo se puede reactivar un
+        certificado en estado SUSPENDIDO.
         """
+        if certificado_id is None:
+            vigente = self.obtener_vigente(operador_id)
+            if vigente is None:
+                raise OperadorError("El operador no tiene un certificado para reactivar")
+            certificado_id = vigente.id
         cert = self._dao.obtener(certificado_id)
         if cert is None or cert.operador_id != operador_id:
             raise OperadorError(f"No existe el certificado {operador_id}/{certificado_id}")

@@ -35,7 +35,7 @@ class AdjuntoOperador(Base):
         default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
-    operador: Mapped["Operador"] = relationship(back_populates="adjuntos")
+    operador: Mapped["Operador"] = relationship(back_populates="adjuntos_operador")
 
     def __repr__(self) -> str:
         return f"<AdjuntoOperador id={self.id} op={self.operador_id} req={self.requisito}>"

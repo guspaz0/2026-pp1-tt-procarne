@@ -23,8 +23,9 @@ class CertificadoIn(BaseModel):
 
 
 class CertificadoSuspenderIn(BaseModel):
-    """DTO de entrada para suspender un certificado (acción de supervisor)."""
+    """DTO de entrada para suspender/reactivar un certificado (acción de supervisor)."""
 
+    operador_id: int = Field(..., description="Id del operador")
     observaciones: Optional[str] = Field(None, description="Motivo de la suspensión")
 
 

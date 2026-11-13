@@ -27,24 +27,36 @@ class Operador(Base):
     persona_id: Mapped[int] = mapped_column(
         ForeignKey("personas.id", ondelete="CASCADE"), nullable=False
     )
+    categoria_id: Mapped[int] = mapped_column(
+        ForeignKey("categorias.id"), nullable=False
+    )
+    domicilio_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("domicilios.id", ondelete="SET NULL"), nullable=True
+    )
     razon_social: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    domicilio_comercial: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     telefono: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     tipo: Mapped[str] = mapped_column(String(50), nullable=False)
-    categoria: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     estado_registral: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
     alta_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     baja_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    domicilio_comercial: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     creado_en: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc), nullable=False
     )
 
-    persona: Mapped["Persona"] = relationship(back_populates="operadores")
-    requisitos: Mapped[list["RequisitoInscripcion"]] = relationship(
+    persona: Mapped["Persona"] = relationship(back_populates="operadores", lazy="joined")
+    categoria: Mapped["Categoria"] = relationship(back_populates="operadores", lazy="joined")
+    domicilio: Mapped[Optional["Domicilio"]] = relationship(
+        back_populates="operadores", lazy="joined"
+    )
+    adjuntos: Mapped[list["Adjunto"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
-    adjuntos: Mapped[list["AdjuntoOperador"]] = relationship(
+    adjuntos_operador: Mapped[list["AdjuntoOperador"]] = relationship(
+        back_populates="operador", cascade="all, delete-orphan"
+    )
+    requisitos_inscripcion: Mapped[list["RequisitoInscripcion"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
     actividades: Mapped[list["OperadorActividad"]] = relationship(
@@ -111,7 +123,7 @@ class OperadorDAO:
             if estado_registral is not None:
                 stmt = stmt.where(Operador.estado_registral == estado_registral)
             if categoria is not None:
-                stmt = stmt.where(Operador.categoria == categoria)
+                stmt = stmt.where(Operador.categoria.has(nombre=categoria))
             return list(session.scalars(stmt).all())
 
     # ------------------------------------------------------------------
@@ -120,21 +132,21 @@ class OperadorDAO:
 
     def crear(self, razon_social: str, tipo: TipoOperador | str,
               persona_id: int,
-              domicilio_comercial: Optional[str] = None,
+              categoria_id: int,
               telefono: Optional[str] = None,
               email: Optional[str] = None,
-              categoria: Optional[str] = None) -> Operador:
+              domicilio_comercial: Optional[str] = None) -> Operador:
         """Crea y persiste un operador (con la relación persona cargada)."""
         from sqlalchemy.orm import joinedload
         with self._session_factory() as session:
             op = Operador(
                 persona_id=persona_id,
+                categoria_id=categoria_id,
                 razon_social=razon_social,
-                domicilio_comercial=domicilio_comercial,
                 telefono=telefono,
                 email=email,
+                domicilio_comercial=domicilio_comercial,
                 tipo=tipo,
-                categoria=categoria,
                 estado_registral=EstadoRegistral.PENDIENTE.value,
                 alta_fecha=datetime.now(timezone.utc),
             )

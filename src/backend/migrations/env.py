@@ -36,6 +36,12 @@ from configs.db import Base  # noqa: E402
 import core.persona.dao  # noqa: F401, E402
 import modulos.registro_operadores.registro_operadores  # noqa: F401, E402
 
+# Modelos nuevos (Módulo I — Registro de Operadores)
+import modulos.registro_operadores.categoria.dao  # noqa: F401, E402
+import modulos.registro_operadores.requisito.dao  # noqa: F401, E402
+import modulos.registro_operadores.domicilio.dao  # noqa: F401, E402
+import modulos.registro_operadores.adjunto.dao  # noqa: F401, E402
+
 # Módulos fuera del scope (reactivar al ampliar):
 # import core.mercaderia.dao  # noqa: F401, E402
 # import modulos.remitos_carnicos.remitos_carnicos  # noqa: F401, E402

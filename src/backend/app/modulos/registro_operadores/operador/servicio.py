@@ -47,14 +47,10 @@ class OperadorService:
         # titular, la resolvemos/creamos por CUIT (idempotente).
         persona_id = self._resolver_persona(data.persona_id, data.cuit, data.razon_social, data.tipo)
 
-        # Validar categoría si se proporciona
-        if data.categoria is not None:
-            categorias_validas = [c.value for c in CategoriaOperador]
-            if data.categoria not in categorias_validas:
-                raise OperadorError(
-                    f"Categoría inválida: {data.categoria}. "
-                    f"Categorías válidas: {', '.join(categorias_validas)}"
-                )
+        # Validar y resolver la categoría (nombre → fila en ``categorias``).
+        # ``operadores.categoria_id`` es NOT NULL, por lo que el alta siempre
+        # debe traer una categoría válida.
+        categoria_id = self._resolver_categoria(data.categoria)
 
         operador = self._dao.crear(
             razon_social=data.razon_social,
@@ -63,7 +59,7 @@ class OperadorService:
             domicilio_comercial=data.domicilio_comercial,
             telefono=data.telefono,
             email=data.email,
-            categoria=data.categoria,
+            categoria_id=categoria_id,
         )
 
         # Cargar la relación persona ANTES de que el DAO cierre la sesión.
@@ -94,6 +90,9 @@ class OperadorService:
         # ``persona`` no es un campo del DTO, así que se pasa explícitamente para
         # que ``_inferir_cuit`` pueda leer ``persona.identificador``.
         attrs = {k: getattr(operador, k, None) for k in OperadorOut.model_fields}
+        # ``categoria`` es una relación ORM (Categoria); el DTO espera el nombre.
+        categoria_obj = attrs.get("categoria")
+        attrs["categoria"] = categoria_obj.nombre if categoria_obj is not None else None
         attrs["actividad_ids"] = self._dao.listar_actividad_ids(operador.id)
         try:
             attrs["persona"] = operador.persona
@@ -231,6 +230,31 @@ class OperadorService:
     # ------------------------------------------------------------------
     # Internos
     # ------------------------------------------------------------------
+
+    def _resolver_categoria(self, categoria: str | None) -> int:
+        """Valida ``categoria`` (nombre) y devuelve el id de la fila en ``categorias``.
+
+        Crea la fila de forma idempotente si no existe (el catálogo de
+        categorías es cerrado y conocido).
+        """
+        if categoria is None:
+            raise OperadorError(
+                "Se debe informar la categoría del operador "
+                f"(una de: {', '.join(c.value for c in CategoriaOperador)})"
+            )
+        categorias_validas = [c.value for c in CategoriaOperador]
+        if categoria not in categorias_validas:
+            raise OperadorError(
+                f"Categoría inválida: {categoria}. "
+                f"Categorías válidas: {', '.join(categorias_validas)}"
+            )
+        from modulos.registro_operadores.categoria.dao import Categoria, CategoriaDAO
+
+        dao = CategoriaDAO(self._dao._session_factory)
+        existente = dao.obtener_por_nombre(categoria)
+        if existente is not None:
+            return existente.id
+        return dao.crear(nombre=categoria).id
 
     def _crear_requisitos_iniciales(self, operador_id: int, categoria: str | None) -> None:
         """Crea los requisitos iniciales (generales + específicos) para un operador."""
