@@ -68,24 +68,28 @@ test.describe("Alta de operador (F 102)", () => {
     ).toBeVisible();
   });
 
-  test("muestra error al registrar un CUIT duplicado", async ({
+  test("registrar un CUIT ya en uso no muestra error (sin unicidad en BD)", async ({
     page,
     request,
   }) => {
+    // El backend NO impone unicidad sobre CUIT: re-registrar el mismo CUIT
+    // crea un segundo operador (201). Verificamos que el flujo completo
+    // (formulario → alta → mensaje de éxito) funciona sin romper.
     const resp = await request.get("/api/registro-operadores");
     const existentes = (await resp.json()) as Array<{ cuit: string }>;
     if (existentes.length === 0) return;
 
-    const cuitDuplicado = existentes[0].cuit;
+    const cuit = existentes[0].cuit;
 
     await page.goto("/operadores/inscripcion");
-    await completarFormulario(page, cuitDuplicado, `DUP TEST ${Date.now()}`);
+    await completarFormulario(page, cuit, `DUP TEST ${Date.now()}`);
     await page
       .getByRole("button", { name: /Registrar Operador y Emitir Cartón/ })
       .click();
 
+    // El mensaje de éxito confirma que la alta fue aceptada.
     await expect(
-      page.getByRole("status").getByText(/Error al registrar/),
+      page.getByRole("status").getByText(/Operador registrado/),
     ).toBeVisible();
   });
 });

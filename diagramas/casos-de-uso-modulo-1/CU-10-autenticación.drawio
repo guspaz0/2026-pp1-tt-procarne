@@ -1,0 +1,55 @@
+<mxfile host="Electron">
+  <diagram id="T7o3wbz92_uvF9fBGWPc" name="Página-1">
+    <mxGraphModel dx="1414" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="titulo" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;" value="CU 10 — Autenticación" vertex="1">
+          <mxGeometry height="30" width="520" x="120" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="sistema" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=none;strokeColor=#666666;dashed=1;fontSize=12;fontStyle=1;" value="Sistema PROCARNE — Módulo I" vertex="1">
+          <mxGeometry height="410" width="520" x="120" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cu_login" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Ingresar (login) [email + contraseña → sesión]" vertex="1">
+          <mxGeometry height="70" width="230" x="150" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="cu_signup" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Crear cuenta (signup) [email + contraseña → sesión]" vertex="1">
+          <mxGeometry height="70" width="230" x="140" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cu_logout" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Cerrar sesión" vertex="1">
+          <mxGeometry height="70" width="230" x="145" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="cu_me" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Consultar mi perfil [usuario autenticado + rol]" vertex="1">
+          <mxGeometry height="70" width="230" x="145" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_persona" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=11;" value="Persona (titular)" vertex="1">
+          <mxGeometry height="52" width="26" x="40" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_supervisor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=11;" value="Supervisor / Admin" vertex="1">
+          <mxGeometry height="52" width="26" x="694" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="e_p_cu_login" edge="1" parent="1" source="actor_persona" style="endArrow=none;html=1;dashed=1;" target="cu_login">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_s_cu_login" edge="1" parent="1" source="actor_supervisor" style="endArrow=none;html=1;dashed=1;" target="cu_login">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_p_cu_signup" edge="1" parent="1" source="actor_persona" style="endArrow=none;html=1;dashed=1;" target="cu_signup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_p_cu_logout" edge="1" parent="1" source="actor_persona" style="endArrow=none;html=1;dashed=1;" target="cu_logout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_s_cu_logout" edge="1" parent="1" source="actor_supervisor" style="endArrow=none;html=1;dashed=1;" target="cu_logout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_p_cu_me" edge="1" parent="1" source="actor_persona" style="endArrow=none;html=1;dashed=1;" target="cu_me">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_s_cu_me" edge="1" parent="1" source="actor_supervisor" style="endArrow=none;html=1;dashed=1;" target="cu_me">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -306,7 +306,16 @@ class RoccaApp:
             cuit = persona.identificador if persona else ""
             nombre = persona.nombre.upper() if persona else ""
             domicilio = op.domicilio_comercial or (persona.domicilio if persona else None) or ""
-            tipo_carne = op.categoria or ""
+            # op.categoria es una relación ORM (Categoria); usamos su nombre.
+            categoria_obj = op.categoria
+            if categoria_obj is None:
+                tipo_carne = ""
+            elif isinstance(categoria_obj, str):
+                tipo_carne = categoria_obj
+            else:
+                tipo_carne = getattr(categoria_obj, "nombre", None) or getattr(
+                    categoria_obj, "descripcion", ""
+                ) or str(categoria_obj)
             fecha_inscrip = (cert.fecha_emision if cert else op.alta_fecha) or datetime.now()
             fecha_venc = cert.fecha_vencimiento if (cert and cert.fecha_vencimiento) else None
             # Si no hay fecha de vencimiento (certificado sin vencimiento o sin

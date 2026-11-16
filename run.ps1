@@ -4,9 +4,13 @@
 # Uso:
 #   .\run.ps1            # build del frontend + backend :8000 + frontend :5173
 #   .\run.ps1 -NoBuild   # salta el build del frontend
+#   .\run.ps1 -E2E       # SOLO backend :8000 con SQLite temporal (sin PG ni
+#                        # frontend). Para que el fixture de Playwright o un
+#                        # `pnpm dev` manual se conecten a un backend aislado.
 #
 param(
-    [switch]$NoBuild
+    [switch]$NoBuild,
+    [switch]$E2E
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,6 +18,35 @@ $ErrorActionPreference = "Stop"
 $ROOT = $PSScriptRoot
 $BACKEND = Join-Path $ROOT "src\backend"
 $FRONTEND = Join-Path $ROOT "src\frontend"
+
+# ------------------------------------------------------------------
+# Modo -E2E: solo backend en :8000 con un SQLite temporal limpio.
+# Sin PostgreSQL, sin frontend, sin build. InsForge sigue siendo el IdP real.
+# ------------------------------------------------------------------
+if ($E2E) {
+    $VENV_PY = Join-Path $BACKEND ".venv\Scripts\python.exe"
+    if (-not (Test-Path $VENV_PY)) {
+        Write-Error "Venv de Python no encontrado en $VENV_PY. Creadlo primero: python -m venv .venv"
+    }
+
+    # SQLite temporal; se borra al salir.
+    $E2E_DB = Join-Path $env:TEMP "rocca-e2e-$(Get-Random).db"
+    $env:ROCCA_DATABASE_URL = "sqlite:///$($E2E_DB -replace '\\','/')"
+
+    Write-Host "==> [e2e] Levantando backend FastAPI en :8000 con SQLite temporal:"
+    Write-Host "    $($env:ROCCA_DATABASE_URL)"
+    Write-Host "    (sin PostgreSQL, sin frontend; InsForge sigue siendo el IdP real)"
+    Write-Host ""
+
+    Push-Location $BACKEND
+    try {
+        & $VENV_PY -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+    } finally {
+        Pop-Location
+    }
+    Remove-Item $E2E_DB -Force -ErrorAction SilentlyContinue
+    exit 0
+}
 
 # URL de la base de datos
 $env:ROCCA_DATABASE_URL = if ($env:ROCCA_DATABASE_URL) { $env:ROCCA_DATABASE_URL }

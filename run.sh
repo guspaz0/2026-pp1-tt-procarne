@@ -6,6 +6,9 @@
 # Uso:
 #   ./run.sh            # build del frontend + postgres + backend :8000 + frontend :5173
 #   ./run.sh --no-build # salta el build del frontend
+#   ./run.sh --e2e      # SOLO backend :8000 con SQLite temporal (sin PG ni
+#                       # frontend). Para que el fixture de Playwright o un
+#                       # `pnpm dev` manual se conecten a un backend aislado.
 #
 set -euo pipefail
 
@@ -14,7 +17,35 @@ BACKEND="$ROOT/src/backend"
 FRONTEND="$ROOT/src/frontend"
 
 SKIP_BUILD=0
-[[ "${1:-}" == "--no-build" ]] && SKIP_BUILD=1
+E2E=0
+for arg in "$@"; do
+  case "$arg" in
+    --no-build) SKIP_BUILD=1 ;;
+    --e2e)      E2E=1 ;;
+  esac
+done
+
+# ------------------------------------------------------------------
+# Modo --e2e: solo backend en :8000 con un SQLite temporal limpio.
+# Sin PostgreSQL, sin frontend, sin build. InsForge sigue siendo el IdP real.
+# ------------------------------------------------------------------
+if [[ "$E2E" -eq 1 ]]; then
+  # Libera el puerto 8000 por si hay una instancia previa.
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -ti:8000 2>/dev/null | xargs kill -9 2>/dev/null || true
+  fi
+  # SQLite temporal; se borra al salir.
+  E2E_DB="$(mktemp -t rocca-e2e-XXXXXX).db"
+  export ROCCA_DATABASE_URL="sqlite:///${E2E_DB}"
+  trap 'rm -f "${E2E_DB}"' EXIT
+
+  echo "==> [e2e] Levantando backend FastAPI en :8000 con SQLite temporal:"
+  echo "    ${ROCCA_DATABASE_URL}"
+  echo "    (sin PostgreSQL, sin frontend; InsForge sigue siendo el IdP real)"
+  echo ""
+  ( cd "$BACKEND" && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 )
+  exit 0
+fi
 
 # Cargar variables de entorno desde .env (si existe)
 if [[ -f "$ROOT/.env" ]]; then

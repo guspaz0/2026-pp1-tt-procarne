@@ -1,1 +1,25 @@
-{}
+{
+  "cookies": [
+    {
+      "name": "rocca_refresh_token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhYzU5MzcwMS0xMTUxLTRiMzYtODE2OC03YzgzYWFmYzI3MGYiLCJ0eXBlIjoicmVmcmVzaCIsImlzcyI6Imluc2ZvcmdlIiwiY3NyZk5vbmNlIjoidFhtXzRKNGtFeUVlYUtlaWRJZk9yN0xLRjIyTmU0OWU0V09kQTF2WDNEOCIsInNlc3Npb25UeXBlIjoidXNlciIsImlhdCI6MTc5NDYxNzA1MCwiZXhwIjoxNzk1MjIxODUwfQ.Qh1d1z4Vxb_Ps8Cq20frpDLBk80pjU2dIvX5nnATOpI",
+      "domain": "localhost",
+      "path": "/api/auth/refresh",
+      "expires": 1795221850.150719,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "rocca_access_token",
+      "value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImtpZF9hYjM4OTU1ZDI0ZjEwNTYxY2Q4M2MxNmEwNjIzM2UzZiJ9.eyJzdWIiOiJhYzU5MzcwMS0xMTUxLTRiMzYtODE2OC03YzgzYWFmYzI3MGYiLCJlbWFpbCI6ImUyZSt0ZXN0QHJvY2NhLmRldiIsInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiaWF0IjoxNzk0NjE3MDUwLCJleHAiOjE3OTQ2MTc5NTB9.NsjMjLgnLnxTZ9-jdywjljh7RODJmICwjA6nXzg0otXJHKt2zVE_dnAHQBfijacBon08jZAm420owLrSeSwHogSIXQeqXmYnAu0PxtOFtflY465vevT-9VhcYLMHwF7XKn43iKW6FuVe0ZPW87XcT5NdDtxKVklmqHRdm_gIihKR21mnNfkg5eUhl3zO0KNYIbP-Avh7UNwddUMeVaGh-TP0ogiWO5We0u9kf9bX6KK-N15uKbAMsdw2L93NtYQo37rvBzk6drrIeFg49V9JCcg9FTpfrsdWlTrh-mkMvre1UJD8_E-gA2lxFxeYqF35cxQ0sUpGNnZ9PMSJxO2QmA",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1795221850.150607,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

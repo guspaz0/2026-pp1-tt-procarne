@@ -1,0 +1,304 @@
+<mxGraphModel adaptiveColors="auto">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <!-- ==================== TITULO ==================== -->
+    <mxCell id="titulo" value="Casos de Uso — Módulo I: Registro de Operadores (implementado)" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="300" y="10" width="700" height="30" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== ACTOR: PERSONA (titular) ==================== -->
+    <mxCell id="actor_persona" value="Persona (titular)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="80" y="480" width="30" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== ACTOR: SUPERVISOR ==================== -->
+    <mxCell id="actor_supervisor" value="Supervisor / Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="1330" y="480" width="30" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== CONTENEDOR: SISTEMA ==================== -->
+    <mxCell id="sistema" value="Sistema PROCARNE — Módulo I: Registro de Operadores" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=none;strokeColor=#666666;dashed=1;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="220" y="50" width="980" height="1100" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: ALTA ==================== -->
+    <mxCell id="g_alta" value="Alta de operador" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="20" y="40" width="450" height="250" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_alta" value="Dar de alta un operador (F101)" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="g_alta">
+      <mxGeometry x="20" y="40" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_res_persona" value="Resolver persona titular&#xa;por CUIT (crear si no existe)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_alta">
+      <mxGeometry x="240" y="40" width="190" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_gen_req" value="Generar requisitos iniciales&#xa;(generales + específicos de categoría)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_alta">
+      <mxGeometry x="20" y="140" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_asig_act" value="Asignar actividades económicas&#xa;(N:M, por id o código DGR)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_alta">
+      <mxGeometry x="240" y="140" width="190" height="70" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: REQUISITOS ==================== -->
+    <mxCell id="g_req" value="Requisitos de inscripción" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="20" y="310" width="450" height="220" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_req_listar" value="Listar requisitos del operador" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_req">
+      <mxGeometry x="20" y="40" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_req_pend" value="Listar requisitos pendientes" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_req">
+      <mxGeometry x="240" y="40" width="190" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_req_cumpl" value="Marcar requisito cumplido&#xa;(cumplido + observaciones)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_req">
+      <mxGeometry x="20" y="130" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_cat_req" value="Consultar catálogo de requisitos&#xa;(generales y por categoría)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_req">
+      <mxGeometry x="240" y="130" width="190" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: ADJUNTOS ==================== -->
+    <mxCell id="g_adj" value="Adjuntos (documentos)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="490" y="40" width="470" height="490" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_adj_op_subir" value="Subir adjunto de operador&#xa;(JPG/PNG/PDF ≤ 10 MB; valida&#xa;requisito vs. categoría)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="20" y="40" width="200" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_adj_op_listar" value="Listar adjuntos de operador" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="250" y="40" width="200" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_adj_op_url" value="Obtener URL firmada de descarga" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="20" y="150" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_adj_op_elim" value="Eliminar adjunto de operador&#xa;(fila + objeto en storage)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="250" y="150" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_adj_p_subir" value="Subir adjunto de persona&#xa;(dni_frente, dni_dorso, cuit, iibb)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="20" y="250" width="200" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_adj_p_listar" value="Listar adjuntos de persona" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="250" y="250" width="200" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_adj_p_url" value="Obtener URL firmada&#xa;(adjunto de persona)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="20" y="360" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_adj_p_elim" value="Eliminar adjunto de persona" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_adj">
+      <mxGeometry x="250" y="360" width="200" height="70" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: PADRON ==================== -->
+    <mxCell id="g_padron" value="Padrón de operadores" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="490" y="550" width="470" height="220" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_pad_listar" value="Listar padrón con filtros&#xa;(tipo, estado, categoría) — todos" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_padron">
+      <mxGeometry x="20" y="40" width="210" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_pad_obtener" value="Obtener operador por id" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_padron">
+      <mxGeometry x="250" y="40" width="200" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_pad_cuit" value="Obtener operador por CUIT" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_padron">
+      <mxGeometry x="20" y="140" width="210" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_pad_mios" value="Ver mis legajos / sucursales&#xa;(solo los propios, por CUIT)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_padron">
+      <mxGeometry x="250" y="140" width="200" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: CICLO DE VIDA ==================== -->
+    <mxCell id="g_ciclo" value="Ciclo de vida del operador" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="20" y="550" width="450" height="220" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_act" value="Activar operador&#xa;(PENDIENTE → ACTIVO)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_ciclo">
+      <mxGeometry x="20" y="40" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_susp" value="Suspender operador&#xa;(ACTIVO → SUSPENDIDO)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_ciclo">
+      <mxGeometry x="240" y="40" width="190" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_react" value="Reactivar operador&#xa;(SUSPENDIDO → ACTIVO)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_ciclo">
+      <mxGeometry x="20" y="140" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_baja" value="Dar de baja operador&#xa;(ACTIVO/SUSPENDIDO → BAJADO)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_ciclo">
+      <mxGeometry x="240" y="140" width="190" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: CERTIFICADOS ==================== -->
+    <mxCell id="g_cert" value="Certificados de habilitación (F-102)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="20" y="790" width="450" height="170" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_cert_emitir" value="Emitir certificado&#xa;(releva el vigente; requiere&#xa;operador ACTIVO)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cert">
+      <mxGeometry x="20" y="40" width="200" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_cert_vig" value="Consultar certificado vigente" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cert">
+      <mxGeometry x="240" y="40" width="190" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_cert_listar" value="Listar certificados del operador" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cert">
+      <mxGeometry x="20" y="130" width="200" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_cert_susp" value="Suspender / reactivar certificado" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cert">
+      <mxGeometry x="240" y="130" width="190" height="30" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: CATALOGO ACTIVIDADES ==================== -->
+    <mxCell id="g_cat" value="Catálogo de actividades económicas" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="490" y="790" width="470" height="170" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_cat_grupos" value="Consultar grupos de actividad" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cat">
+      <mxGeometry x="20" y="40" width="210" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_cat_subgrupos" value="Consultar subgrupos&#xa;(filtrar por grupo)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cat">
+      <mxGeometry x="250" y="40" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_cat_subsubgrupos" value="Consultar subsubgrupos&#xa;(filtrar por grupo/subgrupo)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cat">
+      <mxGeometry x="20" y="120" width="210" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_cat_actividades" value="Consultar actividades&#xa;(filtrar por jerarquía)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_cat">
+      <mxGeometry x="250" y="120" width="200" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: JERARQUIA ==================== -->
+    <mxCell id="g_jer" value="Jerarquía" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="490" y="310" width="470" height="220" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_jer_mia" value="Ver mi jerarquía&#xa;(persona → mis operadores)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_jer">
+      <mxGeometry x="20" y="40" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_jer_todos" value="Ver jerarquía completa&#xa;(todas las personas y operadores)" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_jer">
+      <mxGeometry x="250" y="40" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_pers_listar" value="Listar personas" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_jer">
+      <mxGeometry x="20" y="140" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_pers_obtener" value="Obtener persona por id" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_jer">
+      <mxGeometry x="250" y="140" width="200" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== BORDES: PERSONA ==================== -->
+    <mxCell id="e_p_alta" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_persona" target="cu_alta">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_p_adj_p_subir" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_persona" target="cu_adj_p_subir">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_p_pad_mios" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_persona" target="cu_pad_mios">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_p_jer_mia" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_persona" target="cu_jer_mia">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== BORDES: SUPERVISOR ==================== -->
+    <mxCell id="e_s_pad_listar" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_pad_listar">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_pad_obtener" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_pad_obtener">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_pad_cuit" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_pad_cuit">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_act" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_act">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_susp" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_susp">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_react" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_react">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_baja" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_baja">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_cert_emitir" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_cert_emitir">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_cert_susp" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_cert_susp">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_jer_todos" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_jer_todos">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_pers_listar" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_pers_listar">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== BORDES: AUTH ==================== -->
+    <mxCell id="e_p_login" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_persona" target="cu_login">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_p_signup" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_persona" target="cu_signup">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_login" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_login">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_s_me" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_supervisor" target="cu_me">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== INCLUDES ==================== -->
+    <mxCell id="i_alta_res" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_alta" target="cu_res_persona">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_alta_gen" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_alta" target="cu_gen_req">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_alta_asig" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_alta" target="cu_asig_act">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_asig_cat" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_asig_act" target="cu_cat_actividades">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_gen_req_cat" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_gen_req" target="cu_cat_req">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_adj_subir_req" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_adj_op_subir" target="cu_cat_req">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_cert_emitir_act" value="«extend»&#xa;(requiere ACTIVO)" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_cert_emitir" target="cu_act">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_cert_vig_listar" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_cert_vig" target="cu_cert_listar">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_pad_mios_cuit" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_pad_mios" target="cu_pad_cuit">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_jer_mia_pers" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_jer_mia" target="cu_pers_obtener">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="i_jer_todos_pers" value="«include»" style="endArrow=open;html=1;dashed=1;fontSize=10;" edge="1" parent="1" source="cu_jer_todos" target="cu_pers_listar">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== GRUPO: AUTENTICACION ==================== -->
+    <mxCell id="g_auth" value="Autenticación (transversal)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;fontStyle=1;align=left;spacingLeft=8;startSize=22;" vertex="1" parent="sistema">
+      <mxGeometry x="20" y="980" width="940" height="100" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cu_login" value="Ingresar (login)&#xa;[email + contraseña → sesión]" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_auth">
+      <mxGeometry x="20" y="40" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_signup" value="Crear cuenta (signup)&#xa;[email + contraseña → sesión]" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_auth">
+      <mxGeometry x="240" y="40" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_logout" value="Cerrar sesión" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_auth">
+      <mxGeometry x="460" y="40" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="cu_me" value="Consultar mi perfil&#xa;[usuario autenticado + rol]" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="g_auth">
+      <mxGeometry x="680" y="40" width="240" height="50" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== NOTA ==================== -->
+    <mxCell id="nota" value="Entidades del modelo ER involucradas: PERSONA (1:N) OPERADOR (N:M) ACTIVIDAD_ECONOMICA, OPERADOR (1:N) REQUISITO / ADJUNTO, OPERADOR (1:N) CERTIFICADO (N:M) ACTIVIDAD_ECONOMICA, CATEGORIA (1:N) REQUISITO. La persona solo ve sus propios legajos/sucursales y su jerarquía; el supervisor/admin ve todos los operadores, el padrón completo y toda la jerarquía." style="shape=note;whiteSpace=wrap;html=1;fontSize=10;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="220" y="1170" width="980" height="60" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>
