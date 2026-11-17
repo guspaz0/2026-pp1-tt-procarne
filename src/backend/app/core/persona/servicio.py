@@ -43,14 +43,35 @@ class PersonaService:
             raise PersonaError(
                 f"Ya existe una persona con documento {data.tipo_documento} {data.identificador}"
             )
+        if data.email:
+            ocupado = self._dao.obtener_por_email(data.email)
+            if ocupado is not None:
+                raise PersonaError(
+                    f"El email {data.email} ya está asociado a otra persona"
+                )
         persona = self._dao.crear(
             tipo=data.tipo,
             tipo_documento=data.tipo_documento,
             identificador=data.identificador,
             nombre=data.nombre,
-            domicilio=data.domicilio,
+            email=data.email,
         )
         return PersonaOut.model_validate(persona)
+
+    def actualizar_email(self, persona_id: int, email: str | None) -> PersonaOut | None:
+        """Actualiza el correo electrónico de una persona.
+
+        El email es único por persona: si ya está asignado a otra persona
+        distinta, se rechaza el cambio.
+        """
+        if email:
+            ocupado = self._dao.obtener_por_email(email)
+            if ocupado is not None and ocupado.id != persona_id:
+                raise PersonaError(
+                    f"El email {email} ya está asociado a otra persona"
+                )
+        persona = self._dao.actualizar(persona_id, email=email)
+        return PersonaOut.model_validate(persona) if persona else None
 
     def obtener_por_documento(self, tipo_documento: str, identificador: str) -> PersonaOut | None:
         """Busca una persona por su documento."""

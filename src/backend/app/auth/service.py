@@ -164,6 +164,29 @@ class AuthService:
         self._set_cookies(response, session)
         return self._session_payload(session)
 
+    async def update_user_metadata(self, user_id: str, metadata: dict[str, Any]) -> None:
+        """Actualiza ``user_metadata`` de un usuario en InsForge.
+
+        ``PATCH /api/auth/users/{user_id}?client_type=server``
+
+        Se usa para vincular ``persona_id`` al usuario **después** de que el
+        signup haya tenido éxito (la Persona no se crea antes: si el signup
+        falla, no queda ninguna huérfana).
+        """
+        try:
+            await self._client.update_record(
+                "users",
+                user_id,
+                {"user_metadata": metadata},
+                user_token="__server__",
+            )
+        except InsforgeError as e:
+            if e.status_code == 0:
+                raise AuthError(http_status.HTTP_503_SERVICE_UNAVAILABLE, "No se pudo contactar InsForge")
+            if e.status_code in (400, 401, 403):
+                raise AuthError(http_status.HTTP_403_FORBIDDEN, "No se pudo actualizar la metadata del usuario")
+            raise AuthError(http_status.HTTP_503_SERVICE_UNAVAILABLE, "No se pudo actualizar la metadata")
+
     async def logout(self, response: Response, refresh_token: str | None = None) -> None:
         """Cierra la sesión: borra cookies y notifica a InsForge."""
         # Mejor esfuerzo: avisar a InsForge (no bloquea el logout local).

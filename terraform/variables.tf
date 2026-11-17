@@ -33,3 +33,10 @@ variable "insforge_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "idfiscal_api_key" {
+  description = "API Key de idfiscal.com (validación de CUIT). Se inyecta como IDFISCAL_API_KEY."
+  type        = string
+  sensitive   = true
+  default     = ""
+}

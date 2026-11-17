@@ -8,3 +8,7 @@ vercel_team_id      = "team_xxx"
 # URL de PostgreSQL (Insforge / Neon). Siempre PostgreSQL, no SQLite.
 # Puede dejarse vacío para que la app use SQLite local.
 rocca_database_url = "postgresql://user:pass@host:5432/rocca"
+
+# API key de idfiscal.com (validación de CUIT). Se inyecta como IDFISCAL_API_KEY.
+# Puede dejarse vacío para que el validador de CUIT no haga llamadas externas.
+idfiscal_api_key = ""

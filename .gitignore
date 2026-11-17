@@ -4,6 +4,7 @@
 */.DS_Store
 */**/rocca.db
 src/backend/migrations/
+migrations
 src/backend/scripts/
 
 .terraform/
@@ -23,3 +24,18 @@ src/backend/app/static/static/
 src/backend/app/static/index.html
 node_modules/
 src/frontend/.pw-browsers/
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

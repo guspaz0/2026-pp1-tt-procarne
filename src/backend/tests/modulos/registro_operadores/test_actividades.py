@@ -13,6 +13,7 @@ from modulos.registro_operadores.actividad_economica.dao import (
     SubgrupoActividad,
 )
 from modulos.registro_operadores.controlador import crear_router
+from modulos.registro_operadores.domicilio.dao import DomicilioDAO
 from modulos.registro_operadores.operador.dao import OperadorDAO
 from modulos.registro_operadores.operador.servicio import OperadorService
 
@@ -36,6 +37,7 @@ def app(db_session_factory, persona_service):
         requisito_service=requisito_service,
         certificado_service=certificado_service,
         catalogo_actividades_dao=catalogo,
+        domicilio_dao=DomicilioDAO(db_session_factory),
     )
     router = crear_router(
         operador_service=operador_service,
@@ -46,6 +48,8 @@ def app(db_session_factory, persona_service):
     )
     application = FastAPI()
     application.include_router(router)
+    from tests.conftest import montar_auth_testeable
+    montar_auth_testeable(application)
     return application
 
 

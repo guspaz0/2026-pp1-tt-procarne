@@ -35,12 +35,10 @@ class Operador(Base):
     )
     razon_social: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     telefono: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     tipo: Mapped[str] = mapped_column(String(50), nullable=False)
     estado_registral: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
     alta_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     baja_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
-    domicilio_comercial: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     creado_en: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc), nullable=False
     )
@@ -48,7 +46,7 @@ class Operador(Base):
     persona: Mapped["Persona"] = relationship(back_populates="operadores", lazy="joined")
     categoria: Mapped["Categoria"] = relationship(back_populates="operadores", lazy="joined")
     domicilio: Mapped[Optional["Domicilio"]] = relationship(
-        back_populates="operadores", lazy="joined"
+        back_populates="operador", lazy="joined"
     )
     adjuntos: Mapped[list["Adjunto"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
@@ -73,6 +71,33 @@ class OperadorDAO:
 
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
+
+    # ------------------------------------------------------------------
+    # Construcción de representaciones legibles
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def construir_domicilio_comercial(domicilio) -> Optional[str]:
+        """Construye la cadena legible del domicilio comercial.
+
+        La columna ``operadores.domicilio_comercial`` fue eliminada: el
+        domicilio vive en la tabla estructurada ``domicilios`` y esta
+        representación se arma en el DAO a partir de sus componentes:
+        ``CALLE N°NUMERO - LOCALIDAD, PROVINCIA``.
+        """
+        if domicilio is None:
+            return None
+        calle_numero = domicilio.calle or ""
+        if domicilio.numero:
+            calle_numero = f"{calle_numero} N°{domicilio.numero}".strip()
+        localidad = (domicilio.localidad or "").strip()
+        provincia = (domicilio.provincia or "").strip()
+        # Evita duplicar la provincia cuando es igual a la localidad
+        # (p. ej. "BANDA, BANDA").
+        if provincia and localidad and provincia.upper() == localidad.upper():
+            provincia = ""
+        resto = ", ".join(part for part in (localidad, provincia) if part)
+        return f"{calle_numero} - {resto}" if resto else calle_numero
 
     # ------------------------------------------------------------------
     # Lecturas
@@ -111,6 +136,17 @@ class OperadorDAO:
                 .first()
             )
 
+    def listar_por_persona_id(self, persona_id: int) -> list[Operador]:
+        """Lista los operadores (sucursales) de una persona titular."""
+        from sqlalchemy.orm import joinedload
+        with self._session_factory() as session:
+            return list(
+                session.query(Operador)
+                .options(joinedload(Operador.persona))
+                .filter(Operador.persona_id == persona_id)
+                .all()
+            )
+
     def listar(self, tipo: Optional[str] = None,
                estado_registral: Optional[str] = None,
                categoria: Optional[str] = None) -> list[Operador]:
@@ -134,8 +170,7 @@ class OperadorDAO:
               persona_id: int,
               categoria_id: int,
               telefono: Optional[str] = None,
-              email: Optional[str] = None,
-              domicilio_comercial: Optional[str] = None) -> Operador:
+              domicilio_id: Optional[int] = None) -> Operador:
         """Crea y persiste un operador (con la relación persona cargada)."""
         from sqlalchemy.orm import joinedload
         with self._session_factory() as session:
@@ -144,8 +179,7 @@ class OperadorDAO:
                 categoria_id=categoria_id,
                 razon_social=razon_social,
                 telefono=telefono,
-                email=email,
-                domicilio_comercial=domicilio_comercial,
+                domicilio_id=domicilio_id,
                 tipo=tipo,
                 estado_registral=EstadoRegistral.PENDIENTE.value,
                 alta_fecha=datetime.now(timezone.utc),

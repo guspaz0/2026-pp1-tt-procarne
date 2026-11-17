@@ -25,18 +25,18 @@ test.describe("Padrón de Operadores", () => {
     const cuerpo = page.locator("tbody");
     await expect(cuerpo).not.toHaveText(/Cargando padrón|Error al cargar/);
 
-    // El encabezado SIEMPRE se muestra ("N establecimientos registrados …"),
-    // incluso con N=0 (donde además aparece "No se encontraron operadores.").
-    const encabezado = page.getByText(/\d+ establecimientos registrados/);
+    // El encabezado SIEMPRE se muestra ("N establecimiento(s) …"),
+    // incluso con N=0 (donde además aparece el aviso de estado vacío).
+    const encabezado = page.getByText(/\d+\s+establecimiento/);
     await expect(encabezado.first()).toBeVisible();
 
     const nPagina = Number(
-      (await encabezado.first().innerText()).match(/(\d+)\s+establecimientos/)?.[1] ?? 0,
+      (await encabezado.first().innerText()).match(/(\d+)\s+establecimiento/)?.[1] ?? 0,
     );
 
     // Filas de datos = filas del tbody que no son el aviso de estado vacío.
     const filasDatos = page.locator("tbody tr").filter({
-      hasNot: page.getByText(/No se encontraron operadores/),
+      hasNot: page.getByText(/No hay operadores|Aún no tiene operadores/),
     });
 
     // 1) Consistencia interna: el contador refleja las filas reales.

@@ -11,18 +11,19 @@ resource "vercel_project" "api" {
 }
 
 data "vercel_project_directory" "app" {
-   path = "${path.module}/../src/backend"
+  path = "${path.module}/../src/backend"
 }
 
 resource "vercel_deployment" "api" {
-  project_id  = vercel_project.api.id
-  files       = data.vercel_project_directory.app.files
-  production  = true
+  project_id = vercel_project.api.id
+  files      = data.vercel_project_directory.app.files
+  production = true
 
   depends_on = [
     vercel_project_environment_variable.database_url,
     vercel_project_environment_variable.insforge_url,
-    vercel_project_environment_variable.insforge_api_key
+    vercel_project_environment_variable.insforge_api_key,
+    vercel_project_environment_variable.idfiscal_api_key
   ]
 }
 
@@ -47,6 +48,14 @@ resource "vercel_project_environment_variable" "insforge_api_key" {
   project_id = vercel_project.api.id
   key        = "INSFORGE_API_KEY"
   value      = var.insforge_api_key
+  target     = ["production", "preview"]
+  sensitive  = true
+}
+
+resource "vercel_project_environment_variable" "idfiscal_api_key" {
+  project_id = vercel_project.api.id
+  key        = "IDFISCAL_API_KEY"
+  value      = var.idfiscal_api_key
   target     = ["production", "preview"]
   sensitive  = true
 }

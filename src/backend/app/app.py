@@ -45,15 +45,6 @@ from core.persona.servicio import PersonaService
 from core.storage.insforge import InsforgeStorage
 from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
 
-# Sprint actual: solo Módulo I (Registro de Operadores)
-# Los demás módulos se reactivan al ampliar el scope:
-# from core.mercaderia.dao import MercaderiaDAO
-# from core.mercaderia.servicio import MercaderiaService
-# from modulos.fiscalizacion.fiscalizacion import FiscalizacionModulo
-# from modulos.remitos_carnicos.remitos_carnicos import RemitosCarnicosModulo
-# from modulos.trazabilidad_comercial.trazabilidad_comercial import TrazabilidadComercialModulo
-
-
 class RoccaApp:
     """Aplicación FastAPI compuesta por todos los módulos de ROCCA.
 
@@ -65,8 +56,8 @@ class RoccaApp:
         self.app = FastAPI(
             title="ROCCA — Registro de Operadores de la Cadena Cárnica",
             description=(
-                "API de gestión de la cadena cárnica: registro de operadores, "
-                "remitos electrónicos, trazabilidad comercial y fiscalización."
+                "API de gestión de la cadena cárnica: registro provincial de "
+                "operadores (Módulo I)."
             ),
             version="1.0.0",
             lifespan=self._lifespan,
@@ -229,6 +220,8 @@ class RoccaApp:
         self.app.include_router(crear_router_auth(lambda: self._auth_service))
 
         # Personas (adjuntos de persona: DNI, CUIT, IIBB)
+        from auth.router import set_persona_service
+        set_persona_service(persona_service)
         self.app.include_router(crear_router_persona(persona_service))
 
         # Módulo I — Registro Provincial de Operadores
@@ -305,7 +298,26 @@ class RoccaApp:
 
             cuit = persona.identificador if persona else ""
             nombre = persona.nombre.upper() if persona else ""
-            domicilio = op.domicilio_comercial or (persona.domicilio if persona else None) or ""
+            # El domicilio ahora es una relación ORM (Domicilio) con campos estructurados.
+            # Se concatena para el template F102 que espera un string.
+            dom_obj = op.domicilio
+            if dom_obj is not None:
+                partes = [dom_obj.calle]
+                if dom_obj.numero:
+                    partes.append(f"N°{dom_obj.numero}")
+                calle_completa = " ".join(partes)
+                domicilio = f"{calle_completa} - {dom_obj.localidad}, {dom_obj.provincia}"
+            else:
+                # Fallback: domicilio de la persona (relación ORM) si el operador
+                # no tiene domicilio propio.
+                dom_p = getattr(persona, "domicilio_rel", None) if persona else None
+                if dom_p is not None:
+                    partes_p = [dom_p.calle]
+                    if dom_p.numero:
+                        partes_p.append(f"N°{dom_p.numero}")
+                    domicilio = f"{' '.join(partes_p)} - {dom_p.localidad}, {dom_p.provincia}"
+                else:
+                    domicilio = ""
             # op.categoria es una relación ORM (Categoria); usamos su nombre.
             categoria_obj = op.categoria
             if categoria_obj is None:
@@ -367,24 +379,6 @@ class RoccaApp:
                 "enableRangeProcessing": False,
             }
 
-        # --- Módulos fuera del scope del sprint actual (comentados) ---
-        # mercaderia_dao = MercaderiaDAO(db_dao.obtener_sesion)
-        # mercaderia_service = MercaderiaService(mercaderia_dao)
-        #
-        # remitos = RemitosCarnicosModulo(
-        #     db_dao,
-        #     persona_dao=persona_dao,
-        #     persona_service=persona_service,
-        #     mercaderia_dao=mercaderia_dao,
-        #     mercaderia_service=mercaderia_service,
-        # )
-        # remitos.registrar(self.app)
-        #
-        # trazabilidad = TrazabilidadComercialModulo(db_dao)
-        # trazabilidad.registrar(self.app)
-        #
-        # fiscalizacion = FiscalizacionModulo(db_dao)
-        # fiscalizacion.registrar(self.app)
         return self.app
 
     def crear(self) -> FastAPI:

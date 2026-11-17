@@ -33,6 +33,8 @@ export function PaginaLogin() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [nombre, setNombre] = useState("");
+  const [tipoDoc, setTipoDoc] = useState<"CUIT" | "DNI">("CUIT");
+  const [documento, setDocumento] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [login, { isLoading: cargandoLogin }] = useLoginMutation();
   const [signup, { isLoading: cargandoSignup }] = useSignupMutation();
@@ -51,6 +53,8 @@ export function PaginaLogin() {
     setPassword("");
     setPasswordConfirm("");
     setNombre("");
+    setDocumento("");
+    setTipoDoc("CUIT");
   }
 
   async function onSubmit(e: FormEvent) {
@@ -70,6 +74,21 @@ export function PaginaLogin() {
       setError("Las contraseñas no coinciden.");
       return;
     }
+    if (modo === "signup" && !documento.trim()) {
+      setError(tipoDoc === "CUIT" ? "Ingrese el CUIT del titular (11 dígitos)." : "Ingrese el DNI del titular (8 dígitos).");
+      return;
+    }
+    if (modo === "signup") {
+      const digitos = documento.replace(/\D/g, "");
+      if (tipoDoc === "CUIT" && digitos.length !== 11) {
+        setError("El CUIT debe tener 11 dígitos.");
+        return;
+      }
+      if (tipoDoc === "DNI" && digitos.length !== 8) {
+        setError("El DNI debe tener 8 dígitos.");
+        return;
+      }
+    }
 
     try {
       let result;
@@ -79,7 +98,10 @@ export function PaginaLogin() {
         result = await signup({
           email,
           password,
-          user_metadata: nombre.trim() ? { nombre: nombre.trim() } : {},
+          name: nombre.trim() || undefined,
+          cuit: documento.trim(),
+          tipo_documento: tipoDoc,
+          user_metadata: { nombre: nombre.trim() || undefined },
         }).unwrap();
       }
       // El backend ya fijó la cookie HttpOnly con el token de InsForge.
@@ -165,12 +187,40 @@ export function PaginaLogin() {
 
           <form onSubmit={onSubmit} className="flex flex-col gap-4 p-6">
             {modo === "signup" && (
-              <TextField
-                label="Nombre completo"
-                placeholder="Juan Pérez"
-                value={nombre}
-                onChange={setNombre}
-              />
+              <>
+                <TextField
+                  label="Nombre completo"
+                  placeholder="Juan Pérez / RAZÓN SOCIAL S.A."
+                  value={nombre}
+                  onChange={setNombre}
+                />
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-semibold text-rocca-texto">Tipo de documento *</label>
+                  <div className="flex gap-2">
+                    {(["CUIT", "DNI"] as const).map((tipo) => (
+                      <button
+                        key={tipo}
+                        type="button"
+                        onClick={() => setTipoDoc(tipo)}
+                        className={`flex-1 rounded-lg border px-3 py-2 text-[13px] font-semibold transition-colors ${
+                          tipoDoc === tipo
+                            ? "border-rocca-rojo bg-rocca-rojo/5 text-rocca-rojo"
+                            : "border-rocca-borde text-rocca-texto-apagado hover:border-rocca-texto-apagado"
+                        }`}
+                      >
+                        {tipo}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <TextField
+                  label={tipoDoc === "CUIT" ? "C.U.I.T. del titular * (ej.: 30-11111111-1)" : "D.N.I. del titular * (ej.: 11111111)"}
+                  required
+                  placeholder={tipoDoc === "CUIT" ? "30-11111111-1" : "11111111"}
+                  value={documento}
+                  onChange={setDocumento}
+                />
+              </>
             )}
             <TextField
               label="Email"
@@ -211,7 +261,7 @@ export function PaginaLogin() {
                 cargando ||
                 !email ||
                 !password ||
-                (modo === "signup" && !passwordConfirm)
+                (modo === "signup" && (!passwordConfirm || !documento.trim()))
               }
               className="mt-1 flex h-[38px] items-center justify-center gap-2 rounded-lg bg-rocca-rojo text-[13px] font-bold text-white transition-colors hover:bg-[#b91c1c] disabled:cursor-not-allowed disabled:opacity-60"
             >

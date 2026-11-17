@@ -5,8 +5,9 @@ Script para cargar datos de operadores en la base de datos de Insforge.
 Proceso:
 1. Parsear los datos del archivo de texto
 2. Insertar personas (si no existen)
-3. Insertar operadores (si no existen)
-4. Insertar inscripciones con actividades económicas
+3. Insertar domicilios estructurados (si no existen) y linkear operadores
+4. Insertar operadores (si no existen)
+5. Insertar inscripciones con actividades económicas
 
 Uso:
     export ROCCA_DATABASE_URL="postgresql://..."
@@ -154,6 +155,79 @@ def obtener_persona_id(session: Session, cuit: str, nombre: str) -> Optional[int
     return result.fetchone()[0]
 
 
+def parsear_direccion(direccion: str, localidad: Optional[str], departamento: Optional[str]) -> dict:
+    """Parsea una dirección en sus componentes estructurados.
+
+    Formato esperado: "CALLE N°NUMERO [B°...] - LOCALIDAD, PROVINCIA"
+    Si la dirección no tiene el formato esperado, se usa como calle.
+    """
+    resultado = {
+        'calle': direccion or '',
+        'numero': None,
+        'localidad': localidad or '',
+        'provincia': departamento or '',
+    }
+    
+    if not direccion:
+        return resultado
+    
+    # Separar calle del resto con " - "
+    partes = direccion.split(' - ')
+    if len(partes) == 2:
+        calle_part = partes[0]
+        resto_part = partes[1]
+        # El resto es "LOCALIDAD, PROVINCIA"
+        if ',' in resto_part:
+            loc, prov = resto_part.split(',', 1)
+            resultado['localidad'] = loc.strip() or localidad or ''
+            resultado['provincia'] = prov.strip() or departamento or ''
+    else:
+        calle_part = direccion
+    
+    # Extraer número de la calle (N°NUMERO)
+    match = re.search(r'N°(\S+)', calle_part)
+    if match:
+        resultado['numero'] = match.group(1)
+        resultado['calle'] = (calle_part[:match.start()] + calle_part[match.end():]).strip()
+    else:
+        resultado['calle'] = calle_part.strip()
+    
+    return resultado
+
+
+def obtener_domicilio_id(session: Session, calle: str, numero: Optional[str], 
+                         localidad: str, provincia: str) -> Optional[int]:
+    """Obtiene el ID del domicilio si ya existe."""
+    result = session.execute(
+        text("""
+            SELECT id FROM domicilios 
+            WHERE calle = :calle 
+            AND (numero IS :numero OR (numero IS NULL AND :numero IS NULL))
+            AND localidad = :localidad 
+            AND provincia = :provincia
+            LIMIT 1
+        """),
+        {"calle": calle, "numero": numero, "localidad": localidad, "provincia": provincia}
+    )
+    row = result.fetchone()
+    return row[0] if row else None
+
+
+def crear_domicilio(session: Session, calle: str, numero: Optional[str], 
+                    localidad: str, provincia: str) -> int:
+    """Crea un nuevo domicilio estructurado."""
+    result = session.execute(
+        text("""
+            INSERT INTO domicilios (calle, numero, localidad, provincia)
+            VALUES (:calle, :numero, :localidad, :provincia)
+            RETURNING id
+        """),
+        {"calle": calle, "numero": numero, "localidad": localidad, "provincia": provincia}
+    )
+    session.commit()
+    return result.fetchone()[0]
+
+
 def obtener_operador_id(session: Session, cuit: str, nombre_establecimiento: str) -> Optional[int]:
     """Obtiene el ID del operador por CUIT o crea uno nuevo."""
     # Buscar por CUIT
@@ -170,22 +244,22 @@ def obtener_operador_id(session: Session, cuit: str, nombre_establecimiento: str
 
 
 def crear_operador(session: Session, persona_id: int, cuit: str, nombre: str, 
-                   domicilio: str, tipo: str) -> int:
-    """Crea un nuevo operador."""
+                   domicilio_id: Optional[int], tipo: str) -> int:
+    """Crea un nuevo operador linkado a un domicilio estructurado."""
     # Normalizar CUIT (quitar guiones)
     cuit_normalizado = re.sub(r'[^0-9]', '', cuit) if cuit else ''
     
     result = session.execute(
         text("""
-            INSERT INTO operadores (persona_id, cuit, razon_social, domicilio_comercial, tipo, estado_registral, creado_en)
-            VALUES (:persona_id, :cuit, :nombre, :domicilio, :tipo, 'ACTIVO', NOW())
+            INSERT INTO operadores (persona_id, cuit, razon_social, domicilio_id, tipo, estado_registral, creado_en)
+            VALUES (:persona_id, :cuit, :nombre, :domicilio_id, :tipo, 'ACTIVO', NOW())
             RETURNING id
         """),
         {
             "persona_id": persona_id,
             "cuit": cuit_normalizado or '',
             "nombre": nombre,
-            "domicilio": domicilio,
+            "domicilio_id": domicilio_id,
             "tipo": tipo
         }
     )
@@ -235,9 +309,7 @@ def obtener_actividad_id(session: Session, nombre: str) -> Optional[int]:
         {"nombre": nombre}
     )
     row = result.fetchone()
-    if row:
-        return row[0]
-    return None
+    return row[0] if row else None
 
 
 def crear_actividad(session: Session, nombre: str, grupo_id: int, subgrupo_id: Optional[int]) -> int:
@@ -333,7 +405,6 @@ def cargar_datos(ruta_archivo: str) -> None:
             # 2. Procesar cada establecimiento
             for estab in establecimientos:
                 nombre_establecimiento = estab['nombre_establecimiento'] or estab['nombre_propietario'] or 'SIN NOMBRE'
-                domicilio = estab['direccion'] or ''
                 tipo = 'ESTABLECIMIENTO'
                 
                 print(f"    Establecimiento: {nombre_establecimiento}")
@@ -360,8 +431,25 @@ def cargar_datos(ruta_archivo: str) -> None:
                         operador_id = row[0]
                         print(f"      Operador existente (por CUIT) con ID: {operador_id}")
                     else:
-                        # Crear nuevo operador
-                        operador_id = crear_operador(session, persona_id, cuit, nombre_establecimiento, domicilio, tipo)
+                        # Parsear la dirección en componentes estructurados
+                        comp = parsear_direccion(estab['direccion'], estab['localidad'], estab['departamento'])
+                        
+                        # Obtener o crear domicilio estructurado
+                        domicilio_id = obtener_domicilio_id(
+                            session, comp['calle'], comp['numero'], comp['localidad'], comp['provincia']
+                        )
+                        if domicilio_id:
+                            print(f"      Domicilio existente con ID: {domicilio_id}")
+                        else:
+                            domicilio_id = crear_domicilio(
+                                session, comp['calle'], comp['numero'], comp['localidad'], comp['provincia']
+                            )
+                            print(f"      Domicilio creado con ID: {domicilio_id}")
+                        
+                        # Crear nuevo operador linkado al domicilio
+                        operador_id = crear_operador(
+                            session, persona_id, cuit, nombre_establecimiento, domicilio_id, tipo
+                        )
                         print(f"      Operador creado con ID: {operador_id}")
                 
                 # Obtener o crear inscripción

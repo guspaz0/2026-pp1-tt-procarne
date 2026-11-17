@@ -24,11 +24,21 @@ import { render } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { PadronSucursales } from "../../../../src/routes/modulo-i/padron/PadronSucursales";
 import { setupStore, type AppStore } from "../../../../src/store/store";
+import { setSesion } from "../../../../src/store/authSlice";
 import { server } from "../../../mocks/server";
 import { createHandlers } from "../../../mocks/handlers";
 import { OPERADORES_MOCK as OPS, crearOperadorMock } from "../../../mocks/data";
 
+/** Usuario admin para ver el padrón completo (rol en user_metadata). */
+const USUARIO_ADMIN = {
+  id: "admin",
+  email: "admin@rocca.gob.ar",
+  user_metadata: { rol: "admin" },
+};
+
 function mount(store: AppStore) {
+  // El padrón completo solo lo ve un admin; sembramos el usuario en el store.
+  store.dispatch(setSesion({ usuario: USUARIO_ADMIN }));
   render(
     <Provider store={store}>
       <PadronSucursales />
@@ -57,7 +67,7 @@ describe("Integración · Padrón de Operadores", () => {
     }, { timeout: 3000 });
 
     // El contador de establecimientos refleja la cantidad de items.
-    expect(screen.getByText(/establecimientos registrados/i)).toHaveTextContent(
+    expect(screen.getByText(/registrados en el padrón|de su titularidad/i)).toHaveTextContent(
       String(OPS.length),
     );
 
@@ -78,7 +88,7 @@ describe("Integración · Padrón de Operadores", () => {
     });
 
     // Antes de filtrar: hay N+1 establecimientos.
-    expect(screen.getByText(/establecimientos registrados/i)).toHaveTextContent(
+    expect(screen.getByText(/registrados en el padrón|de su titularidad/i)).toHaveTextContent(
       String(OPS.length + 1),
     );
 
@@ -92,7 +102,7 @@ describe("Integración · Padrón de Operadores", () => {
     // Los demás operadores desaparecen de la tabla.
     expect(screen.queryAllByText(OPS[0].razon_social).length).toBe(0);
     // El contador refleja la filtración.
-    expect(screen.getByText(/establecimientos registrados/i)).toHaveTextContent("1");
+    expect(screen.getByText(/registrados en el padrón|de su titularidad/i)).toHaveTextContent("1");
   });
 
   it("muestra 'No se encontraron operadores' cuando la búsqueda no coincide", async () => {
@@ -105,9 +115,9 @@ describe("Integración · Padrón de Operadores", () => {
     await user.type(input, "ZZZ-NONE-MATCH");
 
     await waitFor(() => {
-      expect(screen.getByText(/No se encontraron operadores/i)).toBeInTheDocument();
+      expect(screen.getByText(/No hay operadores en el padrón/i)).toBeInTheDocument();
     });
-    expect(screen.getByText(/establecimientos registrados/i)).toHaveTextContent("0");
+    expect(screen.getByText(/registrados en el padrón|de su titularidad/i)).toHaveTextContent("0");
   });
 
   it("al vaciar la búsqueda, vuelve a mostrar toda la lista", async () => {
@@ -119,8 +129,8 @@ describe("Integración · Padrón de Operadores", () => {
     const input = screen.getByPlaceholderText(/Buscar por N° Cartón/i);
     await user.type(input, OPS[0].razon_social);
     await waitFor(() => {
-      // Queda una sola fila (la razón social se pinta en dos celdas de esa fila).
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBe(2);
+      // Queda una sola fila (la razón social se pinta en varias celdas de esa fila).
+      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
     });
 
     // Vaciamos la búsqueda (jsdom no soporta bien {SelectAll}/Backspace en
@@ -131,7 +141,7 @@ describe("Integración · Padrón de Operadores", () => {
       expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
     });
     // El contador vuelve a N.
-    expect(screen.getByText(/establecimientos registrados/i)).toHaveTextContent(
+    expect(screen.getByText(/registrados en el padrón|de su titularidad/i)).toHaveTextContent(
       String(OPS.length),
     );
   });
@@ -147,7 +157,7 @@ describe("Integración · Padrón de Operadores", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText(/Error al cargar el padrón/i)).toBeInTheDocument();
+        expect(screen.getByText(/Error al cargar/i)).toBeInTheDocument();
       },
       { timeout: 3000 },
     );

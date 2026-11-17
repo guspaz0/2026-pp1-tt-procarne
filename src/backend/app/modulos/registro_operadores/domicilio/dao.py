@@ -14,7 +14,11 @@ from configs.db import Base
 
 
 class Domicilio(Base):
-    """Modelo ORM de domicilio de un operador."""
+    """Modelo ORM de domicilio (estructurado).
+
+    Un domicilio puede estar asociado a un operador (domicilio comercial)
+    y/o a una persona (domicilio titular). La relación es 1:1 en cada caso.
+    """
 
     __tablename__ = "domicilios"
     __table_args__ = {"extend_existing": True}
@@ -26,10 +30,14 @@ class Domicilio(Base):
     provincia: Mapped[str] = mapped_column(String(50), nullable=False)
     codigo_postal: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
 
-    operadores: Mapped[list["Operador"]] = relationship(back_populates="domicilio")
+    # Relación con operador (domicilio comercial) — FK vive en operadores.domicilio_id
+    operador: Mapped[Optional["Operador"]] = relationship(back_populates="domicilio")
+
+    # Relación con persona (domicilio titular) — FK vive en personas.domicilio_id
+    persona: Mapped[Optional["Persona"]] = relationship(back_populates="domicilio_rel")
 
     def __repr__(self) -> str:
-        return f"<Domicilio id={self.id} operador_id={self.operador_id} calle={self.calle}>"
+        return f"<Domicilio id={self.id} calle={self.calle} {self.localidad}>"
 
 
 class DomicilioDAO:
@@ -37,11 +45,6 @@ class DomicilioDAO:
 
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory
-
-    def obtener_por_id(self, domicilio_id: int) -> Optional[Domicilio]:
-        """Obtiene un domicilio por su id."""
-        with self._session_factory() as session:
-            return session.get(Domicilio, domicilio_id)
 
     def obtener_por_id(self, domicilio_id: int) -> Optional[Domicilio]:
         """Obtiene un domicilio por su id."""

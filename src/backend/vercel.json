@@ -23,5 +23,11 @@
       "src": "/(.*)",
       "dest": "/app/main.py"
     }
-  ]
+  ],
+  "functions": {
+    "api/f102.mjs": {
+      "maxDuration": 30
+    }
+  },
+  "installCommand": "pnpm install --frozen-lockfile"
 }

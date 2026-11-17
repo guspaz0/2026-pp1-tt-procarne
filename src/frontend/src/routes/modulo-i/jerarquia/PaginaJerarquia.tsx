@@ -9,7 +9,7 @@
  */
 import { IconBuildings, IconUser } from "../../../components/shared/Icons";
 import { useListarQuery } from "../../../store/api";
-import type { Operador } from "../../../types";
+import { formatearDomicilio, type Operador } from "../../../types";
 import { ModuloILayout } from "../ModuloILayout";
 
 /**
@@ -108,7 +108,7 @@ export function PaginaJerarquia() {
                         {s.razon_social}
                       </span>
                       <span className="truncate text-[11px] text-[#64748b]">
-                        {s.domicilio_comercial ?? "—"}
+                        {formatearDomicilio(s.domicilio) || "—"}
                       </span>
                     </div>
                     <span className="ml-auto shrink-0 rounded-full bg-[#d1fae5] px-2.5 py-0.5 text-[11px] font-semibold text-[#065f46]">

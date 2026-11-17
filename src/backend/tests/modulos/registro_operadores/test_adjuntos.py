@@ -11,6 +11,7 @@ from modulos.registro_operadores.adjunto_operador.servicio import (
     AdjuntoOperadorService,
 )
 from modulos.registro_operadores.controlador import crear_router
+from modulos.registro_operadores.domicilio.dao import DomicilioDAO
 from modulos.registro_operadores.operador.dao import OperadorDAO
 from modulos.registro_operadores.operador.servicio import OperadorService
 from modulos.registro_operadores.requisito_inscripcion.dao import (
@@ -62,6 +63,7 @@ def app(db_session_factory, persona_service, storage):
         requisito_service=requisito_service,
         certificado_service=certificado_service,
         catalogo_actividades_dao=catalogo,
+        domicilio_dao=DomicilioDAO(db_session_factory),
     )
     adjunto_service = AdjuntoOperadorService(
         AdjuntoOperadorDAO(db_session_factory),

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from modulos.registro_operadores.certificado.dao import CertificadoDAO
 from modulos.registro_operadores.certificado.servicio import CertificadoService
 from modulos.registro_operadores.controlador import crear_router
+from modulos.registro_operadores.domicilio.dao import DomicilioDAO
 from modulos.registro_operadores.operador.dao import OperadorDAO
 from modulos.registro_operadores.operador.servicio import OperadorService
 from modulos.registro_operadores.requisito_inscripcion.dao import (
@@ -37,6 +38,7 @@ def app(db_session_factory, persona_service):
         requisito_service=requisito_service,
         certificado_service=certificado_service,
         catalogo_actividades_dao=catalogo,
+        domicilio_dao=DomicilioDAO(db_session_factory),
     )
     router = crear_router(
         operador_service=operador_service,

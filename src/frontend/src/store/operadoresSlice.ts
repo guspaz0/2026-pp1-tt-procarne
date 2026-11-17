@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Operador } from "../types";
+import { formatearDomicilio } from "../types";
 import { operadoresApi } from "./api";
 import type { RootState } from "./store";
 
@@ -64,7 +65,7 @@ export const selectOperadoresFiltrados = (state: RootState): Operador[] => {
     (o) =>
       o.razon_social.toLowerCase().includes(q) ||
       (o.cuit ?? "").toLowerCase().includes(q) ||
-      (o.domicilio_comercial ?? "").toLowerCase().includes(q),
+      formatearDomicilio(o.domicilio).toLowerCase().includes(q),
   );
 };
 

@@ -18,7 +18,6 @@ class Persona(Entidad):
         tipo_documento: tipo de documento (DNI, CUIT, etc.).
         identificador: número de documento.
         nombre: nombre (persona física) o razón social (persona jurídica).
-        domicilio: domicilio (opcional).
     """
 
     def __init__(
@@ -27,14 +26,12 @@ class Persona(Entidad):
         tipo_documento: str,
         identificador: str,
         nombre: str,
-        domicilio: str | None = None,
     ) -> None:
         super().__init__()
         self.tipo = tipo
         self.tipo_documento = tipo_documento
         self.identificador = identificador
         self.nombre = nombre
-        self.domicilio = domicilio
 
     def to_dict(self) -> dict:
         return {
@@ -43,7 +40,6 @@ class Persona(Entidad):
             "tipo_documento": self.tipo_documento,
             "identificador": self.identificador,
             "nombre": self.nombre,
-            "domicilio": self.domicilio,
         }
 
 
@@ -56,14 +52,12 @@ class PersonaFisica(Persona):
         nombre: str,
         tipo_documento: str = "DNI",
         identificador: str = "",
-        domicilio: str | None = None,
     ) -> None:
         super().__init__(
             tipo=TipoPersona.FISICA,
             tipo_documento=tipo_documento,
             identificador=identificador,
             nombre=f"{apellido}, {nombre}",
-            domicilio=domicilio,
         )
         self.apellido = apellido
         self.nombre_pila = nombre
@@ -76,14 +70,12 @@ class PersonaJuridica(Persona):
         self,
         razon_social: str,
         cuit: str,
-        domicilio: str | None = None,
     ) -> None:
         super().__init__(
             tipo=TipoPersona.JURIDICA,
             tipo_documento="CUIT",
             identificador=cuit,
             nombre=razon_social,
-            domicilio=domicilio,
         )
         self.razon_social = razon_social
         self.cuit = cuit

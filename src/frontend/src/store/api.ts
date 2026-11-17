@@ -7,7 +7,7 @@
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { Operador, OperadorIn, LoginResult, Usuario } from "../types";
+import type { Operador, OperadorIn, LoginResult, Usuario, SignupPayload } from "../types";
 import { baseQueryWithAuth } from "./authGuard";
 
 export type FileTangoInfo = {
@@ -92,10 +92,7 @@ export const authApi = operadoresApi.injectEndpoints({
         body: data,
       }),
     }),
-    signup: builder.mutation<
-      LoginResult,
-      { email: string; password: string; user_metadata?: Record<string, unknown> }
-    >({
+    signup: builder.mutation<LoginResult, SignupPayload>({
       query: (data) => ({
         url: "/auth/signup",
         method: "POST",

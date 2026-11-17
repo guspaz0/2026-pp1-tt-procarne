@@ -73,6 +73,7 @@ class RegistroOperadoresModulo:
             requisito_service=self._requisito_service,
             certificado_service=self._certificado_service,
             catalogo_actividades_dao=self._catalogo_dao,
+            domicilio_dao=self._domicilio_dao,
         )
 
     def registrar(self, app: FastAPI) -> None:

@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { IconCheck, IconCamera, IconDownload } from "../../../components/shared/Icons";
 import { CartonF102Modal } from "./CartonF102Modal";
-import type { Operador } from "../../../types";
+import { formatearDomicilio, type Operador } from "../../../types";
 import {
   setBusqueda as setBusquedaAction,
   selectItems,
@@ -101,7 +101,6 @@ export function PadronSucursales() {
       "Domicilio",
       "Domicilio Fiscal",
       "Teléfono",
-      "Email",
       "Estado",
     ];
     const filas = filtrados.map((o) => [
@@ -109,13 +108,12 @@ export function PadronSucursales() {
       o.razon_social,
       o.cuit,
       o.categoria ?? "",
-      o.domicilio_comercial ?? "",
+      formatearDomicilio(o.domicilio),
       o.telefono ?? "",
-      o.email ?? "",
       o.estado_registral,
     ]);
     const csv = [encabezados, ...filas]
-      .map((f) => f.map((c) => `"${c.replace(/"/g, '""')}`)).join(",");
+      .map((f) => f.map((c) => `"${String(c ?? "").replace(/"/g, '""')}`)).join(",");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -145,7 +143,7 @@ export function PadronSucursales() {
             Padrón de Operadores
           </h2>
           <p className="text-[12px] text-rocca-texto-suave">
-            {filtrados.length} establecimientos registrados • listado por sucursal
+            {filtrados.length} establecimientos registrados en el padrón • listado por sucursal
           </p>
         </div>
         <div className="flex w-full items-center gap-2 lg:w-auto">
@@ -218,7 +216,7 @@ export function PadronSucursales() {
               {!cargando && !error && filtrados.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-rocca-texto-apagado">
-                    No se encontraron operadores.
+                    No hay operadores en el padrón.
                   </td>
                 </tr>
               )}
@@ -255,7 +253,7 @@ export function PadronSucursales() {
                             {estado.tono === "ok" && <SelloVerde />}
                           </div>
                           <span className="text-[10px] text-[#64748b]">
-                            {o.domicilio_comercial ?? "—"}
+                            {formatearDomicilio(o.domicilio) || "—"}
                           </span>
                         </div>
                       </td>
@@ -287,7 +285,7 @@ export function PadronSucursales() {
                       {/* Domicilio */}
                       <td className="px-3 py-4 align-top">
                         <span className="text-[12px] text-[#0f172a]">
-                          {o.domicilio_comercial ?? "—"}
+                          {formatearDomicilio(o.domicilio) || "—"}
                         </span>
                       </td>
 

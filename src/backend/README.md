@@ -110,6 +110,24 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### 2b. Dependencias Node.js (pdfme — generación de PDF F102)
+
+El backend usa **pnpm** como package manager por defecto (ver
+`"packageManager"` en `package.json` y `installCommand` en `vercel.json`).
+
+```bash
+# Instala las dependencias de pdfme (@pdfme/generator, @pdfme/schemas, …)
+pnpm install
+```
+
+> **Nota:** si no tenés pnpm instalado, usá `npm i -g pnpm` o
+> `corepack enable` (pnpm queda activado automáticamente por el campo
+> `packageManager` de `package.json`).
+>
+> **Vercel:** la plataforma lee `installCommand` de `vercel.json` y ejecuta
+> `pnpm install --frozen-lockfile` en lugar de `npm install`. Asegurate de
+> tener `pnpm-lock.yaml` commitado en el repo.
+
 ### 3. Aplicar migraciones (crea el esquema + carga seeds)
 
 ```bash

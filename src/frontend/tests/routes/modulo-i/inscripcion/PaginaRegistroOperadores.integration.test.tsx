@@ -76,7 +76,7 @@ describe("Integración · Alta de Operador (F 102)", () => {
     // coincide en live regions; usamos el texto del elemento `status`.)
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent(
-        /Operador registrado con CUIT 30-11122233-4/i,
+        /Operador registrado \(CUIT 30-11122233-4\)/i,
       );
     });
 

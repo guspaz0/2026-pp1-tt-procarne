@@ -84,6 +84,67 @@ class TestLogin:
 class TestSignup:
     """Signup contra InsForge (caído en tests)."""
 
+    def test_signup_cuit_invalido_formato(self, app_client):
+        """CUIT con menos de 11 dígitos → 422 (validación local, sin llamar a InsForge)."""
+        resp = app_client.post(
+            "/api/auth/signup",
+            json={
+                "email": "nuevo@ejemplo.com",
+                "password": "clave12345",
+                "name": "Juan",
+                "cuit": "12345",
+                "tipo_documento": "CUIT",
+            },
+        )
+        assert resp.status_code == 422
+        assert "11 dígitos" in resp.json()["detail"]
+
+    def test_signup_cuit_invalido_digito_verificador(self, app_client):
+        """CUIT con dígito verificador incorrecto → 422 (validación local)."""
+        # 30-12345678-8: el dígito verificador correcto es 3, no 8.
+        resp = app_client.post(
+            "/api/auth/signup",
+            json={
+                "email": "nuevo@ejemplo.com",
+                "password": "clave12345",
+                "name": "Juan",
+                "cuit": "30123456788",
+                "tipo_documento": "CUIT",
+            },
+        )
+        assert resp.status_code == 422
+        assert "dígito verificador" in resp.json()["detail"]
+
+    def test_signup_dni_invalido_formato(self, app_client):
+        """DNI con menos de 8 dígitos → 422."""
+        resp = app_client.post(
+            "/api/auth/signup",
+            json={
+                "email": "nuevo@ejemplo.com",
+                "password": "clave12345",
+                "name": "Juan",
+                "cuit": "12345",
+                "tipo_documento": "DNI",
+            },
+        )
+        assert resp.status_code == 422
+        assert "8 dígitos" in resp.json()["detail"]
+
+    def test_signup_tipo_documento_no_soportado(self, app_client):
+        """Tipo de documento no soportado → 422."""
+        resp = app_client.post(
+            "/api/auth/signup",
+            json={
+                "email": "nuevo@ejemplo.com",
+                "password": "clave12345",
+                "name": "Juan",
+                "cuit": "30123456789",
+                "tipo_documento": "PASAPORTE",
+            },
+        )
+        assert resp.status_code == 422
+        assert "no soportado" in resp.json()["detail"]
+
     def test_signup_con_insforge_caido(self, app_client):
         resp = app_client.post(
             "/api/auth/signup",

@@ -79,12 +79,19 @@ _kill_port 5173
 # 1. Verificar PostgreSQL (debe estar corriendo en localhost:5432)
 # ------------------------------------------------------------------
 echo "==> [1/4] Verificando PostgreSQL en localhost:5432..."
+PG_OK=0
 for i in $(seq 1 10); do
   if python3 -c "import socket; s=socket.socket(); s.settimeout(1); s.connect(('localhost',5432)); s.close()" 2>/dev/null; then
+    PG_OK=1
     break
   fi
   sleep 1
 done
+if [[ "$PG_OK" -ne 1 ]]; then
+  echo "    ERROR: PostgreSQL no accesible en localhost:5432."
+  echo "    Arranca el contenedor con: docker start postgres-server"
+  exit 1
+fi
 echo "    PostgreSQL accesible en localhost:5432"
 
 # ------------------------------------------------------------------

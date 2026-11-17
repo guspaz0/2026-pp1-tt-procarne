@@ -13,6 +13,8 @@ El catálogo de requisitos por categoría vive en
 
 from __future__ import annotations
 
+from typing import Optional
+
 from modulos.registro_operadores.errores import OperadorError
 from modulos.registro_operadores.enums import CategoriaOperador
 from modulos.registro_operadores.operador.dao import OperadorDAO
@@ -24,10 +26,12 @@ class OperadorService:
 
     def __init__(self, dao: OperadorDAO, persona_service=None,
                  requisito_service=None,
-                 certificado_service=None, catalogo_actividades_dao=None) -> None:
+                 certificado_service=None, catalogo_actividades_dao=None,
+                 domicilio_dao=None) -> None:
         self._dao = dao
         self._persona_service = persona_service
         self._requisito_service = requisito_service
+        self._domicilio_dao = domicilio_dao
         self._certificado_service = certificado_service
         self._catalogo_actividades_dao = catalogo_actividades_dao
 
@@ -52,13 +56,33 @@ class OperadorService:
         # debe traer una categoría válida.
         categoria_id = self._resolver_categoria(data.categoria)
 
+        # Domicilio comercial estructurado: si el alta trae un domicilio y hay
+        # un DomicilioDAO disponible, lo persiste en ``domicilios`` y vincula el
+        # id al operador (la columna ``operadores.domicilio_comercial`` ya no
+        # existe: el domicilio vive en la tabla estructurada).
+        domicilio_id: Optional[int] = None
+        if data.domicilio is not None and self._domicilio_dao is not None:
+            dom = self._domicilio_dao.crear(
+                calle=data.domicilio.calle,
+                numero=data.domicilio.numero,
+                localidad=data.domicilio.localidad,
+                provincia=data.domicilio.provincia,
+                codigo_postal=data.domicilio.codigo_postal,
+            )
+            domicilio_id = dom.id
+
+        # El email es un dato de la persona titular (no del operador/sucursal):
+        # se guarda en ``personas.email``. Si el alta trae un email, lo
+        # actualizamos en la persona (idempotente).
+        if data.email is not None and self._persona_service is not None:
+            self._persona_service.actualizar_email(persona_id, data.email)
+
         operador = self._dao.crear(
             razon_social=data.razon_social,
             tipo=data.tipo,
             persona_id=persona_id,
-            domicilio_comercial=data.domicilio_comercial,
+            domicilio_id=domicilio_id,
             telefono=data.telefono,
-            email=data.email,
             categoria_id=categoria_id,
         )
 
@@ -94,6 +118,11 @@ class OperadorService:
         categoria_obj = attrs.get("categoria")
         attrs["categoria"] = categoria_obj.nombre if categoria_obj is not None else None
         attrs["actividad_ids"] = self._dao.listar_actividad_ids(operador.id)
+        # Domicilio comercial legible: se construye a partir del domicilio
+        # estructurado (``operadores.domicilio_comercial`` ya no es columna).
+        attrs["domicilio_comercial"] = self._dao.construir_domicilio_comercial(
+            getattr(operador, "domicilio", None)
+        )
         try:
             attrs["persona"] = operador.persona
         except Exception:

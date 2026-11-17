@@ -117,6 +117,7 @@ def operador_service(db_session_factory, persona_service):
     from modulos.registro_operadores.actividad_economica.dao import CatalogoActividadesDAO
     from modulos.registro_operadores.certificado.dao import CertificadoDAO
     from modulos.registro_operadores.certificado.servicio import CertificadoService
+    from modulos.registro_operadores.domicilio.dao import DomicilioDAO
     from modulos.registro_operadores.operador.dao import OperadorDAO
     from modulos.registro_operadores.operador.servicio import OperadorService
     from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
@@ -130,4 +131,5 @@ def operador_service(db_session_factory, persona_service):
         requisito_service=RequisitoInscripcionService(RequisitoInscripcionDAO(db_session_factory)),
         certificado_service=CertificadoService(CertificadoDAO(db_session_factory)),
         catalogo_actividades_dao=CatalogoActividadesDAO(db_session_factory),
+        domicilio_dao=DomicilioDAO(db_session_factory),
     )

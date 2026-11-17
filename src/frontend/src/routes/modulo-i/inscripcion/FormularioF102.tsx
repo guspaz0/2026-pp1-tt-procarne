@@ -251,8 +251,12 @@ export function FormularioF102({ onRegistrar, onCancelar }: FormularioF102Props)
             }
           />
           <TextField
-            label="C.U.I.T. * (ej.: 23-30917912-9)"
-            required
+            label={
+              form.personaExistente
+                ? "C.U.I.T. (opcional — se usa la persona de la sesión)"
+                : "C.U.I.T. * (ej.: 23-30917912-9)"
+            }
+            required={!form.personaExistente}
             placeholder="23-30917912-9"
             value={form.cuit}
             onChange={(v) => set("cuit", v)}

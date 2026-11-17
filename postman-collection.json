@@ -98,7 +98,7 @@
             "description": "POST /api/auth/signup — Alta de usuario en InsForge (usa API key admin). Fija cookies HttpOnly. 409 si el email ya existe, 503 si InsForge no está disponible.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"nuevo.usuario@gmail.com\",\n  \"password\": \"password123\",\n  \"name\": \"Nuevo Usuario\",\n  \"user_metadata\": {\n    \"persona_id\": \"1\"\n  }\n}",
+              "raw": "{\n  \"email\": \"nuevo.usuario@gmail.com\",\n  \"password\": \"password123\",\n  \"name\": \"Nuevo Usuario\",\n  \"user_metadata\": {\n    \"persona_id\": \"1\"\n  },\n  \"tipo_documento\": \"CUIT\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -229,6 +229,119 @@
             },
             "description": "GET /api/registro-operadores — Endpoint protegido: requiere cookie rocca_access_token válida. 401 si no hay sesión. Ejecutar login primero y habilitar cookies en Postman."
           }
+        },
+        {
+          "name": "GET formulario F102 (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/f102",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "f102"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "disabled": false
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 404\", function () {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Personas",
+      "item": [
+        {
+          "name": "GET listar personas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/personas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "personas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"devuelve un array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET obtener persona por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/personas/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 404\", function () {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test(\"devuelve persona con domicilio_id\", function () {",
+                  "    if (pm.response.code === 200) {",
+                  "        var p = pm.response.json();",
+                  "        pm.expect(p).to.have.property('id');",
+                  "        pm.expect(p).to.have.property('identificador');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -427,7 +540,7 @@
             "description": "POST '' — alta de operador (OperadorIn). ``categoria`` es obligatoria (SALA_DE_DESPOSTE, CARNICERIAS, CAMARAS_FRIGORIFICAS, FABRICA_DE_CHACINADOS, CARNICERIA_CON_CAMARA, TRANSPONEDOR, SUPERMERCADO, DISTRIBUIDOR). El CUIT identifica a la persona titular (se crea/resuelve idempotente). 400 si la categoría es inválida o falta.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cuit\": \"30222222222\",\n  \"razon_social\": \"CARNICERIA EL ESTERO\",\n  \"tipo\": \"CARNICERIA\",\n  \"categoria\": \"CARNICERIAS\",\n  \"domicilio_comercial\": \"Av. Rivadavia 500, Santiago del Estero\",\n  \"telefono\": \"385-4444444\",\n  \"email\": \"carniceria@ester.com\"\n}",
+              "raw": "{\n  \"cuit\": \"30222222222\",\n  \"razon_social\": \"CARNICERIA EL ESTERO\",\n  \"tipo\": \"CARNICERIA\",\n  \"categoria\": \"CARNICERIAS\",\n  \"telefono\": \"385-4444444\",\n  \"email\": \"carniceria@ester.com\",\n  \"domicilio\": {\n    \"calle\": \"Av. Rivadavia\",\n    \"numero\": \"500\",\n    \"localidad\": \"Santiago del Estero\",\n    \"provincia\": \"Santiago del Estero\",\n    \"codigo_postal\": \"4400\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -477,7 +590,7 @@
             "description": "POST '' — el CUIT ya existe como persona: se reutiliza (idempotente) y se crea un nuevo operador vinculado a la misma persona. 201 con el nuevo operador.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cuit\": \"30111111111\",\n  \"razon_social\": \"FRIGORIFICO TEST S.A.\",\n  \"tipo\": \"FRIGORIFICO\",\n  \"categoria\": \"SALA_DE_DESPOSTE\",\n  \"domicilio_comercial\": \"Ruta 9 km 12, Santiago del Estero\"\n}",
+              "raw": "{\n  \"cuit\": \"30111111111\",\n  \"razon_social\": \"FRIGORIFICO TEST S.A.\",\n  \"tipo\": \"FRIGORIFICO\",\n  \"categoria\": \"SALA_DE_DESPOSTE\",\n  \"domicilio\": {\n    \"calle\": \"Ruta 9 km 12\",\n    \"numero\": null,\n    \"localidad\": \"Santiago del Estero\",\n    \"provincia\": \"Santiago del Estero\",\n    \"codigo_postal\": \"4300\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1242,1018 +1355,6 @@
             }
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Remitos Carnicos",
-      "item": [
-        {
-          "name": "GET listar remitos",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/remitos-carnicos",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "remitos-carnicos"
-              ]
-            },
-            "description": "GET '' — lista remitos, opcionalmente filtrados por estado."
-          }
-        },
-        {
-          "name": "GET listar filtrado por estado",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"todos son EMITIDO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(r => r.estado === \"EMITIDO\"));\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/remitos-carnicos?estado=EMITIDO",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "remitos-carnicos"
-              ],
-              "query": [
-                {
-                  "key": "estado",
-                  "value": "EMITIDO"
-                }
-              ]
-            },
-            "description": "GET '' con query estado."
-          }
-        },
-        {
-          "name": "POST emitir remito",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
-                  "",
-                  "pm.test(\"estado es EMITIDO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.estado === \"EMITIDO\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/remitos-carnicos",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "remitos-carnicos"
-              ]
-            },
-            "description": "POST '' — body RemitoCarnicoIn. 400 si el servicio lanza RemitoCarnicoError.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"punto_emision\": \"0001\",\n  \"numero_comprobante\": \"0000000001\",\n  \"caso\": \"01\",\n  \"tipo_movimiento\": \"ENVIO_NORMAL\",\n  \"fecha_emision\": \"2025-06-01T10:00:00\",\n  \"fecha_vencimiento\": \"2025-06-02T10:00:00\",\n  \"titular_cuit\": \"30111111111\",\n  \"transportista_cuit\": \"30222222222\",\n  \"destinatario_cuit\": \"30333333333\",\n  \"chofer_apellido_nombre\": \"Juan Perez\",\n  \"chofer_documento\": \"12345678\",\n  \"dominio_vehiculo\": \"ABC123\",\n  \"renglones\": [\n    {\n      \"codigo_afip\": \"1101\",\n      \"unidades\": 100,\n      \"kilos\": 500.5,\n      \"numero_tropa\": \"T-001\"\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "GET obtener remito por id",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/remitos-carnicos/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "remitos-carnicos",
-                "1"
-              ]
-            },
-            "description": "GET '/{remito_id}' (id entero). 404 si no existe."
-          }
-        },
-        {
-          "name": "PATCH cambiar estado",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
-                  "",
-                  "pm.test(\"estado es ENTREGADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"ENTREGADO\");\n    }\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/remitos-carnicos/1/estado?estado=ENTREGADO",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "remitos-carnicos",
-                "1",
-                "estado"
-              ],
-              "query": [
-                {
-                  "key": "estado",
-                  "value": "ENTREGADO"
-                }
-              ]
-            },
-            "description": "PATCH '/{remito_id}/estado' — el estado va en QUERY (EstadoRemito: EMITIDO, EN_TRANSITO, ENTREGADO, ANULADO, VENCIDO). 404 si el remito no existe."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Trazabilidad Comercial",
-      "item": [
-        {
-          "name": "GET listar registros",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad"
-              ]
-            },
-            "description": "GET '' — lista registros, filtrable por estado, especie, origen_cuit y destino_cuit."
-          }
-        },
-        {
-          "name": "GET listar filtrado por estado",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"todos son REGISTRADO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(r => r.estado === \"REGISTRADO\"));\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad?estado=REGISTRADO",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad"
-              ],
-              "query": [
-                {
-                  "key": "estado",
-                  "value": "REGISTRADO"
-                }
-              ]
-            },
-            "description": "GET '' con query estado."
-          }
-        },
-        {
-          "name": "GET listar filtrado por especie",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"todos son BOVINO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(r => r.especie === \"BOVINO\"));\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad?especie=BOVINO",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad"
-              ],
-              "query": [
-                {
-                  "key": "especie",
-                  "value": "BOVINO"
-                }
-              ]
-            },
-            "description": "GET '' con query especie."
-          }
-        },
-        {
-          "name": "GET listar filtrado por destino_cuit",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad?destino_cuit=30111111111",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad"
-              ],
-              "query": [
-                {
-                  "key": "destino_cuit",
-                  "value": "30111111111"
-                }
-              ]
-            },
-            "description": "GET '' con query destino_cuit."
-          }
-        },
-        {
-          "name": "POST registrar ingreso",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
-                  "",
-                  "pm.test(\"estado es REGISTRADO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.estado === \"REGISTRADO\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad"
-              ]
-            },
-            "description": "POST '' — body RegistroTrazabilidadIn.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_ingreso\": \"COMPRA\",\n  \"especie\": \"BOVINO\",\n  \"cantidad\": 10,\n  \"peso_kg\": 500.5,\n  \"origen_cuit\": \"30222222222\",\n  \"destino_cuit\": \"30111111111\",\n  \"tipo_destino\": \"FRIGORIFICO\",\n  \"fecha_ingreso\": \"2025-06-01T10:00:00\",\n  \"numero_remito\": \"0000000001\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "GET obtener registro por id",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad",
-                "1"
-              ]
-            },
-            "description": "GET '/{registro_id}' (id entero). 404 si no existe."
-          }
-        },
-        {
-          "name": "POST confirmar registro",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
-                  "",
-                  "pm.test(\"estado es CONFIRMADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"CONFIRMADO\");\n    }\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad/1/confirmar",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad",
-                "1",
-                "confirmar"
-              ]
-            },
-            "description": "POST '/{registro_id}/confirmar'. 404 si el registro no existe o no puede confirmarse."
-          }
-        },
-        {
-          "name": "POST anular registro",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
-                  "",
-                  "pm.test(\"estado es ANULADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"ANULADO\");\n    }\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/trazabilidad/1/anular",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "trazabilidad",
-                "1",
-                "anular"
-              ]
-            },
-            "description": "POST '/{registro_id}/anular'. 404 si el registro no existe o no puede anularse."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Fiscalizacion",
-      "item": [
-        {
-          "name": "GET listar inspecciones",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/inspecciones",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "inspecciones"
-              ]
-            },
-            "description": "GET '/inspecciones' — opcionalmente filtrado por operador_cuit."
-          }
-        },
-        {
-          "name": "GET listar inspecciones por operador",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"todas son del operador\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(i => i.operador_cuit === \"30222222222\"));\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/inspecciones?operador_cuit=30222222222",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "inspecciones"
-              ],
-              "query": [
-                {
-                  "key": "operador_cuit",
-                  "value": "30222222222"
-                }
-              ]
-            },
-            "description": "GET '/inspecciones' con query operador_cuit."
-          }
-        },
-        {
-          "name": "POST registrar inspeccion",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
-                  "",
-                  "pm.test(\"operador correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.operador_cuit === \"30222222222\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/inspecciones",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "inspecciones"
-              ]
-            },
-            "description": "POST '/inspecciones' — body InspeccionIn {tipo, operador_cuit, fecha, inspector, observaciones}.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"PROGRAMADA\",\n  \"operador_cuit\": \"30222222222\",\n  \"fecha\": \"2025-06-01T10:00:00\",\n  \"inspector\": \"Dr. Smith\",\n  \"observaciones\": \"Todo en orden\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "GET obtener inspeccion por id",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/inspecciones/1",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "inspecciones",
-                "1"
-              ]
-            },
-            "description": "GET '/inspecciones/{inspeccion_id}'. 404 si no existe."
-          }
-        },
-        {
-          "name": "GET listar actas",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/actas",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "actas"
-              ]
-            },
-            "description": "GET '/actas' — opcionalmente filtrado por inspeccion_id."
-          }
-        },
-        {
-          "name": "POST crear acta",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
-                  "",
-                  "pm.test(\"numero correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.numero === \"ACT-001\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/actas",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "actas"
-              ]
-            },
-            "description": "POST '/actas' — body ActaIn {inspeccion_id, tipo, numero, fecha, contenido}.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"inspeccion_id\": 1,\n  \"tipo\": \"INSPECCION\",\n  \"numero\": \"ACT-001\",\n  \"fecha\": \"2025-06-01T10:00:00\",\n  \"contenido\": \"Acta de inspeccion sin observaciones\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "POST firmar acta",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
-                  "",
-                  "pm.test(\"firmado_por esta seteado (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.firmado_por === \"Dr. Smith\");\n    }\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/actas/1/firmar?firmado_por=Dr.%20Smith",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "actas",
-                "1",
-                "firmar"
-              ],
-              "query": [
-                {
-                  "key": "firmado_por",
-                  "value": "Dr. Smith"
-                }
-              ]
-            },
-            "description": "POST '/actas/{acta_id}/firmar' — firmado_por va en QUERY. 404 si el acta no existe."
-          }
-        },
-        {
-          "name": "GET listar infracciones",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/infracciones",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "infracciones"
-              ]
-            },
-            "description": "GET '/infracciones' — opcionalmente filtrado por operador_cuit."
-          }
-        },
-        {
-          "name": "POST registrar infraccion",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
-                  "",
-                  "pm.test(\"tipo correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.tipo === \"FALTA_DE_HIGIENE\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/infracciones",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "infracciones"
-              ]
-            },
-            "description": "POST '/infracciones' — body InfraccionIn {inspeccion_id, operador_cuit, tipo, gravedad, descripcion}.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"inspeccion_id\": 1,\n  \"operador_cuit\": \"30222222222\",\n  \"tipo\": \"FALTA_DE_HIGIENE\",\n  \"gravedad\": \"GRAVE\",\n  \"descripcion\": \"Falta de condiciones de higiene\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "GET listar sanciones",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"devuelve lista\", function () {\n    var data = pm.response.json();\n    pm.expect(Array.isArray(data) && data.length >= 0);\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/sanciones",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "sanciones"
-              ]
-            },
-            "description": "GET '/sanciones' — opcionalmente filtrado por operador_cuit."
-          }
-        },
-        {
-          "name": "POST aplicar sancion",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
-                  "",
-                  "pm.test(\"tipo correcto\", function () {\n    var data = pm.response.json();\n    pm.expect(data.tipo === \"MULTA\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/sanciones",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "sanciones"
-              ]
-            },
-            "description": "POST '/sanciones' — body SancionIn {infraccion_id, operador_cuit, tipo, monto, observaciones}.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"infraccion_id\": 1,\n  \"operador_cuit\": \"30222222222\",\n  \"tipo\": \"MULTA\",\n  \"monto\": 10000.0,\n  \"observaciones\": \"Multa por falta de higiene\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "POST notificar sancion",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
-                  "",
-                  "pm.test(\"estado es NOTIFICADO (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.estado === \"NOTIFICADO\");\n    }\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/sanciones/1/notificar",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "sanciones",
-                "1",
-                "notificar"
-              ]
-            },
-            "description": "POST '/sanciones/{sancion_id}/notificar'. 404 si la sanción no existe."
-          }
-        },
-        {
-          "name": "POST registrar decomiso",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n});",
-                  "",
-                  "pm.test(\"mercaderia correcta\", function () {\n    var data = pm.response.json();\n    pm.expect(data.mercaderia === \"Carne de vacuno\");\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/decomisos",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "decomisos"
-              ]
-            },
-            "description": "POST '/decomisos' — body DecomisoIn {inspeccion_id, mercaderia, cantidad, peso_kg, motivo}.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"inspeccion_id\": 1,\n  \"mercaderia\": \"Carne de vacuno\",\n  \"cantidad\": 100,\n  \"peso_kg\": 500.0,\n  \"motivo\": \"Producto caducado\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "GET obtener reincidencia",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code es 200 o 404\", function () {\n    pm.expect([200, 404]).to.include(pm.response.code);\n});",
-                  "",
-                  "pm.test(\"operador correcto (si existe)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.operador_cuit === \"30222222222\");\n    }\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/fiscalizacion/reincidencias/30222222222",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "fiscalizacion",
-                "reincidencias",
-                "30222222222"
-              ]
-            },
-            "description": "GET '/reincidencias/{operador_cuit}'. 404 si no hay reincidencias para el operador."
-          }
         }
       ]
     },

@@ -20,6 +20,8 @@ class SignupRequest(BaseModel):
     email: str = Field(..., description="Email")
     password: str = Field(..., min_length=8, description="Contraseña")
     name: Optional[str] = Field(None, description="Nombre del usuario")
+    cuit: Optional[str] = Field(None, description="Número de documento del titular (CUIT de 11 dígitos o DNI de 8)")
+    tipo_documento: Optional[str] = Field("CUIT", description="Tipo de documento: 'CUIT' o 'DNI' (determina la validación y el tipo de Persona)")
     # Metadatos de usuario que se guardan en InsForge ``user_metadata``
     # (p. ej. persona_id). InsForge los expone en el JWT.
     user_metadata: Optional[dict[str, Any]] = Field(

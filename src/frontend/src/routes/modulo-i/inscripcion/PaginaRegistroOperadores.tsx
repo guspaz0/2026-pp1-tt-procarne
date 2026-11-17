@@ -9,6 +9,7 @@ import { FormularioF102, CATEGORIAS_CARNICAS } from "./FormularioF102";
 import type { FormF102 } from "../../../store/formF102Slice";
 import { setAltaMensaje } from "../../../store/operadoresSlice";
 import { useListarQuery, useRegistrarMutation } from "../../../store/api";
+import { parsearDomicilio } from "../../../types";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { ModuloILayout } from "../ModuloILayout";
 
@@ -26,18 +27,20 @@ export function PaginaRegistroOperadores() {
         .map((id) => CATEGORIAS_CARNICAS.find((c) => c.id === id)?.codigoAfip)
         .filter((c): c is string => Boolean(c));
       const op = await registrar({
-        cuit: data.cuit,
+        // El titular (persona) viene de la sesión; el CUIT es opcional.
+        cuit: data.cuit.trim() || null,
         razon_social: data.titular || data.nombreEstablecimiento,
-        tipo: data.tipoPersona === "fisica" ? "PRODUCTOR" : "COMERCIALIZADOR",
+        // Tipo de establecimiento según la primera categoría elegida.
+        tipo: data.categorias[0] ?? "CARNICERIA",
         categoria: data.categorias[0] ?? null,
         codigo_afip: codigoAfip,
-        domicilio_comercial: data.domicilio,
+        domicilio: parsearDomicilio(data.domicilio),
         telefono: data.telefono,
         email: data.email,
       }).unwrap();
       dispatch(
         setAltaMensaje(
-          `Operador registrado con CUIT ${op.cuit}. Estado registral: ${op.estado_registral}.`,
+          `Operador registrado (CUIT ${op.cuit ?? "de la sesión"}). Estado registral: ${op.estado_registral}.`,
         ),
       );
     } catch (err) {

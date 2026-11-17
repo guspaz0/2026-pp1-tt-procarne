@@ -84,6 +84,60 @@ export function createHandlers(options: HandlerOptions = {}) {
       return json(operadores);
     }),
 
+    // GET /api/registro-operadores/mios — mis operadores (persona autenticada)
+    http.get("/api/registro-operadores/mios", async () => {
+      await wait(options.delayMs);
+      // En el mock, "mis operadores" son los de la persona 1 (LA NORITA).
+      return json(operadores.filter((o) => o.persona_id === 1));
+    }),
+
+    // GET /api/registro-operadores/jerarquia/mia — jerarquía de la persona
+    http.get("/api/registro-operadores/jerarquia/mia", async () => {
+      await wait(options.delayMs);
+      return json({
+        persona: {
+          id: 1,
+          tipo: "PF",
+          tipo_documento: "CUIT",
+          identificador: "30-71234567-8",
+          nombre: "CARNICERÍA LA NORITA",
+          domicilio: {
+            id: 1,
+            calle: "JOSE BENJAMIN ABALOS",
+            numero: "4582",
+            localidad: "SANTIAGO DEL ESTERO",
+            provincia: "CAPITAL",
+            codigo_postal: null,
+          },
+        },
+        operadores: operadores.filter((o) => o.persona_id === 1),
+      });
+    }),
+
+    // GET /api/registro-operadores/jerarquia/completa — todas las personas (admin)
+    http.get("/api/registro-operadores/jerarquia/completa", async () => {
+      await wait(options.delayMs);
+      const porPersona = new Map<number, typeof operadores>();
+      for (const o of operadores) {
+        const pid = o.persona_id ?? 0;
+        if (!porPersona.has(pid)) porPersona.set(pid, []);
+        porPersona.get(pid)!.push(o);
+      }
+      return json(
+        Array.from(porPersona.entries()).map(([pid, ops]) => ({
+          persona: {
+            id: pid,
+            tipo: "PJ",
+            tipo_documento: "CUIT",
+            identificador: ops[0]?.cuit ?? "",
+            nombre: ops[0]?.titular ?? "",
+            domicilio: ops[0]?.domicilio ?? null,
+          },
+          operadores: ops,
+        })),
+      );
+    }),
+
     // POST /api/registro-operadores — alta de operador
     http.post("/api/registro-operadores", async ({ request }) => {
       await wait(options.delayMs);
@@ -100,7 +154,7 @@ export function createHandlers(options: HandlerOptions = {}) {
       nuevo.id = nextId++;
       nuevo.tipo = data.tipo;
       nuevo.categoria = data.categoria ?? null;
-      nuevo.domicilio_comercial = data.domicilio_comercial ?? "Sin domicilio";
+      nuevo.domicilio = data.domicilio ? { id: nextId++, ...data.domicilio } : null;
       nuevo.telefono = data.telefono ?? null;
       nuevo.email = data.email ?? null;
       operadores.push(nuevo);

@@ -55,7 +55,7 @@ test.describe("Alta de operador (F 102)", () => {
     // Mensaje de éxito con el CUIT.
     await expect(
       page.getByRole("status").getByText(
-        new RegExp(`Operador registrado con CUIT ${cuit}`),
+        new RegExp(`Operador registrado \(CUIT ${cuit}\)`),
       ),
     ).toBeVisible();
 

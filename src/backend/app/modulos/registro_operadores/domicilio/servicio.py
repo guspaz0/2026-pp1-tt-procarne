@@ -21,17 +21,13 @@ class DomicilioService:
         """Lista todos los domicilios."""
         return self._dao.listar()
 
-    def obtener(self, domicilio_id: int) -> Optional[Domicilio]:
-        """Obtiene un domicilio por su id."""
-        return self._dao.obtener_por_id(domicilio_id)
-
-    def crear(self, operador_id: int, calle: str,
+    def crear(self, calle: str,
               numero: str | None = None,
               localidad: str = "",
               provincia: str = "",
               codigo_postal: str | None = None) -> Domicilio:
         """Crea un domicilio nuevo."""
-        return self._dao.crear(operador_id, calle, numero, localidad,
+        return self._dao.crear(calle, numero, localidad,
                                provincia, codigo_postal)
 
     def actualizar(self, domicilio_id: int, **kwargs) -> Optional[Domicilio]:
