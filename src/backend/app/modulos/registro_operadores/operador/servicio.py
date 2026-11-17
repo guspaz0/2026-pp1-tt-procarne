@@ -49,7 +49,7 @@ class OperadorService:
         """
         # ``operadores.persona_id`` es NOT NULL: si el alta no trae la persona
         # titular, la resolvemos/creamos por CUIT (idempotente).
-        persona_id = self._resolver_persona(data.persona_id, data.cuit, data.razon_social, data.tipo)
+        persona_id = self._resolver_persona(data.persona_id, data.cuit, data.razon_social)
 
         # Validar y resolver la categoría (nombre → fila en ``categorias``).
         # ``operadores.categoria_id`` es NOT NULL, por lo que el alta siempre
@@ -79,7 +79,6 @@ class OperadorService:
 
         operador = self._dao.crear(
             razon_social=data.razon_social,
-            tipo=data.tipo,
             persona_id=persona_id,
             domicilio_id=domicilio_id,
             telefono=data.telefono,
@@ -98,11 +97,16 @@ class OperadorService:
         self._crear_requisitos_iniciales(operador.id, data.categoria)
 
         # Guardar las actividades económicas del catálogo (N:M).
-        # ``actividad_ids`` son ids directos; ``codigo_dgr`` son códigos del
-        # catálogo (DGR) que se resuelven a ids. Se combinan ambos.
+        # ``actividad_ids`` son ids directos; ``codigo_dgr`` / ``codigo_afip``
+        # son códigos del catálogo (DGR) que se resuelven a ids. Se combinan
+        # ambos conjuntos de códigos (el frontend envía ``codigo_afip``).
         ids: list[int] = list(data.actividad_ids or [])
-        if data.codigo_dgr and self._catalogo_actividades_dao is not None:
-            ids.extend(self._catalogo_actividades_dao.resolver_ids_por_codigos(data.codigo_dgr))
+        codigos: list[str] = list(data.codigo_dgr or [])
+        for c in (data.codigo_afip or []):
+            if c not in codigos:
+                codigos.append(c)
+        if codigos and self._catalogo_actividades_dao is not None:
+            ids.extend(self._catalogo_actividades_dao.resolver_ids_por_codigos(codigos))
         if ids:
             self._dao.asignar_actividades(operador.id, ids)
 
@@ -152,11 +156,10 @@ class OperadorService:
                 return self._to_out(op)
         return None
 
-    def listar(self, tipo: str | None = None,
-               estado_registral: str | None = None,
+    def listar(self, estado_registral: str | None = None,
                categoria: str | None = None) -> list[OperadorOut]:
-        """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
-        operadores = self._dao.listar(tipo=tipo, estado_registral=estado_registral, categoria=categoria)
+        """Lista operadores, opcionalmente filtrados por estado y categoría."""
+        operadores = self._dao.listar(estado_registral=estado_registral, categoria=categoria)
         return [self._to_out(op) for op in operadores]
 
     def cambiar_estado(self, operador_id: int, estado) -> OperadorOut:
@@ -221,7 +224,7 @@ class OperadorService:
     # ------------------------------------------------------------------
 
     def _resolver_persona(self, persona_id: int | None, cuit: str,
-                          razon_social: str, tipo: str) -> int:
+                          razon_social: str) -> int:
         """Devuelve el id de la persona titular del operador.
 
         Si el alta trae ``persona_id`` lo usa directamente; si no, busca la

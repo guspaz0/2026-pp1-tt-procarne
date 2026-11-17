@@ -61,7 +61,6 @@ class TestAPIOperadores:
         payload = {
             "cuit": "30111111111",
             "razon_social": "FRIGORIFICO TEST S.A.",
-            "tipo": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         response = client.post("/api/registro-operadores", json=payload)
@@ -69,7 +68,6 @@ class TestAPIOperadores:
         data = response.json()
         assert data["cuit"] == "30111111111"
         assert data["razon_social"] == "FRIGORIFICO TEST S.A."
-        assert data["tipo"] == "FRIGORIFICO"
         assert data["categoria"] == "SALA_DE_DESPOSTE"
         assert data["estado_registral"] == "PENDIENTE"
 
@@ -78,7 +76,6 @@ class TestAPIOperadores:
         payload = {
             "cuit": "30111111111",
             "razon_social": "FRIGORIFICO TEST S.A.",
-            "tipo": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         r1 = client.post("/api/registro-operadores", json=payload)
@@ -90,7 +87,6 @@ class TestAPIOperadores:
     def test_crear_operador_sin_cuit_ni_persona(self, client):
         payload = {
             "razon_social": "SIN TITULAR",
-            "tipo": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         response = client.post("/api/registro-operadores", json=payload)
@@ -101,7 +97,6 @@ class TestAPIOperadores:
         payload = {
             "cuit": "30555555555",
             "razon_social": "OPERADOR INVALIDO",
-            "tipo": "FRIGORIFICO",
             "categoria": "CATEGORIA_INEXISTENTE",
         }
         response = client.post("/api/registro-operadores", json=payload)
@@ -112,7 +107,6 @@ class TestAPIOperadores:
         payload = {
             "cuit": "30111111111",
             "razon_social": "FRIGORIFICO TEST S.A.",
-            "tipo": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         client.post("/api/registro-operadores", json=payload)
@@ -120,33 +114,30 @@ class TestAPIOperadores:
         assert response.status_code == 200
         assert len(response.json()) == 1
 
-    def test_listar_operadores_filtrar_por_tipo(self, client):
+    def test_listar_operadores_filtrar_por_categoria(self, client):
         payload_frigo = {
             "cuit": "30111111111",
             "razon_social": "FRIGORIFICO",
-            "tipo": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         payload_carn = {
             "cuit": "30111111112",
             "razon_social": "CARNICERIA",
-            "tipo": "CARNICERIA",
             "categoria": "CARNICERIAS",
         }
         client.post("/api/registro-operadores", json=payload_frigo)
         client.post("/api/registro-operadores", json=payload_carn)
         response = client.get(
-            "/api/registro-operadores", params={"tipo": "FRIGORIFICO"}
+            "/api/registro-operadores", params={"categoria": "CARNICERIAS"}
         )
         assert response.status_code == 200
         assert len(response.json()) == 1
-        assert response.json()[0]["tipo"] == "FRIGORIFICO"
+        assert response.json()[0]["categoria"] == "CARNICERIAS"
 
     def test_obtener_operador(self, client):
         payload = {
             "cuit": "30111111111",
             "razon_social": "FRIGORIFICO TEST S.A.",
-            "tipo": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         created = client.post("/api/registro-operadores", json=payload)
@@ -163,7 +154,6 @@ class TestAPIOperadores:
         payload = {
             "cuit": "30111111111",
             "razon_social": "FRIGORIFICO TEST S.A.",
-            "tipo": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         created = client.post("/api/registro-operadores", json=payload)

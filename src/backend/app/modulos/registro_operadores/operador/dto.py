@@ -31,7 +31,6 @@ class OperadorIn(BaseModel):
 
     cuit: Optional[str] = Field(None, description="CUIT de la persona titular (13 dígitos); se usa solo para crear/resolver la persona si no se trae persona_id")
     razon_social: str = Field(..., description="Razón social")
-    tipo: str = Field(..., description="Tipo de operador (PRODUCTOR, FRIGORIFICO, etc.)")
     persona_id: Optional[int] = Field(None, description="ID de la persona (entidad legal padre)")
     categoria: Optional[str] = Field(None, description="Categoría según especificación (SALA_DE_DESPOSTE, CARNICERIAS, etc.)")
     domicilio: Optional[DomicilioIn] = Field(None, description="Domicilio comercial de esta sucursal (estructurado)")
@@ -39,6 +38,7 @@ class OperadorIn(BaseModel):
     email: Optional[str] = Field(None, description="Email de contacto de la persona titular (se guarda en personas.email)")
     actividad_ids: Optional[list[int]] = Field(None, description="Ids del catálogo de actividades económicas que realiza el operador (N:M)")
     codigo_dgr: Optional[list[str]] = Field(None, description="Códigos DGR del catálogo (actividades_economicas.codigo) que realiza el operador; se resuelven a ids")
+    codigo_afip: Optional[list[str]] = Field(None, description="Códigos AFIP/DGR enviados por el frontend (alias de codigo_dgr); se resuelven a ids")
 
 
 class DomicilioOut(BaseModel):
@@ -68,7 +68,6 @@ class OperadorOut(BaseModel):
     domicilio: Optional[DomicilioOut] = Field(None, description="Domicilio comercial (estructurado)")
     domicilio_comercial: Optional[str] = Field(None, description="Domicilio comercial legible, construido por el DAO")
     telefono: Optional[str]
-    tipo: str
     categoria: Optional[str]
     estado_registral: str
     alta_fecha: Optional[datetime]

@@ -143,7 +143,7 @@ def _crear_operador(db, persona_id: int, categoria: str) -> int:
             cat = Categoria(nombre=categoria)
             s.add(cat)
             s.flush()
-        op = Operador(persona_id=persona_id, razon_social=f"OP {categoria}", tipo="empresa",
+        op = Operador(persona_id=persona_id, razon_social=f"OP {categoria}",
                       categoria_id=cat.id, estado_registral="PENDIENTE")
         s.add(op)
         s.commit()

@@ -39,12 +39,11 @@ def crear_router(servicio: OperadorService, prefix: str = "") -> APIRouter:
 
     @router.get("", response_model=list[OperadorOut])
     def listar_operadores(
-        tipo: str | None = Query(None, description="Filtrar por tipo de operador"),
         estado_registral: str | None = Query(None, description="Filtrar por estado registral"),
         categoria: str | None = Query(None, description="Filtrar por categoría (SALA_DE_DESPOSTE, CARNICERIAS, etc.)"),
     ):
-        """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
-        return servicio.listar(tipo=tipo, estado_registral=estado_registral, categoria=categoria)
+        """Lista operadores, opcionalmente filtrados por estado y categoría."""
+        return servicio.listar(estado_registral=estado_registral, categoria=categoria)
 
     @router.post("", response_model=OperadorOut, status_code=201)
     def crear_operador(data: OperadorIn):

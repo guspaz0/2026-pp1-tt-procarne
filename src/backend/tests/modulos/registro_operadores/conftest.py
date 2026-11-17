@@ -73,7 +73,6 @@ def crear_operador_test(
     session,
     cuit: str,
     razon_social: str,
-    tipo: str = "FRIGORIFICO",
     categoria: str | None = "SALA_DE_DESPOSTE",
     estado_registral: str = "PENDIENTE",
 ) -> Operador:
@@ -84,7 +83,6 @@ def crear_operador_test(
         persona_id=persona.id,
         categoria_id=cat.id if cat else None,
         razon_social=razon_social,
-        tipo=tipo,
         estado_registral=estado_registral,
         alta_fecha=datetime.now(timezone.utc),
     )

@@ -15,7 +15,7 @@ from sqlalchemy import ForeignKey, String, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from configs.db import Base
-from modulos.registro_operadores.enums import EstadoRegistral, TipoOperador
+from modulos.registro_operadores.enums import EstadoRegistral
 
 
 class Operador(Base):
@@ -35,7 +35,6 @@ class Operador(Base):
     )
     razon_social: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     telefono: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    tipo: Mapped[str] = mapped_column(String(50), nullable=False)
     estado_registral: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
     alta_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     baja_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
@@ -147,15 +146,12 @@ class OperadorDAO:
                 .all()
             )
 
-    def listar(self, tipo: Optional[str] = None,
-               estado_registral: Optional[str] = None,
+    def listar(self, estado_registral: Optional[str] = None,
                categoria: Optional[str] = None) -> list[Operador]:
-        """Lista operadores, opcionalmente filtrados por tipo, estado y categoría."""
+        """Lista operadores, opcionalmente filtrados por estado y categoría."""
         from sqlalchemy.orm import joinedload
         with self._session_factory() as session:
             stmt = select(Operador).options(joinedload(Operador.persona))
-            if tipo is not None:
-                stmt = stmt.where(Operador.tipo == tipo)
             if estado_registral is not None:
                 stmt = stmt.where(Operador.estado_registral == estado_registral)
             if categoria is not None:
@@ -166,7 +162,7 @@ class OperadorDAO:
     # Escrituras
     # ------------------------------------------------------------------
 
-    def crear(self, razon_social: str, tipo: TipoOperador | str,
+    def crear(self, razon_social: str,
               persona_id: int,
               categoria_id: int,
               telefono: Optional[str] = None,
@@ -180,7 +176,6 @@ class OperadorDAO:
                 razon_social=razon_social,
                 telefono=telefono,
                 domicilio_id=domicilio_id,
-                tipo=tipo,
                 estado_registral=EstadoRegistral.PENDIENTE.value,
                 alta_fecha=datetime.now(timezone.utc),
             )

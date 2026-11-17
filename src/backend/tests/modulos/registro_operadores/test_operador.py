@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from modulos.registro_operadores.enums import EstadoRegistral, TipoOperador
+from modulos.registro_operadores.enums import EstadoRegistral
 from modulos.registro_operadores.operador.dao import OperadorDAO
 from modulos.registro_operadores.operador.dto import OperadorIn
 from modulos.registro_operadores.errores import OperadorError
@@ -29,13 +29,11 @@ class TestOperadorService:
         data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="SALA_DE_DESPOSTE",
         )
         resultado = servicio.crear_operador(data)
         assert resultado.cuit == "30111111111"
         assert resultado.razon_social == "FRIGORIFICO TEST S.A."
-        assert resultado.tipo == "FRIGORIFICO"
         assert resultado.categoria == "SALA_DE_DESPOSTE"
         assert resultado.estado_registral == "PENDIENTE"
 
@@ -44,7 +42,6 @@ class TestOperadorService:
         data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="SALA_DE_DESPOSTE",
         )
         primero = servicio.crear_operador(data)
@@ -57,7 +54,6 @@ class TestOperadorService:
         """Sin persona_id ni CUIT no se puede identificar al titular."""
         data = OperadorIn(
             razon_social="SIN TITULAR",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="SALA_DE_DESPOSTE",
         )
         with pytest.raises(OperadorError, match="persona_id o cuit"):
@@ -67,7 +63,6 @@ class TestOperadorService:
         data = OperadorIn(
             cuit="30555555555",
             razon_social="OPERADOR INVALIDO",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="CATEGORIA_INEXISTENTE",
         )
         with pytest.raises(OperadorError, match="Categoría inválida"):
@@ -77,7 +72,6 @@ class TestOperadorService:
         data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="SALA_DE_DESPOSTE",
         )
         creado = servicio.crear_operador(data)
@@ -90,7 +84,6 @@ class TestOperadorService:
         data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="SALA_DE_DESPOSTE",
         )
         servicio.crear_operador(data)
@@ -107,33 +100,23 @@ class TestOperadorService:
                 OperadorIn(
                     cuit=f"3011111111{i}",
                     razon_social=f"OPERADOR {i}",
-                    tipo=TipoOperador.FRIGORIFICO.value,
                     categoria="SALA_DE_DESPOSTE",
                 )
             )
         resultado = servicio.listar()
         assert len(resultado) == 3
 
-    def test_listar_filtrar_por_tipo(self, servicio):
-        servicio.crear_operador(
-            OperadorIn(
-                cuit="30111111111",
-                razon_social="FRIGORIFICO",
-                tipo=TipoOperador.FRIGORIFICO.value,
-                categoria="SALA_DE_DESPOSTE",
-            )
+    def test_listar_filtrar_por_estado(self, servicio):
+        data = OperadorIn(
+            cuit="30111111111",
+            razon_social="FRIGORIFICO",
+            categoria="SALA_DE_DESPOSTE",
         )
-        servicio.crear_operador(
-            OperadorIn(
-                cuit="30111111112",
-                razon_social="CARNICERIA",
-                tipo=TipoOperador.CARNICERIA.value,
-                categoria="CARNICERIAS",
-            )
-        )
-        resultado = servicio.listar(tipo=TipoOperador.FRIGORIFICO.value)
+        creado = servicio.crear_operador(data)
+        servicio.cambiar_estado(creado.id, EstadoRegistral.SUSPENDIDO)
+        resultado = servicio.listar(estado_registral="SUSPENDIDO")
         assert len(resultado) == 1
-        assert resultado[0].tipo == "FRIGORIFICO"
+        assert resultado[0].id == creado.id
 
     def test_listar_filtrar_por_categoria(self, servicio):
         for i, cat in enumerate(["SALA_DE_DESPOSTE", "CARNICERIAS", "SALA_DE_DESPOSTE"]):
@@ -141,7 +124,6 @@ class TestOperadorService:
                 OperadorIn(
                     cuit=f"3066666666{i}",
                     razon_social=f"OP {cat}",
-                    tipo=TipoOperador.FRIGORIFICO.value,
                     categoria=cat,
                 )
             )
@@ -153,7 +135,6 @@ class TestOperadorService:
         data = OperadorIn(
             cuit="30111111111",
             razon_social="FRIGORIFICO TEST S.A.",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="SALA_DE_DESPOSTE",
         )
         creado = servicio.crear_operador(data)
@@ -181,7 +162,6 @@ class TestOperadorService:
         data = OperadorIn(
             cuit="30121212121",
             razon_social="FRIGO CON ACTIVIDAD",
-            tipo=TipoOperador.FRIGORIFICO.value,
             categoria="SALA_DE_DESPOSTE",
             actividad_ids=[actividad_id],
         )
