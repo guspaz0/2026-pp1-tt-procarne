@@ -15,6 +15,12 @@ variable "vercel_project_name" {
   default     = "procarne"
 }
 
+variable "vercel_team_id" {
+  description = "ID del equipo de Vercel al que pertenece el proyecto (team_xxx). Vacío si el proyecto es personal."
+  type        = string
+  default     = ""
+}
+
 
 variable "rocca_database_url" {
   description = "URL de PostgreSQL (Insforge, Render Postgres o Neon). Se inyecta como ROCCA_DATABASE_URL."

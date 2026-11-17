@@ -1,15 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/*.mjs",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "app/main.py",
-      "use": "@vercel/python"
-    }
-  ],
   "routes": [
     {
       "src": "/api/f102",
@@ -17,17 +7,11 @@
     },
     {
       "src": "/api/(.*)",
-      "dest": "/app/main.py"
+      "dest": "/main.py"
     },
     {
       "src": "/(.*)",
-      "dest": "/app/main.py"
+      "dest": "/main.py"
     }
-  ],
-  "functions": {
-    "api/f102.mjs": {
-      "maxDuration": 30
-    }
-  },
-  "installCommand": "pnpm install --frozen-lockfile"
+  ]
 }
