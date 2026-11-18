@@ -251,7 +251,7 @@ def crear_operador(session: Session, persona_id: int, cuit: str, nombre: str,
     
     result = session.execute(
         text("""
-            INSERT INTO operadores (persona_id, cuit, razon_social, domicilio_id, tipo, estado_registral, creado_en)
+            INSERT INTO operadores (persona_id, cuit, establecimiento_fantasia, domicilio_id, tipo, estado_registral, creado_en)
             VALUES (:persona_id, :cuit, :nombre, :domicilio_id, :tipo, 'ACTIVO', NOW())
             RETURNING id
         """),

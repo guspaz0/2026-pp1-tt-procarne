@@ -13,8 +13,8 @@ export const OPERADORES_MOCK: Operador[] = [
     id: 1,
     persona_id: 1,
     titular: "CARNICERÍA LA NORITA",
-    cuit: "30-71234567-8",
-    razon_social: "CARNICERÍA LA NORITA",
+    cuit: "30-71234567-9",
+    establecimiento_fantasia: "CARNICERÍA LA NORITA",
     domicilio: { id: 1, calle: "JOSE BENJAMIN ABALOS", numero: "4582", localidad: "SANTIAGO DEL ESTERO", provincia: "CAPITAL", codigo_postal: null },
     telefono: "(0385) 431-8910",
     email: "contacto@lanorita.com",
@@ -29,8 +29,8 @@ export const OPERADORES_MOCK: Operador[] = [
     id: 2,
     persona_id: 2,
     titular: "FRIGORÍFICO EL TRUFO S.R.L.",
-    cuit: "30-82345678-9",
-    razon_social: "FRIGORÍFICO EL TRUFO S.R.L.",
+    cuit: "30-82345678-3",
+    establecimiento_fantasia: "FRIGORÍFICO EL TRUFO S.R.L.",
     domicilio: { id: 2, calle: "AV. SAN MARTÍN", numero: "1234", localidad: "SANTIAGO DEL ESTERO", provincia: "CAPITAL", codigo_postal: null },
     telefono: "(0385) 442-7721",
     email: "admin@eltrufosrl.com",
@@ -45,8 +45,8 @@ export const OPERADORES_MOCK: Operador[] = [
     id: 3,
     persona_id: 1,
     titular: "CARNICERÍA LA NORITA",
-    cuit: "30-71234567-8", // Mismo CUIT que id=1 (sucursal de LA NORITA)
-    razon_social: "CARNICERÍA LA NORITA SUC. 2",
+    cuit: "30-71234567-9", // Mismo CUIT que id=1 (sucursal de LA NORITA)
+    establecimiento_fantasia: "CARNICERÍA LA NORITA SUC. 2",
     domicilio: { id: 3, calle: "Mitre", numero: "567", localidad: "LA BANDA", provincia: "SANTIAGO DEL ESTERO", codigo_postal: null },
     telefono: "(0385) 455-9012",
     email: "sucursal2@lanorita.com",
@@ -61,8 +61,8 @@ export const OPERADORES_MOCK: Operador[] = [
     id: 4,
     persona_id: 4,
     titular: "TRANSPORTES CARNE S.A.",
-    cuit: "30-99988877-0",
-    razon_social: "TRANSPORTES CARNE S.A.",
+    cuit: "30-99988877-9",
+    establecimiento_fantasia: "TRANSPORTES CARNE S.A.",
     domicilio: { id: 4, calle: "Ruta Nacional 9", numero: null, localidad: "KM 45", provincia: "SANTIAGO DEL ESTERO", codigo_postal: null },
     telefono: null,
     email: null,
@@ -89,13 +89,13 @@ export const ACTIVIDADES_MOCK = [
  * Crea un operador de prueba con CUIT aleatorio (para tests de alta).
  * Útil para verificar que un POST crea correctamente un operador.
  */
-export function crearOperadorMock(cuit: string, razonSocial: string): Operador {
+export function crearOperadorMock(cuit: string, establecimientoFantasia: string): Operador {
   return {
     id: Date.now(),
     persona_id: 99,
-    titular: razonSocial,
+    titular: establecimientoFantasia,
     cuit,
-    razon_social: razonSocial,
+    establecimiento_fantasia: establecimientoFantasia,
     domicilio: { id: 99, calle: "Calle Prueba", numero: "1", localidad: "CAPITAL", provincia: "SDE", codigo_postal: null },
     telefono: null,
     email: null,
@@ -111,7 +111,7 @@ export function crearOperadorMock(cuit: string, razonSocial: string): Operador {
 /** Payload de alta de prueba. */
 export const OPERADOR_IN_MOCK: OperadorIn = {
   cuit: "30-12345678-9",
-  razon_social: "OPERADOR TEST",
+  establecimiento_fantasia: "OPERADOR TEST",
   domicilio: { calle: "Calle Falsa", numero: "123", localidad: "CAPITAL", provincia: "SDE" },
   tipo: "CARNICERIA",
   categoria: "CARNICERIAS",

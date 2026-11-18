@@ -64,7 +64,7 @@ def _crear_operador(app, cuit="30111111111") -> int:
     # operadores con la misma lógica de negocio (requisitos iniciales, etc.).
     operador_service = app.state.operador_service
     out = operador_service.crear_operador(OperadorIn(
-        cuit=cuit, razon_social="FRIGO REQUISITOS S.A.",
+        cuit=cuit, establecimiento_fantasia="FRIGO REQUISITOS S.A.",
         tipo="FRIGORIFICO", categoria="SALA_DE_DESPOSTE",
     ))
     return out.id

@@ -59,10 +59,10 @@ describe("Integración · Formulario F 102", () => {
   it("escribir en un campo dispatchea setCampo (DOM y store se sincronizan)", async () => {
     mount(store);
     const cuit = screen.getByLabelText(/C\.U\.I\.T\./i);
-    await user.type(cuit, "23-30917912-9");
+    await user.type(cuit, "23-30917912-5");
 
-    expect(cuit).toHaveValue("23-30917912-9");
-    expect(store.getState().formF102.form.cuit).toBe("23-30917912-9");
+    expect(cuit).toHaveValue("23-30917912-5");
+    expect(store.getState().formF102.form.cuit).toBe("23-30917912-5");
   });
 
   it("cambiar a Persona Física muestra el campo D.N.I.", async () => {
@@ -119,7 +119,7 @@ describe("Integración · Formulario F 102", () => {
     mount(store, onRegistrar);
 
     // Rellenamos un par de campos.
-    await user.type(screen.getByLabelText(/C\.U\.I\.T\./i), "23-30917912-9");
+    await user.type(screen.getByLabelText(/C\.U\.I\.T\./i), "23-30917912-5");
     // Por defecto el tipo de persona es Física, así que el campo del titular
     // se llama "Apellido y Nombre del Titular *" (no "Razón Social *").
     await user.type(
@@ -142,7 +142,7 @@ describe("Integración · Formulario F 102", () => {
 
     expect(onRegistrar).toHaveBeenCalledTimes(1);
     const enviado = onRegistrar.mock.calls[0][0] as FormF102;
-    expect(enviado.cuit).toBe("23-30917912-9");
+    expect(enviado.cuit).toBe("23-30917912-5");
     expect(enviado.titular).toBe("LA NORITA S.R.L.");
     expect(enviado.nombreEstablecimiento).toBe("LA NORITA");
     expect(enviado.categorias).toContain("CARNICERIAS");

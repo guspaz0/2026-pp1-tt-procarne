@@ -187,6 +187,26 @@ class AuthService:
                 raise AuthError(http_status.HTTP_403_FORBIDDEN, "No se pudo actualizar la metadata del usuario")
             raise AuthError(http_status.HTTP_503_SERVICE_UNAVAILABLE, "No se pudo actualizar la metadata")
 
+    async def change_password(self, user_id: str, new_password: str) -> None:
+        """Cambia la contraseña de un usuario (requiere API key admin)."""
+        try:
+            await self._client.change_password(user_id, new_password)
+        except InsforgeError as e:
+            if e.status_code == 0:
+                raise AuthError(http_status.HTTP_503_SERVICE_UNAVAILABLE, "No se pudo contactar InsForge")
+            if e.status_code in (400, 401, 403):
+                raise AuthError(http_status.HTTP_403_FORBIDDEN, "No se pudo cambiar la contraseña")
+            raise AuthError(http_status.HTTP_503_SERVICE_UNAVAILABLE, "No se pudo cambiar la contraseña")
+
+    async def delete_user(self, user_id: str) -> None:
+        """Elimina un usuario de InsForge (compensación tras fallo en Persona)."""
+        try:
+            await self._client.delete_user(user_id)
+        except InsforgeError as e:
+            if e.status_code == 0:
+                raise AuthError(http_status.HTTP_503_SERVICE_UNAVAILABLE, "No se pudo contactar InsForge")
+            raise AuthError(http_status.HTTP_503_SERVICE_UNAVAILABLE, "No se pudo eliminar el usuario")
+
     async def logout(self, response: Response, refresh_token: str | None = None) -> None:
         """Cierra la sesión: borra cookies y notifica a InsForge."""
         # Mejor esfuerzo: avisar a InsForge (no bloquea el logout local).
@@ -225,9 +245,20 @@ class AuthService:
 
     @staticmethod
     def _session_payload(session: InsforgeSession) -> dict[str, Any]:
-        """Construye el payload de respuesta (snake_case para el frontend)."""
+        """Construye el payload de respuesta (snake_case para el frontend).
+
+        Agrega el ``rol`` al usuario: si tiene ``persona_id`` en
+        ``user_metadata`` → ``operador``; si no → ``admin``.
+        """
+        user = dict(session.user) if session.user else {}
+        metadata = user.get("user_metadata") or {}
+        persona_id = metadata.get("persona_id")
+        rol = "operador" if persona_id else "admin"
+        user["rol"] = rol
+        user["persona_id"] = persona_id
+        user["must_change_password"] = bool(metadata.get("must_change_password"))
         return {
             "access_token": session.access_token,
             "refresh_token": session.refresh_token,
-            "user": session.user,
+            "user": user,
         }

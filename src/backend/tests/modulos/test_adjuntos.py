@@ -102,7 +102,7 @@ def _crear_operador(db, categoria=CategoriaOperador.SALA_DE_DESPOSTE.value):
             s.flush()
         op = Operador(
             persona_id=p.id,
-            razon_social="Empresa SA",
+            establecimiento_fantasia="Empresa SA",
             tipo="empresa",
             categoria_id=cat.id,
             estado_registral="ACTIVO",

@@ -14,7 +14,12 @@ class CategoriaService:
         self._dao = dao
 
     def listar(self) -> list[Categoria]:
-        """Lista todas las categorías."""
+        """Lista todas las categorías con sus requisitos de papeleo.
+
+        El DAO aplica *eager loading* de la relación N:M y devuelve una
+        copia desacoplada de la sesión, lista para serializarse en la
+        respuesta HTTP.
+        """
         return self._dao.listar()
 
     def obtener(self, categoria_id: int) -> Optional[Categoria]:

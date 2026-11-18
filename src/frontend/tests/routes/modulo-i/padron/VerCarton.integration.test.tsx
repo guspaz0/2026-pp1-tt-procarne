@@ -64,7 +64,7 @@ describe("Integración · Ver Cartón desde el header", () => {
     mount(store);
     // La lista se carga (RTK Query) en el Padrón y las tabs.
     await waitFor(() => {
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(OPS[0].establecimiento_fantasia).length).toBeGreaterThan(0);
     });
 
     // Botón del PageHeader.

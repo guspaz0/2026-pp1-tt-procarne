@@ -40,7 +40,7 @@ from modulos.registro_operadores.requisito.dao import Requisito  # noqa: F401
 # Helpers de seed (reutilizables desde los test_*.py del módulo)
 # ---------------------------------------------------------------------------
 
-def seed_persona(session, cuit: str, razon_social: str) -> Persona:
+def seed_persona(session, cuit: str, establecimiento_fantasia: str) -> Persona:
     """Crea (o reutiliza) la persona jurídica titular por CUIT."""
     persona = (
         session.query(Persona)
@@ -52,7 +52,7 @@ def seed_persona(session, cuit: str, razon_social: str) -> Persona:
             tipo="PJ",
             tipo_documento="CUIT",
             identificador=cuit,
-            nombre=razon_social,
+            nombre=establecimiento_fantasia,
         )
         session.add(persona)
         session.flush()
@@ -72,17 +72,17 @@ def seed_categoria(session, nombre: str) -> Categoria:
 def crear_operador_test(
     session,
     cuit: str,
-    razon_social: str,
+    establecimiento_fantasia: str,
     categoria: str | None = "SALA_DE_DESPOSTE",
     estado_registral: str = "PENDIENTE",
 ) -> Operador:
     """Crea un operador con su persona y categoría, y lo devuelve (ORM)."""
-    persona = seed_persona(session, cuit, razon_social)
+    persona = seed_persona(session, cuit, establecimiento_fantasia)
     cat = seed_categoria(session, categoria) if categoria else None
     op = Operador(
         persona_id=persona.id,
         categoria_id=cat.id if cat else None,
-        razon_social=razon_social,
+        establecimiento_fantasia=establecimiento_fantasia,
         estado_registral=estado_registral,
         alta_fecha=datetime.now(timezone.utc),
     )

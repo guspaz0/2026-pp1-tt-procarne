@@ -33,7 +33,8 @@ class Operador(Base):
     domicilio_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("domicilios.id", ondelete="SET NULL"), nullable=True
     )
-    razon_social: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    establecimiento_fantasia: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    tipos_carne: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     telefono: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     estado_registral: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDIENTE")
     alta_fecha: Mapped[Optional[datetime]] = mapped_column(nullable=True)
@@ -47,15 +48,10 @@ class Operador(Base):
     domicilio: Mapped[Optional["Domicilio"]] = relationship(
         back_populates="operador", lazy="joined"
     )
-    adjuntos: Mapped[list["Adjunto"]] = relationship(
+    requisitos: Mapped[list["OperadorRequisito"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
-    adjuntos_operador: Mapped[list["AdjuntoOperador"]] = relationship(
-        back_populates="operador", cascade="all, delete-orphan"
-    )
-    requisitos_inscripcion: Mapped[list["RequisitoInscripcion"]] = relationship(
-        back_populates="operador", cascade="all, delete-orphan"
-    )
+
     actividades: Mapped[list["OperadorActividad"]] = relationship(
         back_populates="operador", cascade="all, delete-orphan"
     )
@@ -162,18 +158,20 @@ class OperadorDAO:
     # Escrituras
     # ------------------------------------------------------------------
 
-    def crear(self, razon_social: str,
+    def crear(self, establecimiento_fantasia: str,
               persona_id: int,
               categoria_id: int,
               telefono: Optional[str] = None,
-              domicilio_id: Optional[int] = None) -> Operador:
+              domicilio_id: Optional[int] = None,
+              tipos_carne: Optional[str] = None) -> Operador:
         """Crea y persiste un operador (con la relación persona cargada)."""
         from sqlalchemy.orm import joinedload
         with self._session_factory() as session:
             op = Operador(
                 persona_id=persona_id,
                 categoria_id=categoria_id,
-                razon_social=razon_social,
+                establecimiento_fantasia=establecimiento_fantasia,
+                tipos_carne=tipos_carne,
                 telefono=telefono,
                 domicilio_id=domicilio_id,
                 estado_registral=EstadoRegistral.PENDIENTE.value,

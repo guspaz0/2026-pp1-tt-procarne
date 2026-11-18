@@ -16,20 +16,19 @@ from modulos.registro_operadores.asociaciones import (  # noqa: F401  (registrar
     CertificadoActividad,
     OperadorActividad,
 )
-from modulos.registro_operadores.adjunto.dao import AdjuntoDAO  # noqa: F401  (registrar modelo ORM)
-from modulos.registro_operadores.adjunto_operador.dao import AdjuntoOperadorDAO
-from modulos.registro_operadores.adjunto_operador.servicio import AdjuntoOperadorService
 from modulos.registro_operadores.actividad_economica.dao import CatalogoActividadesDAO
 from modulos.registro_operadores.categoria.dao import CategoriaDAO
+from modulos.registro_operadores.categoria.servicio import CategoriaService
 from modulos.registro_operadores.certificado.dao import CertificadoDAO
 from modulos.registro_operadores.certificado.servicio import CertificadoService
 from modulos.registro_operadores.controlador import crear_router
 from modulos.registro_operadores.domicilio.dao import DomicilioDAO
 from modulos.registro_operadores.operador.dao import OperadorDAO
 from modulos.registro_operadores.operador.servicio import OperadorService
+from modulos.registro_operadores.operador_requisito.dao import OperadorRequisitoDAO  # noqa: F401  (registrar modelo ORM)
 from modulos.registro_operadores.requisito.dao import RequisitoDAO  # noqa: F401  (registrar modelo ORM)
-from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcionDAO
-from modulos.registro_operadores.requisito_inscripcion.servicio import RequisitoInscripcionService
+from modulos.registro_operadores.requisito_operador.servicio import RequisitoOperadorService
+from modulos.registro_operadores.requisito_operador.controlador import crear_router as crear_router_requisitos
 
 
 class RegistroOperadoresModulo:
@@ -44,8 +43,8 @@ class RegistroOperadoresModulo:
         db_dao,
         persona_dao: PersonaDAOProtocol | None = None,
         persona_service: PersonaService | None = None,
-        adjunto_dao: AdjuntoOperadorDAO | None = None,
         storage: InsforgeStorage | None = None,
+        auth_service=None,
     ) -> None:
         self._db_dao = db_dao
         self._persona_dao = persona_dao or PersonaDAO(db_dao.obtener_sesion)
@@ -56,26 +55,33 @@ class RegistroOperadoresModulo:
         self._catalogo_dao = CatalogoActividadesDAO(db_dao.obtener_sesion)
         self._certificado_dao = CertificadoDAO(db_dao.obtener_sesion)
         self._categoria_dao = CategoriaDAO(db_dao.obtener_sesion)
-        self._requisito_dao = RequisitoInscripcionDAO(db_dao.obtener_sesion)
         self._domicilio_dao = DomicilioDAO(db_dao.obtener_sesion)
-        self._adjunto_dao = adjunto_dao or AdjuntoOperadorDAO(db_dao.obtener_sesion)
 
         # Servicios por entidad
         self._certificado_service = CertificadoService(self._certificado_dao)
-        self._requisito_service = RequisitoInscripcionService(self._requisito_dao)
-        self._adjunto_service = AdjuntoOperadorService(
-            self._adjunto_dao,
-            storage=storage,
-            operador_dao=self._operador_dao,
-            requisito_service=self._requisito_service,
-        )
+        self._categoria_service = CategoriaService(self._categoria_dao)
         self._operador_service = OperadorService(
             self._operador_dao,
             persona_service=self._persona_service,
-            requisito_service=self._requisito_service,
             certificado_service=self._certificado_service,
             catalogo_actividades_dao=self._catalogo_dao,
             domicilio_dao=self._domicilio_dao,
+            auth_service=auth_service,
+        )
+
+        # DAOs para requisitos de operador
+        self._or_dao = OperadorRequisitoDAO(db_dao.obtener_sesion)
+        from modulos.registro_operadores.documento_requisito.dao import DocumentoRequisitoDAO
+        from modulos.registro_operadores.archivo.dao import ArchivoDAO
+        self._dr_dao = DocumentoRequisitoDAO(db_dao.obtener_sesion)
+        self._archivo_dao = ArchivoDAO(db_dao.obtener_sesion)
+
+        # Servicio de requisitos de operador
+        self._requisito_operador_service = RequisitoOperadorService(
+            self._or_dao,
+            self._dr_dao,
+            self._archivo_dao,
+            storage,
         )
 
     def registrar(self, app: FastAPI) -> None:
@@ -84,7 +90,12 @@ class RegistroOperadoresModulo:
             operador_service=self._operador_service,
             catalogo_actividades_dao=self._catalogo_dao,
             certificado_service=self._certificado_service,
-            requisito_service=self._requisito_service,
-            adjunto_service=self._adjunto_service,
+            categoria_service=self._categoria_service,
         )
         app.include_router(router)
+
+        # Registrar router de requisitos de operador
+        router_requisitos = crear_router_requisitos(
+            servicio=self._requisito_operador_service,
+        )
+        app.include_router(router_requisitos)

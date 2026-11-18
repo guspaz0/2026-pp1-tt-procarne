@@ -45,26 +45,17 @@ def _normalizar(cuit: str) -> str:
 
 
 def validar_formato_cuit(cuit: str) -> str:
-    """Valida el formato local del CUIT (11 dígitos + dígito verificador).
+    """Valida el formato local del CUIT (11 dígitos).
 
     Devuelve el CUIT normalizado (solo dígitos). Lanza :class:`CuitError`
     (``422``) si el formato es inválido, **sin** llamar a la API externa.
+
+    Nota: no se valida el dígito verificador localmente; la validación
+    definitiva se realiza contra el padrón público (IDFiscal).
     """
     cuit_norm = _normalizar(cuit)
     if len(cuit_norm) != 11:
         raise CuitError(422, "El CUIT debe tener 11 dígitos.")
-
-    # Dígito verificador (módulo 11).
-    pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3]
-    total = sum(int(d) * p for d, p in zip(cuit_norm[2:], pesos))
-    mod = total % 11
-    dv = 11 - mod
-    if dv == 11:
-        dv = 0
-    if dv == 10:
-        dv = 9
-    if int(cuit_norm[10]) != dv:
-        raise CuitError(422, "El CUIT no es válido: el dígito verificador no coincide.")
 
     return cuit_norm
 
@@ -133,27 +124,28 @@ class CuitValidator:
         """
         cuit_norm = validar_formato_cuit(cuit)
 
-        if not self.api_key:
-            # Sin API key no podemos consultar el padrón: solo validamos el
-            # formato local (ya hecho arriba) y dejamos pasar.
-            return
+        # [IDFISCAL] Validación contra el padrón público desactivada
+        # (API key inválida). Solo se valida el formato local (11 dígitos).
+        # Para reactivar: descomentar el bloque inferior y renovar IDFISCAL_API_KEY.
+        return
 
-        status, data = await asyncio.to_thread(self._request_sync, cuit_norm)
-
-        if status == 200:
-            return  # Contribuyente encontrado: CUIT válido.
-
-        if status == 400:
-            # Formato inválido según el proveedor (p. ej. dígito verificador).
-            detail = self._extraer_detalle(data) or "CUIT inválido."
-            raise CuitError(422, detail)
-        if status == 404:
-            raise CuitError(422, "El CUIT no está registrado en el padrón.")
-        if status == 401:
-            raise CuitError(503, "El servicio de validación de CUIT no está configurado correctamente.")
-        if status == 429:
-            raise CuitError(429, "Se alcanzó el límite de consultas de validación de CUIT. Intentá más tarde.")
-        raise CuitError(503, f"Error del servicio de validación de CUIT ({status}).")
+        # if not self.api_key:
+        #     return
+        #
+        # status, data = await asyncio.to_thread(self._request_sync, cuit_norm)
+        #
+        # if status == 200:
+        #     return
+        # if status == 400:
+        #     detail = self._extraer_detalle(data) or "CUIT inválido."
+        #     raise CuitError(422, detail)
+        # if status == 404:
+        #     raise CuitError(422, "El CUIT no está registrado en el padrón.")
+        # if status == 401:
+        #     raise CuitError(503, "El servicio de validación de CUIT no está configurado correctamente.")
+        # if status == 429:
+        #     raise CuitError(429, "Se alcanzó el límite de consultas de validación de CUIT. Intentá más tarde.")
+        # raise CuitError(503, f"Error del servicio de validación de CUIT ({status}).")
 
     @staticmethod
     def _extraer_detalle(data: Any) -> str | None:

@@ -58,79 +58,104 @@ def crear_router(get_auth_service) -> APIRouter:
         response: Response,
         auth: AuthService = Depends(get_auth_service),
     ):
-        """Alta de usuario.
+        """Alta de usuario (siempre crea un operador).
 
-        Flujo:
-        1. **Validar el documento** (solo si es CUIT): formato local + padrón
-           público (IDFiscal). Si no es válido, se rechaza con ``422`` **antes**
-           de crear el usuario en InsForge (no queda ningún usuario huérfano).
-        2. Crear el usuario en InsForge (signup).
-        3. **Solo si el signup tuvo éxito** y el payload trae documento:
-           resolver/crear la ``Persona`` y vincular su id al usuario en
-           ``user_metadata`` (InsForge lo expone en el JWT).
+        **Requisito**: Debe proporcionar un CUIT o DNI. Si no, se rechaza con 422.
+
+        Flujo (happy path):
+        1. Validar formato del documento (CUIT/DNI) → 422.
+        2. Pre-checks: email no asignado a otra Persona → 409.
+        3. Signup en InsForge → 409 si email ya existe.
+        4. Crear/Resolver Persona.
+        5. Actualizar ``user_metadata`` con ``persona_id`` (siempre).
+
+        **Resultado**: Todos los usuarios creados por signup tienen rol ``operador``
+        (porque siempre tienen ``persona_id`` en ``user_metadata``).
+
+        Compensaciones:
+        - Si el signup en InsForge falla → no se crea Persona (nada que revertir).
+        - Si la Persona falla → se elimina el usuario de InsForge.
         """
         from fastapi import HTTPException
         from core.cuit.validator import CuitError, CuitValidator, validar_formato_cuit
         from core.persona.schema import PersonaIn
 
+        # 0) RECHAZAR si no se provee CUIT o DNI.
+        if not payload.cuit:
+            raise HTTPException(
+                status_code=422,
+                detail="Debes proporcionar un CUIT o DNI para registrarte.",
+            )
+
         # Normalizar el tipo de documento (mayúsculas).
         tipo_doc = (payload.tipo_documento or "CUIT").upper()
 
         # 1) Validar el documento ANTES de crear el usuario en InsForge.
-        identificador_norm = payload.cuit or ""
-        if payload.cuit:
-            if tipo_doc == "CUIT":
-                # Validar formato (11 dígitos + dígito verificador) y padrón.
-                try:
-                    identificador_norm = validar_formato_cuit(payload.cuit)
-                    validator = CuitValidator()
-                    await validator.validar(payload.cuit)
-                except CuitError as e:
-                    raise HTTPException(status_code=e.status_code, detail=e.detail)
-            elif tipo_doc == "DNI":
-                # DNI: solo validamos el formato (8 dígitos). No se consulta
-                # el padrón (la API de IDFiscal solo valida CUIT).
-                dni_digits = "".join(ch for ch in payload.cuit if ch.isdigit())
-                if len(dni_digits) != 8:
-                    raise HTTPException(
-                        status_code=422, detail="El DNI debe tener 8 dígitos."
-                    )
-                identificador_norm = dni_digits
-            else:
+        identificador_norm = payload.cuit
+        if tipo_doc == "CUIT":
+            # Validar formato (11 dígitos + dígito verificador) y padrón.
+            try:
+                identificador_norm = validar_formato_cuit(payload.cuit)
+                validator = CuitValidator()
+                await validator.validar(payload.cuit)
+            except CuitError as e:
+                raise HTTPException(status_code=e.status_code, detail=e.detail)
+        elif tipo_doc == "DNI":
+            # DNI: solo validamos el formato (8 dígitos). No se consulta
+            # el padrón (la API de IDFiscal solo valida CUIT).
+            dni_digits = "".join(ch for ch in payload.cuit if ch.isdigit())
+            if len(dni_digits) != 8:
                 raise HTTPException(
-                    status_code=422,
-                    detail=f"Tipo de documento no soportado: {tipo_doc}",
+                    status_code=422, detail="El DNI debe tener 8 dígitos."
                 )
+            identificador_norm = dni_digits
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Tipo de documento no soportado: {tipo_doc}",
+            )
 
-        # 2) Signup en InsForge (sin metadata de persona todavía).
+        # 2) Pre-checks: verificar que el email no esté ya asignado a otra
+        #    Persona. Si está, se rechaza ANTES de crear el usuario.
+        persona_id: int | None = None
+        persona_creada_en_signup = False  # Flag para compensación.
+        persona_service = _persona_service()
+        if persona_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="PersonaService no disponible: no se puede verificar la Persona.",
+            )
+        persona_por_email = persona_service.obtener_por_email(payload.email)
+        if persona_por_email is not None:
+            raise HTTPException(
+                status_code=409,
+                detail="Ese email ya está registrado con otra persona.",
+            )
+        existente = persona_service.obtener_por_documento(
+            tipo_doc, identificador_norm
+        )
+        if existente is not None:
+            persona_id = existente.id
+
+        # 3) Signup en InsForge.
+        metadata = dict(payload.user_metadata or {})
+        if persona_id is not None:
+            metadata["persona_id"] = persona_id
         try:
             session = await auth.signup(
                 payload.email,
                 payload.password,
                 response,
                 name=payload.name,
-                metadata=dict(payload.user_metadata or {}),
+                metadata=metadata,
             )
         except AuthError as e:
+            # Si el signup falla, no se creó Persona → nada que revertir.
             raise HTTPException(status_code=e.status_code, detail=e.detail)
 
-        # 3) Persona: solo después de que el signup haya sido exitoso.
-        if payload.cuit:
-            persona_service = _persona_service()
-            if persona_service is None:
-                # El usuario ya existe en InsForge; no lo borramos. Solo
-                # reportamos que no se pudo vincular la Persona.
-                raise HTTPException(
-                    status_code=503,
-                    detail="PersonaService no disponible: el usuario se creó pero la Persona no se vinculó",
-                )
-            existente = persona_service.obtener_por_documento(
-                tipo_doc, identificador_norm
-            )
-            if existente is not None:
-                persona_id = existente.id
-            else:
-                # CUIT → persona jurídica (PJ); DNI → persona física (PF).
+        # 4) Crear la Persona (solo si no existía) y vincular.
+        if persona_id is None:
+            try:
                 tipo_persona = "PJ" if tipo_doc == "CUIT" else "PF"
                 creada = persona_service.crear_persona(
                     PersonaIn(
@@ -142,19 +167,32 @@ def crear_router(get_auth_service) -> APIRouter:
                     )
                 )
                 persona_id = creada.id
-
-            # 4) Vincular persona_id al usuario en InsForge (user_metadata).
-            #    InsForge lo expone en el JWT de la próxima sesión.
-            try:
+                persona_creada_en_signup = True
+            except Exception:
+                # COMPENSACIÓN: la Persona falló → eliminar el usuario de InsForge.
                 user_id = (
-                    session.user.get("id") if isinstance(session.user, dict) else None
+                    session["user"].get("id") if isinstance(session.get("user"), dict) else None
                 )
                 if user_id:
-                    await auth.update_user_metadata(user_id, {"persona_id": persona_id})
+                    try:
+                        await auth.delete_user(user_id)
+                    except AuthError:
+                        pass  # Loggear: queda usuario huérfano sin Persona.
+                raise HTTPException(
+                    status_code=500,
+                    detail="No se pudo crear la Persona. El usuario fue eliminado.",
+                )
+
+        # 5) Vincular persona_id al usuario en InsForge (user_metadata).
+        #    Siempre se hace, ya que persona_id nunca es None después de la creación.
+        user_id = (
+            session["user"].get("id") if isinstance(session.get("user"), dict) else None
+        )
+        if user_id:
+            try:
+                await auth.update_user_metadata(user_id, {"persona_id": persona_id})
             except AuthError:
-                # No es fatal: la Persona ya existe y el cliente puede
-                # re-vincularla en el próximo login/refresh.
-                pass
+                pass  # No fatal: se re-vincula en el próximo login.
 
         return session
 
@@ -187,7 +225,51 @@ def crear_router(get_auth_service) -> APIRouter:
 
     @router.get("/me")
     async def me(user: schemas.UserOut = Depends(require_user)):
-        """Datos del usuario autenticado (ruta protegida)."""
-        return user
+        """Datos del usuario autenticado (ruta protegida).
+
+        Resuelve el rol del usuario:
+        - Si tiene ``persona_id`` en ``user_metadata`` → rol ``operador``.
+        - Si no → rol ``admin``.
+        """
+        metadata = user.user_metadata or {}
+        rol = "operador" if metadata.get("persona_id") else "admin"
+        return {
+            "id": user.id,
+            "email": user.email,
+            "rol": rol,
+            "persona_id": metadata.get("persona_id"),
+            "must_change_password": bool(metadata.get("must_change_password")),
+            "user_metadata": metadata,
+        }
+
+    @router.post("/change-password", status_code=200)
+    async def change_password(
+        payload: schemas.ChangePasswordRequest,
+        user: schemas.UserOut = Depends(require_user),
+        auth: AuthService = Depends(get_auth_service),
+    ):
+        """Cambia la contraseña del usuario autenticado.
+
+        Después del cambio, se elimina el flag ``must_change_password``
+        de la ``user_metadata`` para que no se pida el cambio en el
+        próximo login.
+        """
+        from fastapi import HTTPException
+
+        if not user.id:
+            raise HTTPException(status_code=401, detail="Usuario no identificado")
+
+        try:
+            await auth.change_password(user.id, payload.new_password)
+        except AuthError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.detail)
+
+        # Quitar el flag must_change_password (si existía).
+        try:
+            await auth.update_user_metadata(user.id, {"must_change_password": False})
+        except AuthError:
+            pass  # No fatal: se pedirá el cambio en el próximo login.
+
+        return {"detail": "Contraseña actualizada correctamente."}
 
     return router

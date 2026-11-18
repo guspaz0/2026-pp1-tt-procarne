@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "ROCCA — ProCarne Test Suite",
-    "description": "ROCCA — Control de la Cadena Cárnica SDE\n\n## Flujo de autenticación\n1. `POST /api/auth/login` → setea cookies HttpOnly (access_token + refresh_token)\n2. Todas las rutas protegidas requieren la cookie `access_token`\n3. `POST /api/auth/refresh` → rota el access token\n4. `POST /api/auth/logout` → borra cookies + revoca refresh en InsForge\n\n## Módulo I — Registro de Operadores\n- **CRUD operadores**: alta (con `categoria` obligatoria), listado con filtros (tipo, estado_registral, categoria), obtener por id, cambio de estado.\n- **Ciclo de vida**: activar (PENDIENTE→ACTIVO), suspender (ACTIVO→SUSPENDIDO), reactivar (SUSPENDIDO→ACTIVO), bajar (→BAJADO). Requieren rol supervisor.\n- **Certificados F102**: alta, listado, vigente, suspender, reactivar. Regla de relevación automática.\n- **Requisitos de inscripción**: catálogo (generales + específicos por categoría), listado por operador, pendientes, actualización de cumplimiento.\n- **Adjuntos**: persona (dni_frente, dni_dorso, cuit, iibb) y operador (requisito por categoría). JSON con data_base64.\n- **Catálogo de actividades económicas**: grupos, subgrupos, subsubgrupos, actividades (código DGR).\n\n## Módulos II y III (en desarrollo)\n- Remitos Electrónicos Cárnicos\n- Trazabilidad Comercial\n- Fiscalización\n\nLos routers de estos módulos están actualmente deshabilitados en el backend (comentados). Se habilitarán en la próxima iteración.",
+    "description": "ROCCA — Control de la Cadena Cárnica SDE\n\n## Flujo de autenticación\n1. `POST /api/auth/login` → setea cookies HttpOnly (access_token + refresh_token)\n2. Todas las rutas protegidas requieren la cookie `access_token`\n3. `POST /api/auth/refresh` → rota el access token\n4. `POST /api/auth/logout` → borra cookies + revoca refresh en InsForge\n\n## Roles\n- **admin**: acceso a `/admin/*` (padrón, jerarquía, inscripción, etc.)\n- **operador**: acceso a `/operador/*` (sus establecimientos, registro)\n\nEl rol se determina por la presencia de `persona_id` en `user_metadata`:\n- Si tiene `persona_id` → rol `operador`\n- Si no → rol `admin`\n\n## Módulo I — Registro de Operadores\n- **CRUD operadores**: alta (con `categoria` obligatoria), listado con filtros (tipo, estado_registral, categoria), obtener por id, cambio de estado.\n- **Ciclo de vida**: activar (PENDIENTE→ACTIVO), suspender (ACTIVO→SUSPENDIDO), reactivar (SUSPENDIDO→ACTIVO), bajar (→BAJADO). Requieren rol supervisor.\n- **Certificados F102**: alta, listado, vigente, suspender, reactivar. Regla de relevación automática.\n- **Adjuntos**: persona (dni_frente, dni_dorso, cuit, iibb). JSON con data_base64.\n- **Catálogo de actividades económicas**: grupos, subgrupos, subsubgrupos, actividades (código DGR).\n\n## Módulos II y III (en desarrollo)\n- Remitos Electrónicos Cárnicos\n- Trazabilidad Comercial\n- Fiscalización\n\nLos routers de estos módulos están actualmente deshabilitados en el backend (comentados). Se habilitarán en la próxima iteración.",
     "schema": "https://schema.postman.com/json/collection/v2.1.0/collection.json",
     "version": "2.1.0"
   },
@@ -25,7 +25,7 @@
                 "exec": [
                   "pm.test(\"Status code es 200 o 401\", function () {\n    pm.expect([200, 401]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"devuelve access_token (si 200)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.access_token).to.be.a(\"string\").and.not.empty;\n      pm.expect(data.user).to.be.an(\"object\");\n    }\n});"
+                  "pm.test(\"devuelve access_token (si 200)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.access_token).to.be.a(\"string\").and.not.empty;\n      pm.expect(data.user).to.be.an(\"object\");\n      pm.expect(data.user.rol).to.be.oneOf([\"admin\", \"operador\"]);\n    }\n});"
                 ]
               }
             }
@@ -49,7 +49,7 @@
                 "login"
               ]
             },
-            "description": "POST /api/auth/login — Login por email+contraseña. Fija cookies HttpOnly (rocca_access_token, rocca_refresh_token). 401 si las credenciales son inválidas, 503 si InsForge no está disponible.",
+            "description": "POST /api/auth/login — Login por email+contraseña. Fija cookies HttpOnly (rocca_access_token, rocca_refresh_token). 401 si las credenciales son inválidas, 503 si InsForge no está disponible.\n\n**Respuesta**: `{access_token, refresh_token, user: {id, email, rol, persona_id, ...}}`",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"gusti.pay@gmail.com\",\n  \"password\": \"password123\"\n}",
@@ -71,7 +71,7 @@
                 "exec": [
                   "pm.test(\"Status code es 201 o 409 o 503\", function () {\n    pm.expect([201, 409, 503]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"devuelve access_token (si 201)\", function () {\n    if (pm.response.code === 201) {\n      var data = pm.response.json();\n      pm.expect(data.access_token).to.be.a(\"string\").and.not.empty;\n      pm.expect(data.user).to.be.an(\"object\");\n    }\n});"
+                  "pm.test(\"devuelve access_token (si 201)\", function () {\n    if (pm.response.code === 201) {\n      var data = pm.response.json();\n      pm.expect(data.access_token).to.be.a(\"string\").and.not.empty;\n      pm.expect(data.user).to.be.an(\"object\");\n      pm.expect(data.user.rol).to.be.oneOf([\"admin\", \"operador\"]);\n    }\n});"
                 ]
               }
             }
@@ -95,10 +95,10 @@
                 "signup"
               ]
             },
-            "description": "POST /api/auth/signup — Alta de usuario en InsForge (usa API key admin). Fija cookies HttpOnly. 409 si el email ya existe, 503 si InsForge no está disponible.",
+            "description": "POST /api/auth/signup — Alta de usuario en InsForge (usa API key admin). Fija cookies HttpOnly.\n\n**Requisito obligatorio**: Debe proporcionar el campo `cuit` (CUIT de 11 dígitos o DNI de 8). Si no se provee, se rechaza con 422.\n\n**Resultado**: Todos los usuarios creados por signup tienen rol `operador` (porque siempre tienen `persona_id` en `user_metadata`).\n\n409 si el email ya existe, 503 si InsForge no está disponible.\n\n**Respuesta**: `{access_token, refresh_token, user: {id, email, rol: \"operador\", persona_id, ...}}`",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"nuevo.usuario@gmail.com\",\n  \"password\": \"password123\",\n  \"name\": \"Nuevo Usuario\",\n  \"user_metadata\": {\n    \"persona_id\": \"1\"\n  },\n  \"tipo_documento\": \"CUIT\"\n}",
+              "raw": "{\n  \"email\": \"nuevo.usuario@gmail.com\",\n  \"password\": \"password123\",\n  \"name\": \"Nuevo Usuario\",\n  \"cuit\": \"30222222222\",\n  \"tipo_documento\": \"CUIT\",\n  \"user_metadata\": {\n    \"nombre\": \"Nuevo Usuario\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -177,7 +177,7 @@
                 "exec": [
                   "pm.test(\"Status code es 200 o 401\", function () {\n    pm.expect([200, 401]).to.include(pm.response.code);\n});",
                   "",
-                  "pm.test(\"devuelve email (si 200)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.email).to.be.a(\"string\").and.not.empty;\n    }\n});"
+                  "pm.test(\"devuelve email y rol (si 200)\", function () {\n    if (pm.response.code === 200) {\n      var data = pm.response.json();\n      pm.expect(data.email).to.be.a(\"string\").and.not.empty;\n      pm.expect(data.rol).to.be.oneOf([\"admin\", \"operador\"]);\n    }\n});"
                 ]
               }
             }
@@ -196,7 +196,7 @@
                 "me"
               ]
             },
-            "description": "GET /api/auth/me — Devuelve los datos del usuario autenticado. Requiere cookie rocca_access_token válida (hacer login antes). 401 si no hay cookie o está expirada."
+            "description": "GET /api/auth/me — Devuelve los datos del usuario autenticado. Requiere cookie rocca_access_token válida (hacer login antes). 401 si no hay cookie o está expirada.\n\n**Respuesta**: `{id, email, rol, persona_id, user_metadata}`"
           }
         },
         {
@@ -266,6 +266,34 @@
               }
             }
           ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"new_password\": \"NuevaContraseña123\"}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/change-password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            }
+          },
+          "description": "Cambia la contraseña del usuario autenticado. Requiere cookie de sesión válida.\n\nBody: {\"new_password\": \"...\"} (mín. 8 caracteres)\n\nDespués del cambio, se elimina el flag must_change_password de la user_metadata."
         }
       ]
     },
@@ -331,7 +359,7 @@
                   "pm.test(\"Status code es 200 o 404\", function () {",
                   "    pm.expect([200, 404]).to.include(pm.response.code);",
                   "});",
-                  "pm.test(\"devuelve persona con domicilio_id\", function () {",
+                  "pm.test(\"devuelve persona\", function () {",
                   "    if (pm.response.code === 200) {",
                   "        var p = pm.response.json();",
                   "        pm.expect(p).to.have.property('id');",
@@ -412,44 +440,7 @@
                 "registro-operadores"
               ]
             },
-            "description": "GET '' — lista operadores, opcionalmente filtrados por tipo y estado_registral."
-          }
-        },
-        {
-          "name": "GET listar filtrado por tipo",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
-                  "",
-                  "pm.test(\"todos son FRIGORIFICO\", function () {\n    var data = pm.response.json();\n    pm.expect(data.every(o => o.tipo === \"FRIGORIFICO\"));\n});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/registro-operadores?tipo=FRIGORIFICO",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "registro-operadores"
-              ],
-              "query": [
-                {
-                  "key": "tipo",
-                  "value": "FRIGORIFICO"
-                }
-              ]
-            },
-            "description": "GET '' con query tipo."
+            "description": "GET /api/registro-operadores — lista operadores, opcionalmente filtrados por tipo y estado_registral."
           }
         },
         {
@@ -486,7 +477,7 @@
                 }
               ]
             },
-            "description": "GET '' con query estado_registral."
+            "description": "GET /api/registro-operadores con query estado_registral."
           }
         },
         {
@@ -537,10 +528,10 @@
                 "registro-operadores"
               ]
             },
-            "description": "POST '' — alta de operador (OperadorIn). ``categoria`` es obligatoria (SALA_DE_DESPOSTE, CARNICERIAS, CAMARAS_FRIGORIFICAS, FABRICA_DE_CHACINADOS, CARNICERIA_CON_CAMARA, TRANSPONEDOR, SUPERMERCADO, DISTRIBUIDOR). El CUIT identifica a la persona titular (se crea/resuelve idempotente). 400 si la categoría es inválida o falta.",
+            "description": "POST /api/registro-operadores — alta de operador (OperadorIn). ``categoria`` es obligatoria (SALA_DE_DESPOSTE, CARNICERIAS, CAMARAS_FRIGORIFICAS, FABRICA_DE_CHACINADOS, CARNICERIA_CON_CAMARA, TRANSPONEDOR, SUPERMERCADO, DISTRIBUIDOR). El CUIT identifica a la persona titular (se crea/resuelve idempotente). 400 si la categoría es inválida o falta.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cuit\": \"30222222222\",\n  \"razon_social\": \"CARNICERIA EL ESTERO\",\n  \"tipo\": \"CARNICERIA\",\n  \"categoria\": \"CARNICERIAS\",\n  \"telefono\": \"385-4444444\",\n  \"email\": \"carniceria@ester.com\",\n  \"domicilio\": {\n    \"calle\": \"Av. Rivadavia\",\n    \"numero\": \"500\",\n    \"localidad\": \"Santiago del Estero\",\n    \"provincia\": \"Santiago del Estero\",\n    \"codigo_postal\": \"4400\"\n  }\n}",
+              "raw": "{\n  \"cuit\": \"30222222222\",\n  \"establecimiento_fantasia\": \"CARNICERIA EL ESTERO\",\n  \"tipo\": \"CARNICERIA\",\n  \"categoria\": \"CARNICERIAS\",\n  \"telefono\": \"385-4444444\",\n  \"email\": \"carniceria@ester.com\",\n  \"domicilio\": {\n    \"calle\": \"Av. Rivadavia\",\n    \"numero\": \"500\",\n    \"localidad\": \"Santiago del Estero\",\n    \"provincia\": \"Santiago del Estero\",\n    \"codigo_postal\": \"4400\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -587,10 +578,10 @@
                 "registro-operadores"
               ]
             },
-            "description": "POST '' — el CUIT ya existe como persona: se reutiliza (idempotente) y se crea un nuevo operador vinculado a la misma persona. 201 con el nuevo operador.",
+            "description": "POST /api/registro-operadores — el CUIT ya existe como persona: se reutiliza (idempotente) y se crea un nuevo operador vinculado a la misma persona. 201 con el nuevo operador.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cuit\": \"30111111111\",\n  \"razon_social\": \"FRIGORIFICO TEST S.A.\",\n  \"tipo\": \"FRIGORIFICO\",\n  \"categoria\": \"SALA_DE_DESPOSTE\",\n  \"domicilio\": {\n    \"calle\": \"Ruta 9 km 12\",\n    \"numero\": null,\n    \"localidad\": \"Santiago del Estero\",\n    \"provincia\": \"Santiago del Estero\",\n    \"codigo_postal\": \"4300\"\n  }\n}",
+              "raw": "{\n  \"cuit\": \"30111111111\",\n  \"establecimiento_fantasia\": \"FRIGORIFICO TEST S.A.\",\n  \"tipo\": \"FRIGORIFICO\",\n  \"categoria\": \"SALA_DE_DESPOSTE\",\n  \"domicilio\": {\n    \"calle\": \"Ruta 9 km 12\",\n    \"numero\": null,\n    \"localidad\": \"Santiago del Estero\",\n    \"provincia\": \"Santiago del Estero\",\n    \"codigo_postal\": \"4300\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -637,10 +628,10 @@
                 "registro-operadores"
               ]
             },
-            "description": "POST '' — categoría no válida. 400 con detalle indicando las categorías permitidas.",
+            "description": "POST /api/registro-operadores — categoría no válida. 400 con detalle indicando las categorías permitidas.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cuit\": \"30111111111\",\n  \"razon_social\": \"INVALIDO\",\n  \"tipo\": \"FRIGORIFICO\",\n  \"categoria\": \"CATEGORIA_NO_EXISTE\"\n}",
+              "raw": "{\n  \"cuit\": \"30111111111\",\n  \"establecimiento_fantasia\": \"INVALIDO\",\n  \"tipo\": \"FRIGORIFICO\",\n  \"categoria\": \"CATEGORIA_NO_EXISTE\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -678,7 +669,7 @@
                 "1"
               ]
             },
-            "description": "GET '/{operador_id}' (id entero, no CUIT). 404 si no existe."
+            "description": "GET /api/registro-operadores/{operador_id} (id entero, no CUIT). 404 si no existe."
           }
         },
         {
@@ -708,7 +699,7 @@
                 "9999"
               ]
             },
-            "description": "GET '/{operador_id}' con id inexistente → 404."
+            "description": "GET /api/registro-operadores/{operador_id} con id inexistente → 404."
           }
         },
         {
@@ -747,7 +738,7 @@
                 }
               ]
             },
-            "description": "PATCH '/{operador_id}/estado' — el estado va en QUERY (EstadoRegistral: ACTIVO, SUSPENDIDO, BAJADO), no en body. 404 si el operador no existe."
+            "description": "PATCH /api/registro-operadores/{operador_id}/estado — el estado va en QUERY (EstadoRegistral: ACTIVO, SUSPENDIDO, BAJADO), no en body. 404 si el operador no existe."
           }
         },
         {
@@ -762,7 +753,7 @@
               ],
               "path": [
                 "api",
-                "registro-operadores?categoria=SALA_DE_DESPOSTE"
+                "registro-operadores"
               ],
               "query": [
                 {
@@ -772,7 +763,7 @@
                 }
               ]
             },
-            "description": "GET '' — filtra operadores por categoría (SALA_DE_DESPOSTE, CARNICERIAS, etc.)."
+            "description": "GET /api/registro-operadores — filtra operadores por categoría (SALA_DE_DESPOSTE, CARNICERIAS, etc.)."
           },
           "event": [
             {
@@ -789,6 +780,136 @@
                   "});"
                 ]
               }
+            }
+          ]
+        },
+        {
+          "name": "GET listar categorías",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/registro-operadores/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "registro-operadores",
+                "categorias"
+              ]
+            },
+            "description": "GET /api/registro-operadores/categorias — lista todas las categorías de establecimientos (SALA_DE_DESPOSTE, CARNICERIAS, CAMARAS_FRIGORIFICAS, FABRICA_DE_CHACINADOS, CARNICERIA_CON_CAMARA, TRANSPONEDOR, SUPERMERCADO, DISTRIBUIDOR)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"es un array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Requisitos",
+          "item": [
+            {
+              "name": "POST subir archivo de requisito",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": ""
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/registro-operadores/1/requisitos/1/archivo",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "registro-operadores",
+                    "1",
+                    "requisitos",
+                    "1",
+                    "archivo"
+                  ]
+                },
+                "description": "POST /api/registro-operadores/{operador_id}/requisitos/{requisito_categoria_id}/archivo — sube un archivo de imagen (JPG, PNG, PDF) para un requisito específico. Máximo 10MB."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code es 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "pm.test(\"responde con estado CUMPLIDO\", function () {",
+                      "    const json = pm.response.json();",
+                      "    pm.expect(json.estado).to.eql('CUMPLIDO');",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "GET listar archivos de requisito",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/registro-operadores/1/requisitos/1/archivos",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "registro-operadores",
+                    "1",
+                    "requisitos",
+                    "1",
+                    "archivos"
+                  ]
+                },
+                "description": "GET /api/registro-operadores/{operador_id}/requisitos/{requisito_categoria_id}/archivos — lista todos los archivos subidos para un requisito específico."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code es 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"es un array\", function () {",
+                      "    pm.expect(pm.response.json()).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ]
             }
           ]
         }
@@ -916,14 +1037,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"operador_id\": 1,\n  \"observaciones\": \"Motivo de suspensi\\u00f3n\"\n}",
+              "raw": "{\n  \"operador_id\": 1,\n  \"observaciones\": \"Motivo de suspensión\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "POST '' — suspende el certificado vigente del operador (supervisor). El ``operador_id`` se pasa en el body. Body: {operador_id, observaciones?}. 400 si no hay certificado vigente o no está ACTIVO."
+            "description": "POST /api/registro-operadores/certificados/suspender — suspende el certificado vigente del operador (supervisor). El ``operador_id`` se pasa en el body. Body: {operador_id, observaciones?}. 400 si no hay certificado vigente o no está ACTIVO."
           },
           "response": []
         },
@@ -949,7 +1070,7 @@
                 "reactivar"
               ]
             },
-            "description": "POST '' — reactiva el certificado suspendido del operador (supervisor). El ``operador_id`` se pasa en el body. Body: {operador_id}. 400 si no hay certificado o no está SUSPENDIDO.",
+            "description": "POST /api/registro-operadores/certificados/reactivar — reactiva el certificado suspendido del operador (supervisor). El ``operador_id`` se pasa en el body. Body: {operador_id}. 400 si no hay certificado o no está SUSPENDIDO.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"operador_id\": 1\n}",
@@ -1050,315 +1171,6 @@
       ]
     },
     {
-      "name": "Adjuntos",
-      "item": [
-        {
-          "name": "Persona",
-          "item": [
-            {
-              "name": "Subir adjunto persona",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/api/personas/1/adjuntos",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "personas",
-                    "1",
-                    "adjuntos"
-                  ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"requisito\": \"dni_frente\",\n  \"filename\": \"dni_frente.jpg\",\n  \"content_type\": \"image/jpeg\",\n  \"data_base64\": \"/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "description": "POST '' — sube un adjunto de persona. ``requisito``: dni_frente, dni_dorso, cuit, iibb. ``content_type``: image/jpeg, image/png, application/pdf. Máx 10 MB."
-              },
-              "response": []
-            },
-            {
-              "name": "Listar adjuntos persona",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/personas/1/adjuntos",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "personas",
-                    "1",
-                    "adjuntos"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "URL de descarga adjunto",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/personas/1/adjuntos/1/url",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "personas",
-                    "1",
-                    "adjuntos",
-                    "1",
-                    "url"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Eliminar adjunto persona",
-              "request": {
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/personas/1/adjuntos/1",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "personas",
-                    "1",
-                    "adjuntos",
-                    "1"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Operador",
-          "item": [
-            {
-              "name": "Subir adjunto operador",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "registro-operadores",
-                    "1",
-                    "adjuntos"
-                  ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"requisito\": \"habilitacion_municipal\",\n  \"filename\": \"habilitacion.pdf\",\n  \"content_type\": \"application/pdf\",\n  \"data_base64\": \"JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwgL0xlbmd0aSAzNSBLIC9UeXBlIC9TdHJlYW0gL0ZpbHRlciAvRmxhdGVEZWNvZGUgPj4Kc3RyZWFtCnicpVXLKgwoVCSPiU/EzOS8k9h0LgI4gYBA\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "description": "POST '' — sube un adjunto de operador. ``requisito`` debe corresponder a la categoría del operador (ver catálogo de requisitos). ``content_type``: image/jpeg, image/png, application/pdf. Máx 10 MB. 400 si el requisito no corresponde a la categoría."
-              },
-              "response": []
-            },
-            {
-              "name": "Listar adjuntos operador",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "registro-operadores",
-                    "1",
-                    "adjuntos"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "URL de descarga adjunto",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos/1/url",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "registro-operadores",
-                    "1",
-                    "adjuntos",
-                    "1",
-                    "url"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Eliminar adjunto operador",
-              "request": {
-                "method": "DELETE",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/registro-operadores/1/adjuntos/1",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "api",
-                    "registro-operadores",
-                    "1",
-                    "adjuntos",
-                    "1"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Requisitos de inscripción",
-      "item": [
-        {
-          "name": "Catálogo de requisitos",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/registro-operadores/catalogo/requisitos",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "registro-operadores",
-                "catalogo",
-                "requisitos"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Requisitos del operador",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/registro-operadores/1/requisitos",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "registro-operadores",
-                "1",
-                "requisitos"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Requisitos pendientes",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/registro-operadores/1/requisitos/pendientes",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "registro-operadores",
-                "1",
-                "requisitos",
-                "pendientes"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Marcar requisito cumplido",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/registro-operadores/1/requisitos/1?cumplido=true",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "registro-operadores",
-                "1",
-                "requisitos",
-                "1"
-              ],
-              "query": [
-                {
-                  "key": "cumplido",
-                  "value": "true"
-                }
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
       "name": "Catálogo de Actividades Económicas",
       "item": [
         {
@@ -1379,7 +1191,7 @@
                 "grupos"
               ]
             },
-            "description": "GET '' — lista los grupos de actividades económicas (A, B, C, ...)."
+            "description": "GET /api/registro-operadores/catalogo/actividades/grupos — lista los grupos de actividades económicas (A, B, C, ...)."
           },
           "event": [
             {
@@ -1414,7 +1226,7 @@
                 "registro-operadores",
                 "catalogo",
                 "actividades",
-                "subgrupos?grupo=A"
+                "subgrupos"
               ],
               "query": [
                 {
@@ -1424,7 +1236,7 @@
                 }
               ]
             },
-            "description": "GET '' — lista subgrupos, opcionalmente filtrados por grupo."
+            "description": "GET /api/registro-operadores/catalogo/actividades/subgrupos — lista subgrupos, opcionalmente filtrados por grupo."
           },
           "event": [
             {
@@ -1455,7 +1267,7 @@
                 "registro-operadores",
                 "catalogo",
                 "actividades",
-                "subsubgrupos?grupo=A&subgrupo=01"
+                "subsubgrupos"
               ],
               "query": [
                 {
@@ -1470,7 +1282,7 @@
                 }
               ]
             },
-            "description": "GET '' — lista sub-subgrupos (3.er dígito), filtrados por grupo y subgrupo."
+            "description": "GET /api/registro-operadores/catalogo/actividades/subsubgrupos — lista sub-subgrupos (3.er dígito), filtrados por grupo y subgrupo."
           },
           "event": [
             {
@@ -1500,7 +1312,7 @@
                 "api",
                 "registro-operadores",
                 "catalogo",
-                "actividades?grupo=A"
+                "actividades"
               ],
               "query": [
                 {
@@ -1510,7 +1322,7 @@
                 }
               ]
             },
-            "description": "GET '' — lista actividades económicas (con código DGR y alícuota)."
+            "description": "GET /api/registro-operadores/catalogo/actividades — lista actividades económicas (con código DGR y alícuota)."
           },
           "event": [
             {

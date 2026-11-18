@@ -35,6 +35,8 @@ export function PaginaLogin() {
   const [nombre, setNombre] = useState("");
   const [tipoDoc, setTipoDoc] = useState<"CUIT" | "DNI">("CUIT");
   const [documento, setDocumento] = useState("");
+  const [aceptoPrivacidad, setAceptoPrivacidad] = useState(false);
+  const [mostrarPolitica, setMostrarPolitica] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [login, { isLoading: cargandoLogin }] = useLoginMutation();
   const [signup, { isLoading: cargandoSignup }] = useSignupMutation();
@@ -55,6 +57,8 @@ export function PaginaLogin() {
     setNombre("");
     setDocumento("");
     setTipoDoc("CUIT");
+    setAceptoPrivacidad(false);
+    setMostrarPolitica(false);
   }
 
   async function onSubmit(e: FormEvent) {
@@ -89,6 +93,10 @@ export function PaginaLogin() {
         return;
       }
     }
+    if (modo === "signup" && !aceptoPrivacidad) {
+      setError("Debe aceptar la Política de Privacidad y Tratamiento de Datos para crear la cuenta.");
+      return;
+    }
 
     try {
       let result;
@@ -109,7 +117,9 @@ export function PaginaLogin() {
       if (result.user) {
         dispatch(setSesion({ usuario: result.user }));
       }
-      const redirect = (location.state as { from?: string } | null)?.from ?? "/operadores";
+      // Redirigir según rol del usuario
+      const rol = (result.user?.rol as string) ?? "admin";
+      const redirect = (location.state as { from?: string } | null)?.from ?? (rol === "operador" ? "/operador" : "/admin");
       navigate(redirect, { replace: true });
     } catch (err: unknown) {
       const data = err as { data?: { detail?: string } };
@@ -214,9 +224,9 @@ export function PaginaLogin() {
                   </div>
                 </div>
                 <TextField
-                  label={tipoDoc === "CUIT" ? "C.U.I.T. del titular * (ej.: 30-11111111-1)" : "D.N.I. del titular * (ej.: 11111111)"}
+                  label={tipoDoc === "CUIT" ? "C.U.I.T. del titular * (ej.: 30-11111111-4)" : "D.N.I. del titular * (ej.: 11111111)"}
                   required
-                  placeholder={tipoDoc === "CUIT" ? "30-11111111-1" : "11111111"}
+                  placeholder={tipoDoc === "CUIT" ? "30-11111111-4" : "11111111"}
                   value={documento}
                   onChange={setDocumento}
                 />
@@ -249,6 +259,31 @@ export function PaginaLogin() {
               />
             )}
 
+            {modo === "signup" && (
+              <div className="flex flex-col gap-1.5">
+                <label className="flex cursor-pointer select-none items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={aceptoPrivacidad}
+                    onChange={(e) => setAceptoPrivacidad(e.target.checked)}
+                    className="mt-0.5 size-4 shrink-0 accent-[var(--color-rocca-rojo)]"
+                  />
+                  <span className="text-[12px] leading-snug text-rocca-texto-medio">
+                    Acepto la{" "}
+                    <button
+                      type="button"
+                      onClick={() => setMostrarPolitica(true)}
+                      className="font-semibold text-rocca-azul-oscuro underline underline-offset-2 hover:text-rocca-rojo"
+                    >
+                      Política de Privacidad y Tratamiento de Datos
+                    </button>{" "}
+                    y consiento el tratamiento de mis datos personales para la
+                    gestión del Registro de Operadores de la Cadena Cárnica. *
+                  </span>
+                </label>
+              </div>
+            )}
+
             {error && (
               <p className="rounded-lg border border-rocca-error/30 bg-rocca-error/5 px-3 py-2 text-[12px] font-medium text-rocca-error">
                 {error}
@@ -261,7 +296,7 @@ export function PaginaLogin() {
                 cargando ||
                 !email ||
                 !password ||
-                (modo === "signup" && (!passwordConfirm || !documento.trim()))
+                (modo === "signup" && (!passwordConfirm || !documento.trim() || !aceptoPrivacidad))
               }
               className="mt-1 flex h-[38px] items-center justify-center gap-2 rounded-lg bg-rocca-rojo text-[13px] font-bold text-white transition-colors hover:bg-[#b91c1c] disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -276,6 +311,94 @@ export function PaginaLogin() {
           </form>
         </div>
       </main>
+
+      {/* Modal: Política de Privacidad y Tratamiento de Datos */}
+      {mostrarPolitica && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Política de Privacidad y Tratamiento de Datos"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMostrarPolitica(false);
+          }}
+        >
+          <div className="flex max-h-[80vh] w-full max-w-[560px] flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-rocca-borde px-5 py-3">
+              <h2 className="text-[14px] font-bold text-rocca-azul-oscuro">
+                Política de Privacidad y Tratamiento de Datos
+              </h2>
+              <button
+                type="button"
+                onClick={() => setMostrarPolitica(false)}
+                aria-label="Cerrar"
+                className="text-[18px] leading-none text-rocca-texto-apagado hover:text-rocca-texto"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4 text-[12px] leading-relaxed text-rocca-texto-medio">
+              <p>
+                <strong className="text-rocca-texto">Responsable del tratamiento.</strong> El
+                Registro de Operadores y Control de la Cadena Cárnica (ROCCA) actúa como
+                responsable del tratamiento de los datos personales que usted proporciona al
+                registrarse.
+              </p>
+              <p>
+                <strong className="text-rocca-texto">Finalidad.</strong> Sus datos se utilizan
+                exclusivamente para la gestión del registro de operadores, la emisión de los
+                cartones F 102, el seguimiento de la documentación exigida por la Dirección de
+                Agricultura y Ganadería y la comunicación de novedades relacionadas con su
+                inscripción.
+              </p>
+              <p>
+                <strong className="text-rocca-texto">Datos que se recogen.</strong> Datos de
+                identificación del titular (nombre o razón social, CUIT o DNI), datos de contacto
+                (email, teléfono) y datos del establecimiento (domicilio, categoría de actividad).
+              </p>
+              <p>
+                <strong className="text-rocca-texto">Conservación y acceso.</strong> Los datos se
+                conservan mientras la inscripción se encuentre vigente y solo son accesibles al
+                personal autorizado de la Dirección de Agricultura y Ganadería. No se ceden a
+                terceros ajenos a la gestión del registro, salvo obligación legal.
+              </p>
+              <p>
+                <strong className="text-rocca-texto">Sus derechos.</strong> Puede ejercer los
+                derechos de acceso, rectificación, supresión y oposición sobre sus datos
+                personales dirigiéndose al área de atención al usuario del Registro.
+              </p>
+              <p>
+                <strong className="text-rocca-texto">Seguridad.</strong> Se aplican medidas
+                técnicas y organizativas razonables para proteger sus datos contra el acceso
+                no autorizado, la pérdida o la alteración.
+              </p>
+              <p>
+                La aceptación de esta política es obligatoria para crear la cuenta y es revocable
+                en cualquier momento mediante el ejercicio de sus derechos.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-rocca-borde px-5 py-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setAceptoPrivacidad(true);
+                  setMostrarPolitica(false);
+                }}
+                className="rounded-lg bg-rocca-rojo px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-[#b91c1c]"
+              >
+                Aceptar y continuar
+              </button>
+              <button
+                type="button"
+                onClick={() => setMostrarPolitica(false)}
+                className="rounded-lg px-4 py-2 text-[13px] font-medium text-rocca-texto-medio hover:bg-rocca-fondo"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

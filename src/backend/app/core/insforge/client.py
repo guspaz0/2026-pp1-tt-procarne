@@ -258,6 +258,32 @@ class InsforgeClient:
             params={"client_type": CLIENT_TYPE},
         )
 
+    async def change_password(self, user_id: str, new_password: str) -> None:
+        """Cambia la contraseña de un usuario (admin).
+
+        ``PATCH /api/auth/users/{user_id}?client_type=server``
+        Body: ``{"password": "..."}``
+        """
+        await self._request_json(
+            "PATCH",
+            f"/api/auth/users/{user_id}",
+            json_body={"password": new_password},
+            params={"client_type": CLIENT_TYPE},
+            admin=True,
+        )
+
+    async def delete_user(self, user_id: str) -> None:
+        """Elimina un usuario de InsForge.
+
+        ``DELETE /api/auth/users/{user_id}?client_type=server``
+        """
+        await self._request_json(
+            "DELETE",
+            f"/api/auth/users/{user_id}",
+            params={"client_type": CLIENT_TYPE},
+            admin=True,
+        )
+
     async def get_current_session(self, access_token: str) -> dict[str, Any]:
         """Obtiene el usuario de la sesión actual.
 

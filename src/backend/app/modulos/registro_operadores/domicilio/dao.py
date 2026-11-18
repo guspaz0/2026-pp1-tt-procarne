@@ -33,9 +33,6 @@ class Domicilio(Base):
     # Relación con operador (domicilio comercial) — FK vive en operadores.domicilio_id
     operador: Mapped[Optional["Operador"]] = relationship(back_populates="domicilio")
 
-    # Relación con persona (domicilio titular) — FK vive en personas.domicilio_id
-    persona: Mapped[Optional["Persona"]] = relationship(back_populates="domicilio_rel")
-
     def __repr__(self) -> str:
         return f"<Domicilio id={self.id} calle={self.calle} {self.localidad}>"
 

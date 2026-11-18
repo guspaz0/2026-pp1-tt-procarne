@@ -40,23 +40,6 @@ class PersonaOut(BaseModel):
     identificador: str
     nombre: str
     email: Optional[str] = Field(None, description="Correo electrónico de contacto")
-    domicilio: Optional[DomicilioOut] = Field(None, description="Domicilio (estructurado)")
     creado_en: datetime
 
     model_config = {"from_attributes": True}
-
-    @model_validator(mode="before")
-    @classmethod
-    def _mapear_domicilio(cls, data):
-        """Mapea ``domicilio_rel`` (relación ORM) a ``domicilio`` para el DTO."""
-        if isinstance(data, dict):
-            if data.get("domicilio") is None and data.get("domicilio_rel") is not None:
-                data["domicilio"] = data["domicilio_rel"]
-            return data
-        # Objeto ORM: expone ``domicilio_rel``; Pydantic lo serializa vía from_attributes.
-        try:
-            if getattr(data, "domicilio", None) is None and getattr(data, "domicilio_rel", None) is not None:
-                data.domicilio = data.domicilio_rel
-        except Exception:
-            pass
-        return data

@@ -30,15 +30,18 @@ class OperadorIn(BaseModel):
     """
 
     cuit: Optional[str] = Field(None, description="CUIT de la persona titular (13 dígitos); se usa solo para crear/resolver la persona si no se trae persona_id")
-    razon_social: str = Field(..., description="Razón social")
+    establecimiento_fantasia: str = Field(..., description="Nombre de fantasía del establecimiento")
     persona_id: Optional[int] = Field(None, description="ID de la persona (entidad legal padre)")
     categoria: Optional[str] = Field(None, description="Categoría según especificación (SALA_DE_DESPOSTE, CARNICERIAS, etc.)")
     domicilio: Optional[DomicilioIn] = Field(None, description="Domicilio comercial de esta sucursal (estructurado)")
+    tipos_carne: Optional[str] = Field(None, description="Tipos de carne comercializada (separados por comas: Bovina, Porcina, Ovino, etc.)")
     telefono: Optional[str] = Field(None, description="Teléfono")
     email: Optional[str] = Field(None, description="Email de contacto de la persona titular (se guarda en personas.email)")
     actividad_ids: Optional[list[int]] = Field(None, description="Ids del catálogo de actividades económicas que realiza el operador (N:M)")
     codigo_dgr: Optional[list[str]] = Field(None, description="Códigos DGR del catálogo (actividades_economicas.codigo) que realiza el operador; se resuelven a ids")
     codigo_afip: Optional[list[str]] = Field(None, description="Códigos AFIP/DGR enviados por el frontend (alias de codigo_dgr); se resuelven a ids")
+    crear_cuenta: bool = Field(False, description="Si es True, se crea una cuenta de login para la persona con contraseña por defecto (CUIT/DNI). Solo para admin.")
+    tipo_documento: Optional[str] = Field("CUIT", description="Tipo de documento de la persona: 'CUIT' o 'DNI'")
 
 
 class DomicilioOut(BaseModel):
@@ -64,9 +67,10 @@ class OperadorOut(BaseModel):
 
     id: int
     persona_id: int
-    razon_social: Optional[str]
+    establecimiento_fantasia: Optional[str]
     domicilio: Optional[DomicilioOut] = Field(None, description="Domicilio comercial (estructurado)")
     domicilio_comercial: Optional[str] = Field(None, description="Domicilio comercial legible, construido por el DAO")
+    tipos_carne: Optional[str] = Field(None, description="Tipos de carne comercializada (separados por comas)")
     telefono: Optional[str]
     categoria: Optional[str]
     estado_registral: str

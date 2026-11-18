@@ -5,8 +5,6 @@ Organización por entidad DAO (una carpeta por entidad):
 - ``operador`` — agregado raíz: operador de la cadena cárnica.
 - ``actividad_economica`` — catálogo de actividades (DGR Santiago).
 - ``certificado`` — certificado de habilitación F102.
-- ``requisito_inscripcion`` — requisitos generales/específicos por categoría.
-- ``adjunto_operador`` — adjuntos (documentos) de operador.
 
 Cada carpeta contiene (al menos):
 - ``dao.py`` — modelo ORM (SQLAlchemy) + DAO.
@@ -19,14 +17,22 @@ cada entidad, y :class:`RegistroOperadoresModulo` compone los DAOs y
 servicios.
 """
 
-from modulos.registro_operadores.adjunto_operador.dao import AdjuntoOperador, AdjuntoOperadorDAO
 from modulos.registro_operadores.actividad_economica.dao import (
     ActividadEconomica,
     GrupoActividad,
     SubgrupoActividad,
     SubSubgrupoActividad,
 )
+from modulos.registro_operadores.archivo.dao import Archivo, ArchivoDAO
 from modulos.registro_operadores.certificado.dao import Certificado, CertificadoDAO
+from modulos.registro_operadores.documento_requisito.dao import (
+    DocumentoRequisito,
+    DocumentoRequisitoDAO,
+)
+from modulos.registro_operadores.operador_requisito.dao import (
+    OperadorRequisito,
+    OperadorRequisitoDAO,
+)
 from modulos.registro_operadores.controlador import crear_router
 from modulos.registro_operadores.enums import (
     CategoriaOperador,
@@ -41,24 +47,26 @@ from modulos.registro_operadores.operador.servicio import (
     OperadorService,
 )
 from modulos.registro_operadores.registro_operadores import RegistroOperadoresModulo
-from modulos.registro_operadores.requisito_inscripcion.dao import RequisitoInscripcion
 
 __all__ = [
     "ActividadEconomica",
-    "AdjuntoOperador",
-    "AdjuntoOperadorDAO",
+    "Archivo",
+    "ArchivoDAO",
     "Certificado",
     "CertificadoDAO",
     "CategoriaOperador",
     "EstadoCertificado",
     "EstadoRegistral",
     "GrupoActividad",
-    "RequisitoInscripcion",
+    "DocumentoRequisito",
+    "DocumentoRequisitoDAO",
     "Operador",
     "OperadorDAO",
     "OperadorError",
     "OperadorIn",
     "OperadorOut",
+    "OperadorRequisito",
+    "OperadorRequisitoDAO",
     "OperadorService",
     "RegistroOperadoresModulo",
     "SubgrupoActividad",

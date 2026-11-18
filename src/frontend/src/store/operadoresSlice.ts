@@ -63,7 +63,7 @@ export const selectOperadoresFiltrados = (state: RootState): Operador[] => {
   if (!q) return items;
   return items.filter(
     (o) =>
-      o.razon_social.toLowerCase().includes(q) ||
+      o.establecimiento_fantasia.toLowerCase().includes(q) ||
       (o.cuit ?? "").toLowerCase().includes(q) ||
       formatearDomicilio(o.domicilio).toLowerCase().includes(q),
   );
@@ -92,7 +92,7 @@ export const selectGruposPorPersona = (state: RootState): GrupoPersona[] => {
   }
   return Array.from(porCuit.entries()).map(([cuit, sucursales]) => ({
     cuit,
-    nombre: sucursales[0].razon_social.split(" - ")[0],
+    nombre: sucursales[0].establecimiento_fantasia.split(" - ")[0],
     sucursales,
   }));
 };

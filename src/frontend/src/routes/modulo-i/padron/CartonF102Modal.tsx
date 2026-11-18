@@ -29,7 +29,9 @@ export function CartonF102Modal({
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
       const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: data.contentType || "application/pdf" });
+      const blob = new Blob([byteArray], {
+        type: data.contentType || "application/pdf",
+      });
       const url = URL.createObjectURL(blob);
       setUrlPdf(url);
       return () => URL.revokeObjectURL(url);
@@ -74,7 +76,7 @@ export function CartonF102Modal({
             </span>
             <div>
               <h3 className="text-[15px] font-bold text-rocca-azul-oscuro">
-                Cartón F 102 — N° {numero}
+                Certificado F 102 — N° {numero}
               </h3>
               <p className="text-[11px] text-rocca-texto-apagado">
                 Formulario Oficial de Inscripción Provincial
@@ -98,7 +100,7 @@ export function CartonF102Modal({
               <div className="flex flex-col items-center gap-3">
                 <div className="size-8 animate-spin rounded-full border-4 border-rocca-rojo border-t-transparent" />
                 <span className="text-[13px] font-medium text-rocca-texto-suave">
-                  Generando Cartón F 102…
+                  Generando Certificado F 102…
                 </span>
               </div>
             </div>
@@ -108,7 +110,7 @@ export function CartonF102Modal({
             <div className="flex h-full items-center justify-center">
               <div className="flex flex-col items-center gap-2 text-center">
                 <span className="text-[14px] font-bold text-rocca-error">
-                  Error al generar el Cartón F 102
+                  Error al generar el Certificado F 102
                 </span>
                 <span className="text-[12px] text-rocca-texto-apagado">
                   Verificá la conexión con el servidor.

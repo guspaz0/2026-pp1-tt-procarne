@@ -29,9 +29,6 @@ class Persona(Base):
     email: Mapped[Optional[str]] = mapped_column(
         String(255), nullable=True, unique=True, index=True
     )
-    domicilio_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("domicilios.id", ondelete="SET NULL"), nullable=True
-    )
     creado_en: Mapped[datetime] = mapped_column(
         default=lambda: datetime.now(timezone.utc), nullable=False
     )
@@ -39,12 +36,7 @@ class Persona(Base):
     operadores: Mapped[list["Operador"]] = relationship(
         back_populates="persona"
     )
-    adjuntos: Mapped[list["AdjuntoPersona"]] = relationship(
-        back_populates="persona", cascade="all, delete-orphan"
-    )
-    domicilio_rel: Mapped[Optional["Domicilio"]] = relationship(
-        back_populates="persona", lazy="joined"
-    )
+
 
     def __repr__(self) -> str:
         return f"<Persona id={self.id} {self.tipo} {self.identificador}>"
@@ -61,8 +53,7 @@ class PersonaDAO:
         self._session_factory = session_factory
 
     def crear(self, tipo: str, tipo_documento: str, identificador: str,
-              nombre: str, email: str | None = None,
-              domicilio_id: int | None = None) -> Persona:
+              nombre: str, email: str | None = None) -> Persona:
         """Crea y persiste una persona nueva."""
         with self._session_factory() as session:
             persona = Persona(
@@ -71,7 +62,6 @@ class PersonaDAO:
                 identificador=identificador,
                 nombre=nombre,
                 email=email,
-                domicilio_id=domicilio_id,
             )
             session.add(persona)
             session.commit()
@@ -96,14 +86,18 @@ class PersonaDAO:
         with self._session_factory() as session:
             return session.get(Persona, persona_id)
 
-    def obtener_por_documento(self, tipo: str, identificador: str) -> Persona | None:
-        """Devuelve la persona con el documento dado, o ``None``."""
+    def obtener_por_documento(self, tipo: str, identificador: str, email: str | None = None) -> Persona | None:
+        """Devuelve la persona con la clave compuesta (tipo_documento, identificador, email).
+
+        Si ``email`` es ``None``, busca solo por documento (primer match).
+        """
         with self._session_factory() as session:
-            return (
-                session.query(Persona)
-                .filter_by(tipo_documento=tipo, identificador=identificador)
-                .first()
+            q = session.query(Persona).filter_by(
+                tipo_documento=tipo, identificador=identificador
             )
+            if email is not None:
+                q = q.filter_by(email=email)
+            return q.first()
 
     def obtener_por_email(self, email: str) -> Persona | None:
         """Devuelve la persona con el email dado, o ``None``.
@@ -113,6 +107,14 @@ class PersonaDAO:
         """
         with self._session_factory() as session:
             return session.query(Persona).filter_by(email=email).first()
+
+    def eliminar(self, persona_id: int) -> None:
+        """Elimina una persona por su id."""
+        with self._session_factory() as session:
+            persona = session.get(Persona, persona_id)
+            if persona is not None:
+                session.delete(persona)
+                session.commit()
 
     def listar(self) -> list[Persona]:
         """Devuelve todas las personas."""

@@ -38,7 +38,6 @@ from auth.router import crear_router as crear_router_auth
 from auth.service import AuthService
 from configs.dao import crear_dao
 from core.insforge.client import InsforgeClient
-from core.persona.adjunto_dao import AdjuntoPersonaDAO
 from core.persona.controlador import crear_router as crear_router_persona
 from core.persona.dao import PersonaDAO
 from core.persona.servicio import PersonaService
@@ -110,7 +109,9 @@ class RoccaApp:
         if not hasattr(self, "_insforge_client"):
             self._insforge_client = self._crear_insforge()
         if not hasattr(self, "_auth"):
-            self._auth = AuthService(self._insforge_client)
+            import os
+            cookie_secure = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
+            self._auth = AuthService(self._insforge_client, cookie_secure=cookie_secure)
         return self._auth
 
     def _crear_storage(self) -> InsforgeStorage:
@@ -207,13 +208,7 @@ class RoccaApp:
 
         # Catálogos genéricos compartidos (core)
         persona_dao = PersonaDAO(db_dao.obtener_sesion)
-        adjunto_persona_dao = AdjuntoPersonaDAO(db_dao.obtener_sesion)
-        storage: InsforgeStorage | None = getattr(self.app.state, "storage", None)
-        persona_service = PersonaService(
-            persona_dao,
-            adjunto_dao=adjunto_persona_dao,
-            storage=storage,
-        )
+        persona_service = PersonaService(persona_dao)
 
         # Autenticación (InsForge como IdP): login/signup/refresh/logout/me.
         # El frontend habla solo con FastAPI; FastAPI orquesta InsForge.
@@ -228,7 +223,7 @@ class RoccaApp:
         registro = RegistroOperadoresModulo(
             db_dao,
             persona_dao=persona_dao,
-            storage=storage,
+            auth_service=self._auth_service,
         )
         registro.registrar(self.app)
 
@@ -308,26 +303,9 @@ class RoccaApp:
                 calle_completa = " ".join(partes)
                 domicilio = f"{calle_completa} - {dom_obj.localidad}, {dom_obj.provincia}"
             else:
-                # Fallback: domicilio de la persona (relación ORM) si el operador
-                # no tiene domicilio propio.
-                dom_p = getattr(persona, "domicilio_rel", None) if persona else None
-                if dom_p is not None:
-                    partes_p = [dom_p.calle]
-                    if dom_p.numero:
-                        partes_p.append(f"N°{dom_p.numero}")
-                    domicilio = f"{' '.join(partes_p)} - {dom_p.localidad}, {dom_p.provincia}"
-                else:
-                    domicilio = ""
-            # op.categoria es una relación ORM (Categoria); usamos su nombre.
-            categoria_obj = op.categoria
-            if categoria_obj is None:
-                tipo_carne = ""
-            elif isinstance(categoria_obj, str):
-                tipo_carne = categoria_obj
-            else:
-                tipo_carne = getattr(categoria_obj, "nombre", None) or getattr(
-                    categoria_obj, "descripcion", ""
-                ) or str(categoria_obj)
+                domicilio = ""
+            # tipos_carne: lista de tipos de carne comercializada (separados por comas)
+            tipo_carne = op.tipos_carne or ""
             fecha_inscrip = (cert.fecha_emision if cert else op.alta_fecha) or datetime.now()
             fecha_venc = cert.fecha_vencimiento if (cert and cert.fecha_vencimiento) else None
             # Si no hay fecha de vencimiento (certificado sin vencimiento o sin
@@ -338,8 +316,8 @@ class RoccaApp:
             payload = {
                 "numero_operador": str(100000 + id),
                 "apellido_y_nombre": nombre,
-                "nombre_establecimiento": op.razon_social or "",
-                "razon_social": op.razon_social or "",
+                "nombre_establecimiento": op.establecimiento_fantasia or "",
+                "establecimiento_fantasia": op.establecimiento_fantasia or "",
                 "cuit": cuit,
                 "domicilio": domicilio,
                 "tipo_carne": tipo_carne,

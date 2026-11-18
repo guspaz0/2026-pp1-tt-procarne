@@ -65,12 +65,16 @@ export function TextField({
 /* Select                                                              */
 /* ------------------------------------------------------------------ */
 
+type SelectOption = string | { value: string; label: string };
+
 type SelectFieldProps = {
   label: string;
   required?: boolean;
-  options: string[];
+  options: SelectOption[];
   value?: string;
   onChange?: (v: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
 };
 
 export function SelectField({
@@ -79,7 +83,10 @@ export function SelectField({
   options,
   value,
   onChange,
+  placeholder,
+  disabled,
 }: SelectFieldProps) {
+  const norm = (o: SelectOption) => (typeof o === "string" ? { value: o, label: o } : o);
   return (
     <label className="flex w-full flex-col gap-1.5">
       <span className="text-[12px] font-medium text-rocca-texto-medio">
@@ -88,14 +95,23 @@ export function SelectField({
       </span>
       <select
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange?.(e.target.value)}
-        className="h-[35px] w-full appearance-none rounded-lg border border-rocca-borde-input bg-white px-3 pr-8 text-[12px] font-semibold text-rocca-texto outline-none transition-colors focus:border-rocca-rojo bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2210%22%20height=%226%22%20viewBox=%220%200%2010%206%22%3E%3Cpath%20d=%22M1%201l4%204%204-4%22%20fill=%22none%22%20stroke=%22%2364748b%22%20stroke-width=%221.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[position:right_12px_center] bg-no-repeat"
+        className="h-[35px] w-full appearance-none rounded-lg border border-rocca-borde-input bg-white px-3 pr-8 text-[12px] font-semibold text-rocca-texto outline-none transition-colors focus:border-rocca-rojo disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-rocca-placeholder bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2210%22%20height=%226%22%20viewBox=%220%200%2010%206%22%3E%3Cpath%20d=%22M1%201l4%204%204-4%22%20fill=%22none%22%20stroke=%22%2364748b%22%20stroke-width=%221.5%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%3C/svg%3E')] bg-[position:right_12px_center] bg-no-repeat"
       >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
+        {placeholder !== undefined && (
+          <option value="" disabled={value !== ""}>
+            {placeholder}
           </option>
-        ))}
+        )}
+        {options.map((o) => {
+          const { value: v, label: l } = norm(o);
+          return (
+            <option key={v} value={v}>
+              {l}
+            </option>
+          );
+        })}
       </select>
     </label>
   );

@@ -15,7 +15,7 @@ test.describe("Jerarquía", () => {
     const resp = await request.get("/api/registro-operadores");
     const operadores = (await resp.json()) as Array<{
       cuit: string;
-      razon_social: string;
+      establecimiento_fantasia: string;
     }>;
     if (operadores.length === 0) return;
 
@@ -47,7 +47,7 @@ test.describe("Jerarquía", () => {
     // Cada sucursal aparece dentro de su grupo.
     for (const op of operadores) {
       await expect(
-        page.getByRole("listitem").getByText(op.razon_social).first(),
+        page.getByRole("listitem").getByText(op.establecimiento_fantasia).first(),
       ).toBeVisible();
     }
   });

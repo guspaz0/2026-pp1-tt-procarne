@@ -19,8 +19,10 @@ export interface Operador {
   persona_id: number | null;
   /** Tipo de establecimiento (FRIGORIFICO, CARNICERIA, …). */
   tipo: string;
-  razon_social: string;
+  establecimiento_fantasia: string;
   domicilio: Domicilio | null;
+  /** Tipos de carne comercializada (separados por comas). */
+  tipos_carne: string | null;
   telefono: string | null;
   /** CUIT de la persona titular (resuelto desde la persona). */
   cuit: string | null;
@@ -52,9 +54,9 @@ export interface JerarquiaPersona {
 
 /** Payload de alta de operador (POST /api/registro-operadores). */
 export interface OperadorIn {
-  /** Tipo de establecimiento (FRIGORIFICO, CARNICERIA, …). */
-  tipo: string;
-  razon_social: string;
+  /** Tipo de establecimiento (FRIGORIFICO, CARNICERIA, …). Opcional en el backend. */
+  tipo?: string;
+  establecimiento_fantasia: string;
   /**
    * CUIT de la persona titular. Opcional: si no se pasa, el backend lo toma
    * de la sesión (el usuario autenticado ya está vinculado a su Persona).
@@ -70,9 +72,18 @@ export interface OperadorIn {
   telefono?: string | null;
   /** Email de contacto de la persona titular (se guarda en personas.email). */
   email?: string | null;
+  /** Tipos de carne comercializada (separados por comas: Bovina, Porcina, Ovino, etc.). */
+  tipos_carne?: string | null;
+  /** Categorías de actividad (nombre de la fila en ``categorias``). */
   categoria?: string | null;
+  /** Códigos DGR del catálogo de actividades económicas (alias backend). */
+  codigo_dgr?: string[];
   /** Códigos AFIP del catálogo de actividades que realiza el operador (N:M). */
   codigo_afip?: string[];
+  /** Si es true, se crea una cuenta de login para la persona (solo admin). */
+  crear_cuenta?: boolean;
+  /** Tipo de documento de la persona: 'CUIT' o 'DNI'. */
+  tipo_documento?: string;
 }
 
 /** Payload de alta de usuario (POST /api/auth/signup). */
@@ -142,6 +153,9 @@ export function parsearDomicilio(texto: string): NonNullable<OperadorIn["domicil
   return resultado;
 }
 
+/** Rol del usuario en el sistema. */
+export type Rol = "admin" | "operador";
+
 /** Usuario autenticado (modelo de InsForge, camelCase). */
 export interface Usuario {
   id?: string;
@@ -150,6 +164,12 @@ export interface Usuario {
   providers?: string[];
   createdAt?: string;
   updatedAt?: string;
+  /** Rol del usuario: "admin" o "operador". */
+  rol?: Rol;
+  /** Id de la persona vinculada (si es operador). */
+  persona_id?: number | null;
+  /** Si es true, el usuario debe cambiar su contraseña en el primer login. */
+  must_change_password?: boolean;
   user_metadata?: Record<string, unknown>;
 }
 

@@ -52,7 +52,7 @@ describe("Integración · Alta de Operador (F 102)", () => {
 
     // Rellenamos el formulario (por defecto el tipo es Física, así que el
     // campo del titular se llama "Apellido y Nombre del Titular *").
-    await user.type(screen.getByLabelText(/C\.U\.I\.T\./i), "30-11122233-4");
+    await user.type(screen.getByLabelText(/C\.U\.I\.T\./i), "30-11122233-9");
     await user.type(
       screen.getByLabelText(/Apellido y Nombre del Titular \*/i),
       "CARNICERIA NUEVO OPERADOR",
@@ -76,7 +76,7 @@ describe("Integración · Alta de Operador (F 102)", () => {
     // coincide en live regions; usamos el texto del elemento `status`.)
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent(
-        /Operador registrado \(CUIT 30-11122233-4\)/i,
+        /Operador registrado \(CUIT 30-11122233-9\)/i,
       );
     });
 

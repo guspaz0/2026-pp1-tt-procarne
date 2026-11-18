@@ -143,7 +143,7 @@ def _crear_operador(db, persona_id: int, categoria: str) -> int:
             cat = Categoria(nombre=categoria)
             s.add(cat)
             s.flush()
-        op = Operador(persona_id=persona_id, razon_social=f"OP {categoria}",
+        op = Operador(persona_id=persona_id, establecimiento_fantasia=f"OP {categoria}",
                       categoria_id=cat.id, estado_registral="PENDIENTE")
         s.add(op)
         s.commit()
@@ -216,7 +216,7 @@ class TestWorkflowOperador:
         assert all(a.size > 1000 for a in adjuntos)  # PNGs reales, no stubs
 
     def test_obtener_url(self, operador_service, db, dummy_docs):
-        pid = _crear_persona(db, tipo="juridica", doc="30-11111111-1")
+        pid = _crear_persona(db, tipo="juridica", doc="30-11111111-4")
         op_id = _crear_operador(db, pid, CategoriaOperador.CARNICERIAS.value)
         data = _datos(dummy_docs, "operador", "formulario_101")
         out = asyncio.run(operador_service.subir(
@@ -228,7 +228,7 @@ class TestWorkflowOperador:
         assert url.startswith("https://insforge.test/")
 
     def test_eliminar_adjunto(self, operador_service, db, dummy_docs):
-        pid = _crear_persona(db, tipo="juridica", doc="30-22222222-2")
+        pid = _crear_persona(db, tipo="juridica", doc="30-22222222-0")
         op_id = _crear_operador(db, pid, CategoriaOperador.CARNICERIAS.value)
         data = _datos(dummy_docs, "operador", "habilitacion_municipal")
         out = asyncio.run(operador_service.subir(
@@ -240,7 +240,7 @@ class TestWorkflowOperador:
 
     def test_requisito_ajeno_a_categoria_rechazado(self, operador_service, db, dummy_docs):
         """plano_camara (Cámaras) no puede subirse a una Carnicería."""
-        pid = _crear_persona(db, tipo="juridica", doc="30-33333333-3")
+        pid = _crear_persona(db, tipo="juridica", doc="30-33333333-1")
         op_id = _crear_operador(db, pid, CategoriaOperador.CARNICERIAS.value)
         data = _datos(dummy_docs, "operador", "plano_camara")
         with pytest.raises(OperadorError, match="no corresponde"):
@@ -250,7 +250,7 @@ class TestWorkflowOperador:
             ))
 
     def test_content_type_rechazado(self, operador_service, db):
-        pid = _crear_persona(db, tipo="juridica", doc="30-44444444-4")
+        pid = _crear_persona(db, tipo="juridica", doc="30-44444444-5")
         op_id = _crear_operador(db, pid, CategoriaOperador.CARNICERIAS.value)
         with pytest.raises(OperadorError, match="no permitido"):
             asyncio.run(operador_service.subir(
@@ -260,7 +260,7 @@ class TestWorkflowOperador:
             ))
 
     def test_tamano_excedido_rechazado(self, operador_service, db):
-        pid = _crear_persona(db, tipo="juridica", doc="30-55555555-5")
+        pid = _crear_persona(db, tipo="juridica", doc="30-55555555-9")
         op_id = _crear_operador(db, pid, CategoriaOperador.CARNICERIAS.value)
         with pytest.raises(OperadorError, match="tamaño"):
             asyncio.run(operador_service.subir(
@@ -271,7 +271,7 @@ class TestWorkflowOperador:
 
     def test_payload_api_base64(self, operador_service, db, dummy_docs):
         """Simula el body JSON de POST /{operador_id}/adjuntos (data_base64)."""
-        pid = _crear_persona(db, tipo="juridica", doc="30-66666666-6")
+        pid = _crear_persona(db, tipo="juridica", doc="30-66666666-2")
         op_id = _crear_operador(db, pid, CategoriaOperador.SALA_DE_DESPOSTE.value)
         data = _datos(dummy_docs, "operador", "memoria_constructiva")
         body = {

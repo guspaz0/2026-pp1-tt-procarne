@@ -60,14 +60,14 @@ class TestAPIOperadores:
     def test_crear_operador(self, client):
         payload = {
             "cuit": "30111111111",
-            "razon_social": "FRIGORIFICO TEST S.A.",
+            "establecimiento_fantasia": "FRIGORIFICO TEST S.A.",
             "categoria": "SALA_DE_DESPOSTE",
         }
         response = client.post("/api/registro-operadores", json=payload)
         assert response.status_code == 201
         data = response.json()
         assert data["cuit"] == "30111111111"
-        assert data["razon_social"] == "FRIGORIFICO TEST S.A."
+        assert data["establecimiento_fantasia"] == "FRIGORIFICO TEST S.A."
         assert data["categoria"] == "SALA_DE_DESPOSTE"
         assert data["estado_registral"] == "PENDIENTE"
 
@@ -75,7 +75,7 @@ class TestAPIOperadores:
         """Dos POST con el mismo CUIT → dos operadores distintos (misma persona)."""
         payload = {
             "cuit": "30111111111",
-            "razon_social": "FRIGORIFICO TEST S.A.",
+            "establecimiento_fantasia": "FRIGORIFICO TEST S.A.",
             "categoria": "SALA_DE_DESPOSTE",
         }
         r1 = client.post("/api/registro-operadores", json=payload)
@@ -86,7 +86,7 @@ class TestAPIOperadores:
 
     def test_crear_operador_sin_cuit_ni_persona(self, client):
         payload = {
-            "razon_social": "SIN TITULAR",
+            "establecimiento_fantasia": "SIN TITULAR",
             "categoria": "SALA_DE_DESPOSTE",
         }
         response = client.post("/api/registro-operadores", json=payload)
@@ -96,7 +96,7 @@ class TestAPIOperadores:
     def test_crear_operador_categoria_invalida(self, client):
         payload = {
             "cuit": "30555555555",
-            "razon_social": "OPERADOR INVALIDO",
+            "establecimiento_fantasia": "OPERADOR INVALIDO",
             "categoria": "CATEGORIA_INEXISTENTE",
         }
         response = client.post("/api/registro-operadores", json=payload)
@@ -106,7 +106,7 @@ class TestAPIOperadores:
     def test_listar_operadores(self, client):
         payload = {
             "cuit": "30111111111",
-            "razon_social": "FRIGORIFICO TEST S.A.",
+            "establecimiento_fantasia": "FRIGORIFICO TEST S.A.",
             "categoria": "SALA_DE_DESPOSTE",
         }
         client.post("/api/registro-operadores", json=payload)
@@ -117,12 +117,12 @@ class TestAPIOperadores:
     def test_listar_operadores_filtrar_por_categoria(self, client):
         payload_frigo = {
             "cuit": "30111111111",
-            "razon_social": "FRIGORIFICO",
+            "establecimiento_fantasia": "FRIGORIFICO",
             "categoria": "SALA_DE_DESPOSTE",
         }
         payload_carn = {
             "cuit": "30111111112",
-            "razon_social": "CARNICERIA",
+            "establecimiento_fantasia": "CARNICERIA",
             "categoria": "CARNICERIAS",
         }
         client.post("/api/registro-operadores", json=payload_frigo)
@@ -137,14 +137,14 @@ class TestAPIOperadores:
     def test_obtener_operador(self, client):
         payload = {
             "cuit": "30111111111",
-            "razon_social": "FRIGORIFICO TEST S.A.",
+            "establecimiento_fantasia": "FRIGORIFICO TEST S.A.",
             "categoria": "SALA_DE_DESPOSTE",
         }
         created = client.post("/api/registro-operadores", json=payload)
         operador_id = created.json()["id"]
         response = client.get(f"/api/registro-operadores/{operador_id}")
         assert response.status_code == 200
-        assert response.json()["razon_social"] == "FRIGORIFICO TEST S.A."
+        assert response.json()["establecimiento_fantasia"] == "FRIGORIFICO TEST S.A."
 
     def test_obtener_operador_no_existente(self, client):
         response = client.get("/api/registro-operadores/99999")
@@ -153,7 +153,7 @@ class TestAPIOperadores:
     def test_cambiar_estado(self, client):
         payload = {
             "cuit": "30111111111",
-            "razon_social": "FRIGORIFICO TEST S.A.",
+            "establecimiento_fantasia": "FRIGORIFICO TEST S.A.",
             "categoria": "SALA_DE_DESPOSTE",
         }
         created = client.post("/api/registro-operadores", json=payload)

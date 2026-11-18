@@ -7,7 +7,11 @@
  * Persona Titular / CUIT | Actividades / Especies | Domicilio | Estado | Cartón F 102
  */
 import { useEffect, useMemo, useState } from "react";
-import { IconCheck, IconCamera, IconDownload } from "../../../components/shared/Icons";
+import {
+  IconCheck,
+  IconCamera,
+  IconDownload,
+} from "../../../components/shared/Icons";
 import { CartonF102Modal } from "./CartonF102Modal";
 import { formatearDomicilio, type Operador } from "../../../types";
 import {
@@ -41,7 +45,10 @@ const ESPECIES: Record<string, string> = {
   SUPERMERCADO: "Bovina, Porcina, Caprina",
 };
 
-function estadoLabel(estado: string): { texto: string; tono: "ok" | "warn" | "off" } {
+function estadoLabel(estado: string): {
+  texto: string;
+  tono: "ok" | "warn" | "off";
+} {
   const e = (estado || "").toUpperCase();
   if (e.includes("ACTIVO") || e.includes("HABILITADO") || e.includes("ALTA"))
     return { texto: "Habilitado", tono: "ok" };
@@ -64,7 +71,13 @@ function SelloVerde() {
   );
 }
 
-function BadgeEstado({ tono, texto }: { tono: "ok" | "warn" | "off"; texto: string }) {
+function BadgeEstado({
+  tono,
+  texto,
+}: {
+  tono: "ok" | "warn" | "off";
+  texto: string;
+}) {
   const estilos =
     tono === "ok"
       ? "bg-[#d1fae5] text-[#065f46]"
@@ -72,7 +85,9 @@ function BadgeEstado({ tono, texto }: { tono: "ok" | "warn" | "off"; texto: stri
         ? "bg-[#fef3c7] text-[#92400e]"
         : "bg-[#fee2e2] text-[#991b1b]";
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${estilos}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${estilos}`}
+    >
       <IconCheck size={12} />
       {texto}
     </span>
@@ -105,7 +120,7 @@ export function PadronSucursales() {
     ];
     const filas = filtrados.map((o) => [
       String(100000 + o.id),
-      o.razon_social,
+      o.establecimiento_fantasia,
       o.cuit,
       o.categoria ?? "",
       formatearDomicilio(o.domicilio),
@@ -113,7 +128,8 @@ export function PadronSucursales() {
       o.estado_registral,
     ]);
     const csv = [encabezados, ...filas]
-      .map((f) => f.map((c) => `"${String(c ?? "").replace(/"/g, '""')}`)).join(",");
+      .map((f) => f.map((c) => `"${String(c ?? "").replace(/"/g, '""')}`))
+      .join(",");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -143,7 +159,8 @@ export function PadronSucursales() {
             Padrón de Operadores
           </h2>
           <p className="text-[12px] text-rocca-texto-suave">
-            {filtrados.length} establecimientos registrados en el padrón • listado por sucursal
+            {filtrados.length} establecimientos registrados en el padrón •
+            listado por sucursal
           </p>
         </div>
         <div className="flex w-full items-center gap-2 lg:w-auto">
@@ -199,7 +216,10 @@ export function PadronSucursales() {
             <tbody>
               {cargando && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-rocca-texto-apagado">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-[13px] text-rocca-texto-apagado"
+                  >
                     Cargando padrón…
                   </td>
                 </tr>
@@ -207,15 +227,24 @@ export function PadronSucursales() {
 
               {!cargando && (error as object) && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-rocca-error">
-                    Error al cargar el padrón: {error instanceof Error ? error.message : JSON.stringify(error)}
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-[13px] text-rocca-error"
+                  >
+                    Error al cargar el padrón:{" "}
+                    {error instanceof Error
+                      ? error.message
+                      : JSON.stringify(error)}
                   </td>
                 </tr>
               )}
 
               {!cargando && !error && filtrados.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-rocca-texto-apagado">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-12 text-center text-[13px] text-rocca-texto-apagado"
+                  >
                     No hay operadores en el padrón.
                   </td>
                 </tr>
@@ -233,7 +262,9 @@ export function PadronSucursales() {
                       {/* Certificado F 102 */}
                       <td className="px-3 py-4 align-top">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[10px] font-medium text-rocca-texto-apagado">N°</span>
+                          <span className="text-[10px] font-medium text-rocca-texto-apagado">
+                            N°
+                          </span>
                           <span className="text-[14px] font-black leading-tight text-[#0f172a]">
                             {String(100000 + o.id)}
                           </span>
@@ -248,9 +279,9 @@ export function PadronSucursales() {
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             <span className="text-[12px] font-semibold text-[#0f172a]">
-                              {o.razon_social}
+                              {o.establecimiento_fantasia}
                             </span>
-                            {estado.tono === "ok" && <SelloVerde />}
+                            {/*estado.tono === "ok" && <SelloVerde />*/}
                           </div>
                           <span className="text-[10px] text-[#64748b]">
                             {formatearDomicilio(o.domicilio) || "—"}
@@ -262,7 +293,7 @@ export function PadronSucursales() {
                       <td className="px-3 py-4 align-top">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-[12px] font-semibold text-[#0f172a]">
-                            {o.razon_social.split(" - ")[0]}
+                            {o.establecimiento_fantasia.split(" - ")[0]}
                           </span>
                           <span className="text-[10px] font-medium text-[#64748b]">
                             CUIT: {o.cuit}

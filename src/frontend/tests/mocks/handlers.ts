@@ -99,7 +99,7 @@ export function createHandlers(options: HandlerOptions = {}) {
           id: 1,
           tipo: "PF",
           tipo_documento: "CUIT",
-          identificador: "30-71234567-8",
+          identificador: "30-71234567-9",
           nombre: "CARNICERÍA LA NORITA",
           domicilio: {
             id: 1,
@@ -150,7 +150,7 @@ export function createHandlers(options: HandlerOptions = {}) {
           { status: 400 },
         );
       }
-      const nuevo = crearOperadorMock(data.cuit, data.razon_social);
+      const nuevo = crearOperadorMock(data.cuit, data.establecimiento_fantasia);
       nuevo.id = nextId++;
       nuevo.tipo = data.tipo;
       nuevo.categoria = data.categoria ?? null;

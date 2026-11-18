@@ -19,6 +19,24 @@ export type FileTangoInfo = {
   enableRangeProcessing: boolean;
 };
 
+/** Requisito de papeleo de una categoría (backend: modulos.registro_operadores). */
+export type CategoriaRequisito = {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion?: string | null;
+  obligatorio: boolean;
+};
+
+/** Categoría de operador con sus requisitos de papeleo. */
+export type CategoriaCarnicaApi = {
+  id: number;
+  nombre: string;
+  descripcion?: string | null;
+  ciclo?: string | null;
+  requisitos: CategoriaRequisito[];
+};
+
 /**
  * BaseQuery con detección de 401 global.
  * Las cookies de sesión (InsForge tokens) se envían automáticamente por el
@@ -75,6 +93,40 @@ export const operadoresApi = createApi({
     obtenerCartonF102: builder.query<FileTangoInfo, number>({
       query: (id) => `/f102?id=${id}`,
     }),
+    /**
+     * Categorías de actividad cárnica con sus requisitos de papeleo
+     * (para el select de categorías del formulario F 101).
+     */
+    listarCategorias: builder.query<CategoriaCarnicaApi[], void>({
+      query: () => "/registro-operadores/categorias",
+    }),
+    /**
+     * Sube un archivo de imagen para un requisito específico.
+     */
+    subirArchivoRequisito: builder.mutation<
+      { operador_requisito_id: number; archivo_id: number; url: string; estado: string },
+      { operadorId: number; requisitoCategoriaId: number; file: File }
+    >({
+      query: ({ operadorId, requisitoCategoriaId, file }) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return {
+          url: `/registro-operadores/${operadorId}/requisitos/${requisitoCategoriaId}/archivo`,
+          method: "POST",
+          body: formData,
+        };
+      },
+    }),
+    /**
+     * Lista archivos subidos para un requisito específico.
+     */
+    listarArchivosRequisito: builder.query<
+      Array<{ documento_id: number; archivo_id: number; nombre: string; url: string; fecha_carga: string | null }>,
+      { operadorId: number; requisitoCategoriaId: number }
+    >({
+      query: ({ operadorId, requisitoCategoriaId }) =>
+        `/registro-operadores/${operadorId}/requisitos/${requisitoCategoriaId}/archivos`,
+    }),
   }),
 });
 
@@ -109,9 +161,17 @@ export const authApi = operadoresApi.injectEndpoints({
         method: "POST",
       }),
     }),
+    changePassword: builder.mutation<{ detail: string }, { new_password: string }>({
+      query: (data) => ({
+        url: "/auth/change-password",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: data,
+      }),
+    }),
   }),
 });
 
 // Re-exportar hooks para compatibilidad con imports existentes
-export const { useListarQuery, useObtenerQuery, useRegistrarMutation, useObtenerCartonF102Query } = operadoresApi;
-export const { useLoginMutation, useSignupMutation, useMeQuery, useLogoutMutation } = authApi;
+export const { useListarQuery, useObtenerQuery, useRegistrarMutation, useObtenerCartonF102Query, useListarCategoriasQuery } = operadoresApi;
+export const { useLoginMutation, useSignupMutation, useMeQuery, useLogoutMutation, useChangePasswordMutation } = authApi;

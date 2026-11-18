@@ -26,7 +26,8 @@ class Categoria(Base):
     ciclo: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     requisitos: Mapped[list["Requisito"]] = relationship(
-        back_populates="categoria", cascade="all, delete-orphan"
+        back_populates="categorias",
+        secondary="categoria_requisitos",
     )
     operadores: Mapped[list["Operador"]] = relationship(
         back_populates="categoria"
@@ -57,9 +58,16 @@ class CategoriaDAO:
             )
 
     def listar(self) -> list[Categoria]:
-        """Lista todas las categorías."""
+        """Lista todas las categorías (con requisitos eager-loadeados)."""
+        from sqlalchemy.orm import selectinload
+
         with self._session_factory() as session:
-            return list(session.query(Categoria).order_by(Categoria.nombre).all())
+            stmt = (
+                session.query(Categoria)
+                .options(selectinload(Categoria.requisitos))
+                .order_by(Categoria.nombre)
+            )
+            return list(stmt.all())
 
     def crear(self, nombre: str, descripcion: str | None = None,
               ciclo: str | None = None) -> Categoria:

@@ -29,6 +29,12 @@ class SignupRequest(BaseModel):
     )
 
 
+class ChangePasswordRequest(BaseModel):
+    """Cambio de contraseña (usuario autenticado)."""
+
+    new_password: str = Field(..., min_length=8, description="Nueva contraseña (mín. 8 caracteres)")
+
+
 class RefreshRequest(BaseModel):
     """Refresh token (aunque viene por cookie, se acepta en el body opcional)."""
 

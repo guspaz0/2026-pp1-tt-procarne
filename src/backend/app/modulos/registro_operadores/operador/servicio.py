@@ -6,9 +6,6 @@ Casos de uso del operador (agregado raíz del módulo):
 - Cambio de estado registral.
 - Creación de los requisitos iniciales (generales + específicos por
   categoría) al dar de alta un operador.
-
-El catálogo de requisitos por categoría vive en
-:mod:`modulos.registro_operadores.requisito_inscripcion.servicio`.
 """
 
 from __future__ import annotations
@@ -25,15 +22,14 @@ class OperadorService:
     """Servicio de negocio de operadores de la cadena cárnica."""
 
     def __init__(self, dao: OperadorDAO, persona_service=None,
-                 requisito_service=None,
                  certificado_service=None, catalogo_actividades_dao=None,
-                 domicilio_dao=None) -> None:
+                 domicilio_dao=None, auth_service=None) -> None:
         self._dao = dao
         self._persona_service = persona_service
-        self._requisito_service = requisito_service
         self._domicilio_dao = domicilio_dao
         self._certificado_service = certificado_service
         self._catalogo_actividades_dao = catalogo_actividades_dao
+        self._auth_service = auth_service
 
     # ------------------------------------------------------------------
     # Operadores
@@ -49,7 +45,7 @@ class OperadorService:
         """
         # ``operadores.persona_id`` es NOT NULL: si el alta no trae la persona
         # titular, la resolvemos/creamos por CUIT (idempotente).
-        persona_id = self._resolver_persona(data.persona_id, data.cuit, data.razon_social)
+        persona_id = self._resolver_persona(data.persona_id, data.cuit, data.establecimiento_fantasia)
 
         # Validar y resolver la categoría (nombre → fila en ``categorias``).
         # ``operadores.categoria_id`` es NOT NULL, por lo que el alta siempre
@@ -78,9 +74,10 @@ class OperadorService:
             self._persona_service.actualizar_email(persona_id, data.email)
 
         operador = self._dao.crear(
-            razon_social=data.razon_social,
+            establecimiento_fantasia=data.establecimiento_fantasia,
             persona_id=persona_id,
             domicilio_id=domicilio_id,
+            tipos_carne=data.tipos_carne,
             telefono=data.telefono,
             categoria_id=categoria_id,
         )
@@ -92,9 +89,6 @@ class OperadorService:
             _persona = operador.persona  # noqa: F841 — fuerza el lazy load
         except Exception:
             pass
-
-        # Crear los requisitos (generales + específicos) con estado "no cumplido"
-        self._crear_requisitos_iniciales(operador.id, data.categoria)
 
         # Guardar las actividades económicas del catálogo (N:M).
         # ``actividad_ids`` son ids directos; ``codigo_dgr`` / ``codigo_afip``
@@ -110,7 +104,49 @@ class OperadorService:
         if ids:
             self._dao.asignar_actividades(operador.id, ids)
 
+        # Crear cuenta de login para la persona (solo si el admin lo pide).
+        # La contraseña por defecto es el número de documento (CUIT/DNI).
+        if data.crear_cuenta and data.email and self._auth_service is not None:
+            self._crear_cuenta_persona(persona_id, data.email, data.cuit or "")
+
         return self._to_out(operador)
+
+    def _crear_cuenta_persona(self, persona_id: int, email: str, documento: str) -> None:
+        """Crea una cuenta de login en InsForge para la persona.
+
+        La contraseña por defecto es el número de documento (CUIT/DNI)
+        sin guiones. Se marca ``must_change_password=True`` en la
+        ``user_metadata`` para forzar el cambio en el primer login.
+
+        Si el email ya tiene una cuenta, no se crea otra (idempotente).
+        """
+        import asyncio
+        from auth.service import AuthError
+
+        # Contraseña por defecto: documento sin guiones.
+        password_defecto = "".join(ch for ch in documento if ch.isdigit())
+        if len(password_defecto) < 8:
+            # El documento es demasiado corto (p. ej. DNI de 7 dígitos):
+            # se completa con ceros a la derecha.
+            password_defecto = password_defecto.ljust(8, "0")
+
+        async def _do_signup():
+            await self._auth_service.signup(
+                email, password_defecto,
+                name=None,
+                metadata={"persona_id": persona_id, "must_change_password": True},
+            )
+
+        try:
+            # El endpoint es sync, así que creamos un loop nuevo.
+            asyncio.run(_do_signup())
+        except AuthError:
+            # Si el email ya existe en InsForge, no es un error:
+            # la persona ya tiene cuenta. Se ignora.
+            pass
+        except Exception:
+            # No es fatal: el operador se crea igual, solo que sin cuenta de login.
+            pass
 
     def _to_out(self, operador) -> OperadorOut:
         """Convierte un ORM a DTO resolviendo las actividades (N:M)."""
@@ -173,35 +209,6 @@ class OperadorService:
     # Delegación a servicios por entidad (API pública del servicio antiguo)
     # ------------------------------------------------------------------
 
-    def listar_requisitos(self, operador_id: int) -> list["RequisitoInscripcionOut"]:
-        """Lista los requisitos de un operador."""
-        if self._requisito_service is None:
-            raise OperadorError("RequisitoInscripcionService no configurado")
-        return self._requisito_service.listar(operador_id)
-
-    def listar_requisitos_pendientes(self, operador_id: int) -> list["RequisitoInscripcionOut"]:
-        """Lista los requisitos pendientes de un operador."""
-        if self._requisito_service is None:
-            raise OperadorError("RequisitoInscripcionService no configurado")
-        return self._requisito_service.listar_pendientes(operador_id)
-
-    def obtener_requisitos_pendientes(self, operador_id: int) -> list["RequisitoInscripcionOut"]:
-        """Alias de :meth:`listar_requisitos_pendientes` (API antigua)."""
-        return self.listar_requisitos_pendientes(operador_id)
-
-    def actualizar_requisito(self, operador_id: int, requisito_id: int,
-                             cumplido: bool, observaciones: str | None = None) -> "RequisitoInscripcionOut":
-        """Actualiza el cumplimiento de un requisito."""
-        if self._requisito_service is None:
-            raise OperadorError("RequisitoInscripcionService no configurado")
-        return self._requisito_service.actualizar(operador_id, requisito_id, cumplido, observaciones)
-
-    def validar_requisito_para_categoria(self, categoria: str, requisito: str) -> bool:
-        """Valida que un requisito corresponda a la categoría."""
-        if self._requisito_service is None:
-            raise OperadorError("RequisitoInscripcionService no configurado")
-        return self._requisito_service.validar_requisito_para_categoria(categoria, requisito)
-
     def obtener_certificado_vigente(self, operador_id: int) -> "CertificadoOut | None":
         """Obtiene el certificado vigente (delega en :class:`CertificadoService`).
 
@@ -224,7 +231,7 @@ class OperadorService:
     # ------------------------------------------------------------------
 
     def _resolver_persona(self, persona_id: int | None, cuit: str,
-                          razon_social: str) -> int:
+                          establecimiento_fantasia: str) -> int:
         """Devuelve el id de la persona titular del operador.
 
         Si el alta trae ``persona_id`` lo usa directamente; si no, busca la
@@ -251,7 +258,7 @@ class OperadorService:
                     tipo=tipo_persona,
                     tipo_documento="CUIT",
                     identificador=cuit,
-                    nombre=razon_social,
+                    nombre=establecimiento_fantasia,
                 )
             )
             return creada.id
@@ -288,41 +295,4 @@ class OperadorService:
             return existente.id
         return dao.crear(nombre=categoria).id
 
-    def _crear_requisitos_iniciales(self, operador_id: int, categoria: str | None) -> None:
-        """Crea los requisitos iniciales (generales + específicos) para un operador."""
-        # Import tardío: evita el ciclo operador <-> requisito_inscripcion
-        # (el servicio de requisitos importa OperadorError de aquí).
-        from modulos.registro_operadores.requisito_inscripcion.servicio import (
-            REQUISITOS_ESPECIFICOS_POR_CATEGORIA,
-            REQUISITOS_GENERALES,
-        )
-        from modulos.registro_operadores.requisito_inscripcion.dao import (
-            RequisitoInscripcion,
-        )
 
-        with self._dao._session_factory() as session:
-
-            # Requisitos generales (comunes a todas las categorías)
-            for codigo in REQUISITOS_GENERALES:
-                req = RequisitoInscripcion(
-                    operador_id=operador_id,
-                    codigo=codigo,
-                    descripcion=codigo.replace("_", " ").title(),
-                    es_general=True,
-                    cumplido=False,
-                )
-                session.add(req)
-
-            # Requisitos específicos según categoría
-            if categoria is not None:
-                for codigo in REQUISITOS_ESPECIFICOS_POR_CATEGORIA.get(categoria, []):
-                    req = RequisitoInscripcion(
-                        operador_id=operador_id,
-                        codigo=codigo,
-                        descripcion=codigo.replace("_", " ").title(),
-                        es_general=False,
-                        cumplido=False,
-                    )
-                    session.add(req)
-
-            session.commit()

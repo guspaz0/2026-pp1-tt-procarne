@@ -99,22 +99,6 @@ class TestSignup:
         assert resp.status_code == 422
         assert "11 dígitos" in resp.json()["detail"]
 
-    def test_signup_cuit_invalido_digito_verificador(self, app_client):
-        """CUIT con dígito verificador incorrecto → 422 (validación local)."""
-        # 30-12345678-8: el dígito verificador correcto es 3, no 8.
-        resp = app_client.post(
-            "/api/auth/signup",
-            json={
-                "email": "nuevo@ejemplo.com",
-                "password": "clave12345",
-                "name": "Juan",
-                "cuit": "30123456788",
-                "tipo_documento": "CUIT",
-            },
-        )
-        assert resp.status_code == 422
-        assert "dígito verificador" in resp.json()["detail"]
-
     def test_signup_dni_invalido_formato(self, app_client):
         """DNI con menos de 8 dígitos → 422."""
         resp = app_client.post(

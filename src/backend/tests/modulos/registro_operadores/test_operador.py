@@ -28,12 +28,12 @@ class TestOperadorService:
     def test_crear_operador(self, servicio):
         data = OperadorIn(
             cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
+            establecimiento_fantasia="FRIGORIFICO TEST S.A.",
             categoria="SALA_DE_DESPOSTE",
         )
         resultado = servicio.crear_operador(data)
         assert resultado.cuit == "30111111111"
-        assert resultado.razon_social == "FRIGORIFICO TEST S.A."
+        assert resultado.establecimiento_fantasia == "FRIGORIFICO TEST S.A."
         assert resultado.categoria == "SALA_DE_DESPOSTE"
         assert resultado.estado_registral == "PENDIENTE"
 
@@ -41,7 +41,7 @@ class TestOperadorService:
         """Crear dos operadores con el mismo CUIT es válido: misma persona, dos sucursales."""
         data = OperadorIn(
             cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
+            establecimiento_fantasia="FRIGORIFICO TEST S.A.",
             categoria="SALA_DE_DESPOSTE",
         )
         primero = servicio.crear_operador(data)
@@ -53,7 +53,7 @@ class TestOperadorService:
     def test_crear_operador_sin_persona_ni_cuit(self, servicio):
         """Sin persona_id ni CUIT no se puede identificar al titular."""
         data = OperadorIn(
-            razon_social="SIN TITULAR",
+            establecimiento_fantasia="SIN TITULAR",
             categoria="SALA_DE_DESPOSTE",
         )
         with pytest.raises(OperadorError, match="persona_id o cuit"):
@@ -62,7 +62,7 @@ class TestOperadorService:
     def test_crear_operador_categoria_invalida(self, servicio):
         data = OperadorIn(
             cuit="30555555555",
-            razon_social="OPERADOR INVALIDO",
+            establecimiento_fantasia="OPERADOR INVALIDO",
             categoria="CATEGORIA_INEXISTENTE",
         )
         with pytest.raises(OperadorError, match="Categoría inválida"):
@@ -71,25 +71,25 @@ class TestOperadorService:
     def test_obtener(self, servicio):
         data = OperadorIn(
             cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
+            establecimiento_fantasia="FRIGORIFICO TEST S.A.",
             categoria="SALA_DE_DESPOSTE",
         )
         creado = servicio.crear_operador(data)
         resultado = servicio.obtener(creado.id)
         assert resultado is not None
-        assert resultado.razon_social == "FRIGORIFICO TEST S.A."
+        assert resultado.establecimiento_fantasia == "FRIGORIFICO TEST S.A."
         assert resultado.cuit == "30111111111"
 
     def test_obtener_por_cuit(self, servicio):
         data = OperadorIn(
             cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
+            establecimiento_fantasia="FRIGORIFICO TEST S.A.",
             categoria="SALA_DE_DESPOSTE",
         )
         servicio.crear_operador(data)
         resultado = servicio.obtener_por_cuit("30111111111")
         assert resultado is not None
-        assert resultado.razon_social == "FRIGORIFICO TEST S.A."
+        assert resultado.establecimiento_fantasia == "FRIGORIFICO TEST S.A."
 
     def test_obtener_por_cuit_sin_resultado(self, servicio):
         assert servicio.obtener_por_cuit("30999999999") is None
@@ -99,7 +99,7 @@ class TestOperadorService:
             servicio.crear_operador(
                 OperadorIn(
                     cuit=f"3011111111{i}",
-                    razon_social=f"OPERADOR {i}",
+                    establecimiento_fantasia=f"OPERADOR {i}",
                     categoria="SALA_DE_DESPOSTE",
                 )
             )
@@ -109,7 +109,7 @@ class TestOperadorService:
     def test_listar_filtrar_por_estado(self, servicio):
         data = OperadorIn(
             cuit="30111111111",
-            razon_social="FRIGORIFICO",
+            establecimiento_fantasia="FRIGORIFICO",
             categoria="SALA_DE_DESPOSTE",
         )
         creado = servicio.crear_operador(data)
@@ -123,7 +123,7 @@ class TestOperadorService:
             servicio.crear_operador(
                 OperadorIn(
                     cuit=f"3066666666{i}",
-                    razon_social=f"OP {cat}",
+                    establecimiento_fantasia=f"OP {cat}",
                     categoria=cat,
                 )
             )
@@ -134,7 +134,7 @@ class TestOperadorService:
     def test_cambiar_estado(self, servicio):
         data = OperadorIn(
             cuit="30111111111",
-            razon_social="FRIGORIFICO TEST S.A.",
+            establecimiento_fantasia="FRIGORIFICO TEST S.A.",
             categoria="SALA_DE_DESPOSTE",
         )
         creado = servicio.crear_operador(data)
@@ -161,7 +161,7 @@ class TestOperadorService:
 
         data = OperadorIn(
             cuit="30121212121",
-            razon_social="FRIGO CON ACTIVIDAD",
+            establecimiento_fantasia="FRIGO CON ACTIVIDAD",
             categoria="SALA_DE_DESPOSTE",
             actividad_ids=[actividad_id],
         )

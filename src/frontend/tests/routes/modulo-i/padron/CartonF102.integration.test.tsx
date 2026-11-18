@@ -56,7 +56,7 @@ describe("Integración · Cartón F 102", () => {
   it("abrir el cartón: dispara la query, el PDF llega de la API y se pinta el iframe", async () => {
     mount(store);
     await waitFor(() => {
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(OPS[0].establecimiento_fantasia).length).toBeGreaterThan(0);
     });
 
     // Abro el cartón del primer operador (N° 100001).

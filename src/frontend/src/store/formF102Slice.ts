@@ -24,6 +24,12 @@ export type FormF102 = {
   categorias: string[];
   tiposCarne: string[];
   requisitos: Record<string, boolean>;
+  /** Archivos adjuntos por requisito (id del requisito → nombre del archivo). */
+  adjuntos: Record<string, string>;
+  /** Aceptación de la política de privacidad y tratamiento de datos personales. */
+  aceptoPrivacidad: boolean;
+  /** Si es true, se crea una cuenta de login para la persona (solo admin). */
+  crearCuenta: boolean;
   // selloAgrotraza: boolean; // [AGROTRAZA] desactivado
 };
 
@@ -44,6 +50,9 @@ export const FORM_INICIAL: FormF102 = {
   categorias: [],
   tiposCarne: [],
   requisitos: {},
+  adjuntos: {},
+  aceptoPrivacidad: false,
+  crearCuenta: false,
   // selloAgrotraza: false, // [AGROTRAZA] desactivado
 };
 
@@ -82,6 +91,14 @@ const formF102Slice = createSlice({
       const id = action.payload;
       state.form.requisitos[id] = !state.form.requisitos[id];
     },
+    setAdjunto(state, action: PayloadAction<{ id: string; nombre: string | null }>) {
+      const { id, nombre } = action.payload;
+      if (nombre === null) {
+        delete state.form.adjuntos[id];
+      } else {
+        state.form.adjuntos[id] = nombre;
+      }
+    },
     /** Vuelve el formulario a su estado inicial, opcionalmente fijando el departamento por defecto. */
     resetearFormulario(state, action: PayloadAction<string>) {
       state.form = { ...FORM_INICIAL, departamento: action.payload };
@@ -89,6 +106,6 @@ const formF102Slice = createSlice({
   },
 });
 
-export const { setCampo, toggleCategoria, toggleCarne, toggleRequisito, resetearFormulario } =
+export const { setCampo, toggleCategoria, toggleCarne, toggleRequisito, setAdjunto, resetearFormulario } =
   formF102Slice.actions;
 export default formF102Slice.reducer;

@@ -35,10 +35,10 @@ PUBLIC_PATHS = {
     "/api/auth/refresh",
     "/api/auth/logout",
     "/api/health",
-    "/docs",
-    "/docs/oauth2-redirect",
-    "/openapi.json",
-    "/redoc",
+    # "/docs",
+    # "/docs/oauth2-redirect",
+    # "/openapi.json",
+    # "/redoc",
 }
 
 # Prefijos que también son públicos (SPA / assets).

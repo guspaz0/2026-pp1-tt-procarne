@@ -132,7 +132,7 @@ export async function mockRoccaApi(
         tipo_operador: "OPERADOR",
         tipo_operacion: "COMERCIALIZADOR",
         cuit: body.cuit,
-        razon_social: body.razon_social,
+        establecimiento_fantasia: body.establecimiento_fantasia,
         domicilio: body.domicilio ? { id: nextId++, ...body.domicilio } : null,
         telefono: body.telefono ?? null,
         email: body.email ?? null,

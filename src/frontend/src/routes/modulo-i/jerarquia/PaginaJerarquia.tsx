@@ -28,7 +28,7 @@ function agruparPorCuit(operadores: Operador[]): [string, Operador[]][] {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([cuit, ops]) => [
       cuit,
-      [...ops].sort((a, b) => a.razon_social.localeCompare(b.razon_social)),
+      [...ops].sort((a, b) => a.establecimiento_fantasia.localeCompare(b.establecimiento_fantasia)),
     ]);
 }
 
@@ -83,7 +83,7 @@ export function PaginaJerarquia() {
                 </span>
                 <div className="flex flex-col">
                   <span className="text-[14px] font-bold text-rocca-azul-oscuro">
-                    {sucursales[0].razon_social}
+                    {sucursales[0].establecimiento_fantasia}
                   </span>
                   <span className="text-[11px] text-rocca-texto-apagado">
                     CUIT: {cuit}
@@ -105,7 +105,7 @@ export function PaginaJerarquia() {
                     </span>
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate text-[13px] font-semibold text-[#0f172a]">
-                        {s.razon_social}
+                        {s.establecimiento_fantasia}
                       </span>
                       <span className="truncate text-[11px] text-[#64748b]">
                         {formatearDomicilio(s.domicilio) || "—"}

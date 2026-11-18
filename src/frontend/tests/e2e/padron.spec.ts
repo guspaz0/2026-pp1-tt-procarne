@@ -54,7 +54,7 @@ test.describe("Padrón de Operadores", () => {
   }) => {
     const resp = await request.get("/api/registro-operadores");
     const operadores = (await resp.json()) as Array<{
-      razon_social: string;
+      establecimiento_fantasia: string;
       cuit: string;
     }>;
     if (operadores.length === 0) return;
@@ -74,7 +74,7 @@ test.describe("Padrón de Operadores", () => {
 
     // Espera a que la tabla esté poblada antes de filtrar.
     await expect(
-      page.getByRole("row").getByText(objetivo.razon_social).first(),
+      page.getByRole("row").getByText(objetivo.establecimiento_fantasia).first(),
     ).toBeVisible();
 
     // Busca un CUIT único: debe quedar solo esa fila.
@@ -82,14 +82,14 @@ test.describe("Padrón de Operadores", () => {
     await busqueda.fill(objetivo.cuit);
 
     const filas = page.getByRole("row").filter({
-      hasText: objetivo.razon_social,
+      hasText: objetivo.establecimiento_fantasia,
     });
     await expect(filas).toHaveCount(1);
 
     // Limpiar el filtro restaura la lista completa.
     await busqueda.fill("");
     await expect(
-      page.getByRole("row").getByText(objetivo.razon_social).first(),
+      page.getByRole("row").getByText(objetivo.establecimiento_fantasia).first(),
     ).toBeVisible();
   });
 

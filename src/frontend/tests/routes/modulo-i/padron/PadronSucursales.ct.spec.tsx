@@ -27,7 +27,7 @@ test("filtra por CUIT del operador mockeado", async ({ mount }) => {
   const component = await mount<HooksConfig>(<PadronSucursales />);
 
   // CUIT de LA NORITA en el mock.
-  await component.getByPlaceholder(/Buscar por N° Cartón/).fill("30-71234567-8");
+  await component.getByPlaceholder(/Buscar por N° Cartón/).fill("30-71234567-9");
   await expect(component.getByText("CARNICERÍA LA NORITA")).toBeVisible();
 
   // Un CUIT de otra persona no aparece.

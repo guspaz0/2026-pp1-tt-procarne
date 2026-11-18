@@ -63,7 +63,7 @@ describe("Integración · Padrón de Operadores", () => {
     // La razón social aparece en dos celdas por fila (Establecimiento y
     // Persona Titular), por eso usamos getAllByText.
     await waitFor(() => {
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(OPS[0].establecimiento_fantasia).length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
     // El contador de establecimientos refleja la cantidad de items.
@@ -73,13 +73,13 @@ describe("Integración · Padrón de Operadores", () => {
 
     // Cada operador de la API aparece en la tabla.
     for (const op of OPS) {
-      expect(screen.getAllByText(op.razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(op.establecimiento_fantasia).length).toBeGreaterThan(0);
     }
   });
 
   it("filtra la lista en vivo al escribir en la búsqueda (slice + selector)", async () => {
     // Sembramos un operador con un CUIT único para buscar.
-    const unico = crearOperadorMock("30-99999999-9", "CARNICERIA UNICA TEST");
+    const unico = crearOperadorMock("30-99999999-3", "CARNICERIA UNICA TEST");
     server.use(...createHandlers({ operadores: [...OPS, unico] }));
     mount(store);
 
@@ -94,13 +94,13 @@ describe("Integración · Padrón de Operadores", () => {
 
     // Escribimos el CUIT único: solo queda esa fila.
     const input = screen.getByPlaceholderText(/Buscar por N° Cartón/i);
-    await user.type(input, "30-99999999-9");
+    await user.type(input, "30-99999999-3");
 
     await waitFor(() => {
       expect(screen.getAllByText("CARNICERIA UNICA TEST").length).toBeGreaterThan(0);
     });
     // Los demás operadores desaparecen de la tabla.
-    expect(screen.queryAllByText(OPS[0].razon_social).length).toBe(0);
+    expect(screen.queryAllByText(OPS[0].establecimiento_fantasia).length).toBe(0);
     // El contador refleja la filtración.
     expect(screen.getByText(/registrados en el padrón|de su titularidad/i)).toHaveTextContent("1");
   });
@@ -108,7 +108,7 @@ describe("Integración · Padrón de Operadores", () => {
   it("muestra 'No se encontraron operadores' cuando la búsqueda no coincide", async () => {
     mount(store);
     await waitFor(() => {
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(OPS[0].establecimiento_fantasia).length).toBeGreaterThan(0);
     });
 
     const input = screen.getByPlaceholderText(/Buscar por N° Cartón/i);
@@ -123,14 +123,14 @@ describe("Integración · Padrón de Operadores", () => {
   it("al vaciar la búsqueda, vuelve a mostrar toda la lista", async () => {
     mount(store);
     await waitFor(() => {
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(OPS[0].establecimiento_fantasia).length).toBeGreaterThan(0);
     });
 
     const input = screen.getByPlaceholderText(/Buscar por N° Cartón/i);
-    await user.type(input, OPS[0].razon_social);
+    await user.type(input, OPS[0].establecimiento_fantasia);
     await waitFor(() => {
       // Queda una sola fila (la razón social se pinta en varias celdas de esa fila).
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(OPS[0].establecimiento_fantasia).length).toBeGreaterThan(0);
     });
 
     // Vaciamos la búsqueda (jsdom no soporta bien {SelectAll}/Backspace en
@@ -138,7 +138,7 @@ describe("Integración · Padrón de Operadores", () => {
     fireEvent.change(input, { target: { value: "" } });
 
     await waitFor(() => {
-      expect(screen.getAllByText(OPS[0].razon_social).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(OPS[0].establecimiento_fantasia).length).toBeGreaterThan(0);
     });
     // El contador vuelve a N.
     expect(screen.getByText(/registrados en el padrón|de su titularidad/i)).toHaveTextContent(

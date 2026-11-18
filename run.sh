@@ -43,7 +43,7 @@ if [[ "$E2E" -eq 1 ]]; then
   echo "    ${ROCCA_DATABASE_URL}"
   echo "    (sin PostgreSQL, sin frontend; InsForge sigue siendo el IdP real)"
   echo ""
-  ( cd "$BACKEND" && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 )
+  ( cd "$BACKEND" && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 )
   exit 0
 fi
 
@@ -125,7 +125,7 @@ echo "==> [3/4] Levantando backend FastAPI en http://localhost:8000 ..."
     # shellcheck disable=SC1091
     source .venv/bin/activate
   fi
-  uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ) &
 BACKEND_PID=$!
 
@@ -135,7 +135,7 @@ BACKEND_PID=$!
 echo "==> [4/4] Levantando frontend Vite en http://localhost:5173 ..."
 (
   cd "$FRONTEND"
-  pnpm dev
+  pnpm dev --host 0.0.0.0
 ) &
 FRONTEND_PID=$!
 
@@ -154,6 +154,7 @@ echo ""
 echo "  PostgreSQL: localhost:5432 (gusta/rocca)"
 echo "  Backend:    http://localhost:8000  (API + frontend compilado)"
 echo "  Frontend:   http://localhost:5173  (Vite dev, proxy /api -> :8000)"
+echo "  (exponidos a la red en 0.0.0.0: usá http://<tu-ip>:8000 / :5173)"
 echo ""
 echo "  Ctrl+C para detener todo."
 echo ""

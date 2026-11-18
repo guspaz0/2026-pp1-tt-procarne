@@ -64,18 +64,18 @@ class PersonaFisica(Persona):
 
 
 class PersonaJuridica(Persona):
-    """Persona jurídica (razón social, CUIT)."""
+    """Persona jurídica (establecimiento de fantasía, CUIT)."""
 
     def __init__(
         self,
-        razon_social: str,
+        establecimiento_fantasia: str,
         cuit: str,
     ) -> None:
         super().__init__(
             tipo=TipoPersona.JURIDICA,
             tipo_documento="CUIT",
             identificador=cuit,
-            nombre=razon_social,
+            nombre=establecimiento_fantasia,
         )
-        self.razon_social = razon_social
+        self.establecimiento_fantasia = establecimiento_fantasia
         self.cuit = cuit

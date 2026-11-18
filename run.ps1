@@ -40,7 +40,7 @@ if ($E2E) {
 
     Push-Location $BACKEND
     try {
-        & $VENV_PY -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+        & $VENV_PY -m uvicorn app.main:app --host 0.0.0.0 --port 8000
     } finally {
         Pop-Location
     }
@@ -122,7 +122,7 @@ if (-not (Test-Path '$VENV_ACTIVATE')) {
     python -m venv .venv
 }
 . '$VENV_ACTIVATE'
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 "@
 
 $BACKEND_JOB = Start-Job -ScriptBlock ([scriptblock]::Create($backendScript))
@@ -134,7 +134,7 @@ Write-Host "==> [4/4] Levantando frontend Vite en http://localhost:5173 ..."
 $FRONTEND_JOB = Start-Job -ScriptBlock {
     param($dir)
     Set-Location $dir
-    pnpm dev
+    pnpm dev --host 0.0.0.0
 } -ArgumentList $FRONTEND
 
 # ------------------------------------------------------------------
@@ -144,6 +144,7 @@ Write-Host ""
 Write-Host "  PostgreSQL: localhost:5432 (gusta/rocca)"
 Write-Host "  Backend:    http://localhost:8000  (API + frontend compilado)"
 Write-Host "  Frontend:   http://localhost:5173  (Vite dev, proxy /api -> :8000)"
+Write-Host "  (exponidos a la red en 0.0.0.0: usá http://<tu-ip>:8000 / :5173)"
 Write-Host ""
 Write-Host "  Ctrl+C para detener todo."
 Write-Host ""

@@ -96,11 +96,11 @@ test.describe("Formulario F 102", () => {
     );
 
     // Completar algunos campos
-    await component.getByLabel(/C\.U\.I\.T/).fill("30-99988877-0");
+    await component.getByLabel(/C\.U\.I\.T/).fill("30-99988877-9");
 
     // Navegar fuera y volver (simular reset)
     // En la app real, resetearFormulario se llama al volver al Padrón.
     // Aquí solo verificamos que el campo tiene el valor inicial.
-    await expect(component.getByLabel(/C\.U\.I\.T/)).toHaveValue("30-99988877-0");
+    await expect(component.getByLabel(/C\.U\.I\.T/)).toHaveValue("30-99988877-9");
   });
 });
