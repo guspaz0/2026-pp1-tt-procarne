@@ -1,6 +1,6 @@
 /**
- * Página de inicio: iframe con el portal público de ProCarne + botón flotante
- * para acceder al dashboard autenticado.
+ * Página de inicio (pública): iframe con el portal público de ProCarne +
+ * botón flotante para acceder al dashboard autenticado.
  */
 import { Link } from "react-router-dom";
 import { IconUser } from "../components/shared/Icons";
@@ -21,7 +21,7 @@ export function PaginaInicio() {
 
       {/* Botón flotante para acceso al dashboard */}
       <Link
-        to="/operadores"
+        to="/login"
         className="absolute bottom-6 right-6 flex items-center gap-2 rounded-full bg-rocca-rojo px-5 py-3 text-[14px] font-bold text-white shadow-[0_4px_12px_rgba(139,20,37,0.3)] transition-all hover:bg-rocca-rojo-oscuro hover:shadow-[0_6px_16px_rgba(139,20,37,0.4)] focus:outline-none focus:ring-2 focus:ring-rocca-rojo focus:ring-offset-2"
       >
         <IconUser size={18} className="text-white" />

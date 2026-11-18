@@ -190,7 +190,8 @@ function RedirigirPorRol() {
   }
 
   if (!autenticado) {
-    return <Navigate to="/login" replace />;
+    // Sin sesión: mostrar la página de inicio pública (portal + botón de acceso).
+    return <PaginaInicio />;
   }
 
   if (rol === "admin") {
@@ -302,7 +303,7 @@ export function AppRoutes() {
       />
 
       {/* ==================== REDIRECCIONES ==================== */}
-      {/* Raíz: redirige según rol */}
+      {/* Raíz: sin sesión muestra el portal público (iframe); con sesión redirige según rol */}
       <Route path="/" element={<RedirigirPorRol />} />
 
       {/* Rutas legacy: redirigen a /admin/* */}
