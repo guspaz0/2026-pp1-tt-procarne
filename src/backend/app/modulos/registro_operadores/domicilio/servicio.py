@@ -24,11 +24,12 @@ class DomicilioService:
     def crear(self, calle: str,
               numero: str | None = None,
               localidad: str = "",
-              provincia: str = "",
+              departamento: str = "",
+              provincia: str = "Santiago del Estero",
               codigo_postal: str | None = None) -> Domicilio:
         """Crea un domicilio nuevo."""
         return self._dao.crear(calle, numero, localidad,
-                               provincia, codigo_postal)
+                               departamento, provincia, codigo_postal)
 
     def actualizar(self, domicilio_id: int, **kwargs) -> Optional[Domicilio]:
         """Actualiza un domicilio."""

@@ -10,16 +10,16 @@
         <mxCell id="sistema" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=none;strokeColor=#666666;dashed=1;fontSize=12;fontStyle=1;" value="Sistema PROCARNE — Módulo I" vertex="1">
           <mxGeometry height="410" width="520" x="120" y="50" as="geometry" />
         </mxCell>
-        <mxCell id="cu_pad_listar" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Listar padrón con filtros (tipo, estado, categoría) — todos" vertex="1">
+        <mxCell id="cu_pad_listar" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Listar padrón con filtros (estado_registral, categoría) — admin/supervisor" vertex="1">
           <mxGeometry height="70" width="230" x="20" y="40" as="geometry" />
         </mxCell>
         <mxCell id="cu_pad_obtener" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Obtener operador por id" vertex="1">
           <mxGeometry height="70" width="230" x="270" y="40" as="geometry" />
         </mxCell>
-        <mxCell id="cu_pad_cuit" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Obtener operador por CUIT" vertex="1">
+        <mxCell id="cu_pad_mios" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Ver mis establecimientos (solo los propios, por persona_id)" vertex="1">
           <mxGeometry height="70" width="230" x="20" y="190" as="geometry" />
         </mxCell>
-        <mxCell id="cu_pad_mios" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Ver mis legajos / sucursales (solo los propios, por CUIT)" vertex="1">
+        <mxCell id="cu_pad_cambiar_estado" parent="sistema" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="Cambiar estado registral directo (PENDIENTE/ACTIVO/SUSPENDIDO/BAJADO)" vertex="1">
           <mxGeometry height="70" width="230" x="270" y="190" as="geometry" />
         </mxCell>
         <mxCell id="actor_persona" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=11;" value="Persona (titular)" vertex="1">
@@ -31,7 +31,7 @@
         <mxCell id="e_p_cu_pad_mios" edge="1" parent="1" source="actor_persona" style="endArrow=none;html=1;dashed=1;" target="cu_pad_mios">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_p_cu_pad_cuit" edge="1" parent="1" source="actor_persona" style="endArrow=none;html=1;dashed=1;" target="cu_pad_cuit">
+        <mxCell id="e_p_cu_pad_obtener" edge="1" parent="1" source="actor_persona" style="endArrow=none;html=1;dashed=1;" target="cu_pad_obtener">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e_s_cu_pad_listar" edge="1" parent="1" source="actor_supervisor" style="endArrow=none;html=1;dashed=1;" target="cu_pad_listar">
@@ -40,7 +40,7 @@
         <mxCell id="e_s_cu_pad_obtener" edge="1" parent="1" source="actor_supervisor" style="endArrow=none;html=1;dashed=1;" target="cu_pad_obtener">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="i_pad_mios_cuit" edge="1" parent="1" source="cu_pad_mios" style="endArrow=open;html=1;dashed=1;fontSize=10;" target="cu_pad_cuit" value="«include»">
+        <mxCell id="e_s_cu_pad_cambiar" edge="1" parent="1" source="actor_supervisor" style="endArrow=none;html=1;dashed=1;" target="cu_pad_cambiar_estado">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>

@@ -27,7 +27,8 @@ class Domicilio(Base):
     calle: Mapped[str] = mapped_column(String(100), nullable=False)
     numero: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     localidad: Mapped[str] = mapped_column(String(100), nullable=False)
-    provincia: Mapped[str] = mapped_column(String(50), nullable=False)
+    departamento: Mapped[str] = mapped_column(String(100), nullable=False)
+    provincia: Mapped[str] = mapped_column(String(50), nullable=False, default="Santiago del Estero")
     codigo_postal: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
 
     # Relación con operador (domicilio comercial) — FK vive en operadores.domicilio_id
@@ -56,7 +57,8 @@ class DomicilioDAO:
     def crear(self, calle: str,
               numero: str | None = None,
               localidad: str = "",
-              provincia: str = "",
+              departamento: str = "",
+              provincia: str = "Santiago del Estero",
               codigo_postal: str | None = None) -> Domicilio:
         """Crea y persiste un domicilio nuevo."""
         with self._session_factory() as session:
@@ -64,6 +66,7 @@ class DomicilioDAO:
                 calle=calle,
                 numero=numero,
                 localidad=localidad,
+                departamento=departamento,
                 provincia=provincia,
                 codigo_postal=codigo_postal,
             )

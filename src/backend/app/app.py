@@ -210,6 +210,11 @@ class RoccaApp:
         persona_dao = PersonaDAO(db_dao.obtener_sesion)
         persona_service = PersonaService(persona_dao)
 
+        # Inyectar el DAO de personas en AuthService para resolver el rol
+        # (InsForge no soporta user_metadata; el rol se deriva de la tabla
+        # personas: email presente → operador, ausente → admin).
+        self._auth_service._persona_dao = persona_dao
+
         # Autenticación (InsForge como IdP): login/signup/refresh/logout/me.
         # El frontend habla solo con FastAPI; FastAPI orquesta InsForge.
         self.app.include_router(crear_router_auth(lambda: self._auth_service))
@@ -218,6 +223,14 @@ class RoccaApp:
         from auth.router import set_persona_service
         set_persona_service(persona_service)
         self.app.include_router(crear_router_persona(persona_service))
+
+        # Domicilios (búsqueda y creación)
+        from modulos.registro_operadores.domicilio.controlador import router as router_domicilios
+        from modulos.registro_operadores.domicilio.dao import DomicilioDAO
+        from modulos.registro_operadores.domicilio.servicio import DomicilioService
+        domicilio_dao = DomicilioDAO(db_dao.obtener_sesion)
+        self.app.state.domicilio_service = DomicilioService(domicilio_dao)
+        self.app.include_router(router_domicilios)
 
         # Módulo I — Registro Provincial de Operadores
         registro = RegistroOperadoresModulo(

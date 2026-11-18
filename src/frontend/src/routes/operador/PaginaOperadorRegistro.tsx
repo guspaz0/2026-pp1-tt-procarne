@@ -1,244 +1,154 @@
 /**
  * Página de registro de nuevo establecimiento (operador) para operadores.
  * Ruta: /operador/registro
+ *
+ * Usa las secciones 2, 3 y 4 del formulario F 102 (la sección 1 — Persona
+ * Titular — se omite porque el operador ya tiene su persona vinculada).
  */
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppSelector } from "../../store/hooks";
-import type { OperadorIn } from "../../types";
-
-const CATEGORIAS = [
-  { valor: "SALA_DE_DESPOSTE", label: "Sala de Desposte" },
-  { valor: "CAMARAS_FRIGORIFICAS", label: "Cámaras Frigoríficas" },
-  { valor: "FABRICA_DE_CHACINADOS", label: "Fábrica de Chacinados" },
-  { valor: "CARNICERIAS", label: "Carnicerías" },
-  { valor: "CARNICERIA_CON_CAMARA", label: "Carnicería con Cámara" },
-  { valor: "TRANSPONEDOR", label: "Transportador" },
-  { valor: "SUPERMERCADO", label: "Supermercado" },
-  { valor: "DISTRIBUIDOR", label: "Distribuidor" },
-];
+import { IconCheck, IconForm } from "../../components/shared/Icons";
+import {
+  resetearFormulario as resetearFormularioAction,
+  type FormF102,
+} from "../../store/formF102Slice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useRegistrarMutation, useCrearDomicilioMutation } from "../../store/api";
+import { useToast } from "../../store/toastSlice";
+import { SeccionEstablecimiento } from "../modulo-i/inscripcion/secciones/SeccionEstablecimiento";
+import { SeccionCategoria } from "../modulo-i/inscripcion/secciones/SeccionCategoria";
+import { SeccionRequisitos } from "../modulo-i/inscripcion/secciones/SeccionRequisitos";
 
 export function PaginaOperadorRegistro() {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const usuario = useAppSelector((s) => s.auth.usuario);
-  const personaId = (usuario?.persona_id as number | undefined) ?? null;
+  const form = useAppSelector((s) => s.formF102.form);
+  const [registrar, { isLoading: enviando }] = useRegistrarMutation();
+  const [crearDomicilio] = useCrearDomicilioMutation();
+  const toast = useToast();
 
-  const [razonSocial, setRazonSocial] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [calle, setCalle] = useState("");
-  const [numero, setNumero] = useState("");
-  const [localidad, setLocalidad] = useState("");
-  const [provincia, setProvincia] = useState("");
-  const [codigoPostal, setCodigoPostal] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [exito, setExito] = useState<string | null>(null);
+  // Resetear el formulario al entrar.
+  useEffect(() => {
+    dispatch(resetearFormularioAction(""));
+  }, [dispatch]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setExito(null);
-
-    if (!razonSocial.trim()) {
-      setError("La razón social es obligatoria.");
-      return;
-    }
-    if (!categoria) {
-      setError("Seleccione una categoría.");
-      return;
-    }
-    if (!calle.trim() || !localidad.trim() || !provincia.trim()) {
-      setError("Complete el domicilio (calle, localidad y provincia).");
-      return;
-    }
-
-    const payload: OperadorIn = {
-      tipo: categoria,
-      establecimiento_fantasia: razonSocial.trim(),
-      cuit: null, // Se toma de la sesión
-      domicilio: {
-        calle: calle.trim(),
-        numero: numero.trim() || null,
-        localidad: localidad.trim(),
-        provincia: provincia.trim(),
-        codigo_postal: codigoPostal.trim() || null,
-      },
-      telefono: telefono.trim() || null,
-      email: usuario?.email ?? null,
-      categoria,
-    };
-
-    setEnviando(true);
+  const manejarRegistrar = async (data: FormF102) => {
     try {
-      const resp = await fetch("/api/registro-operadores", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
-        throw new Error(data.detail || `Error ${resp.status}`);
+      // Si el usuario no seleccionó un domicilio existente, se crea uno nuevo.
+      let domicilioId = data.domicilio_id;
+      if (!domicilioId && data.domicilio.trim()) {
+        const nuevo = await crearDomicilio({
+          calle: data.domicilio.replace(/\s*N°.*$/, "").trim(),
+          numero: data.numero_calle || undefined,
+          localidad: data.localidad,
+          departamento: data.departamento,
+          provincia: data.provincia,
+        }).unwrap();
+        domicilioId = nuevo.id;
       }
 
-      const nuevo = await resp.json();
-      setExito(`Establecimiento "${nuevo.establecimiento_fantasia}" registrado correctamente.`);
-      // Reset form
-      setRazonSocial("");
-      setCategoria("");
-      setTelefono("");
-      setCalle("");
-      setNumero("");
-      setLocalidad("");
-      setProvincia("");
-      setCodigoPostal("");
+      // Recopilar los requisitos marcados como cumplidos (códigos).
+      const requisitosCumplidos = Object.entries(data.requisitos)
+        .filter(([, v]) => v)
+        .map(([k]) => k.replace(/^req:/, ""));
 
-      // Navegar al detalle
-      setTimeout(() => {
-        navigate(`/operador/${nuevo.id}`);
-      }, 1500);
-    } catch (e: any) {
-      setError(e.message || "Error al registrar el establecimiento.");
-    } finally {
-      setEnviando(false);
+      await registrar({
+        persona_id: usuario?.persona_id ?? null,
+        cuit: null,
+        establecimiento_fantasia: data.nombreEstablecimiento,
+        categoria: data.categorias[0] ?? null,
+        domicilio: {
+          calle: data.domicilio.replace(/\s*N°.*$/, "").trim(),
+          numero: data.numero_calle || null,
+          localidad: data.localidad,
+          departamento: data.departamento,
+          provincia: data.provincia,
+          codigo_postal: null,
+          id: domicilioId,
+        },
+        tipos_carne: data.tiposCarne.join(", ") || null,
+        telefono: data.telefono || null,
+        email: data.email || null,
+        crear_cuenta: false,
+        tipo_documento: "DNI",
+        documento_requisitos: requisitosCumplidos.length > 0 ? requisitosCumplidos : null,
+      }).unwrap();
+
+      toast.exito(
+        "Establecimiento registrado",
+        `"${data.nombreEstablecimiento}" fue registrado correctamente. Estado: PENDIENTE.`,
+      );
+      navigate("/operador", { replace: true });
+    } catch (err: unknown) {
+      let detalle = "Ocurrió un error inesperado al registrar el establecimiento.";
+      if (err && typeof err === "object" && "data" in err) {
+        const data = (err as { data?: { detail?: string } }).data;
+        if (data?.detail) {
+          detalle = data.detail;
+        }
+      } else if (err instanceof Error) {
+        detalle = err.message;
+      }
+      toast.error("No se pudo registrar", detalle, 10000);
     }
-  }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    manejarRegistrar(form);
+  };
 
   return (
-    <div style={{ margin: "2rem", padding: "1.5rem", border: "1px solid #c9d2d8", borderRadius: "6px", background: "#fff", maxWidth: "700px" }}>
-      <h1>Registrar Nuevo Establecimiento</h1>
-      <p>Complete los datos para dar de alta un nuevo operador/sucursal.</p>
-
-      {exito && (
-        <div style={{ padding: "1rem", background: "#dcfce7", border: "1px solid #16a34a", borderRadius: "6px", marginBottom: "1rem" }}>
-          {exito}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Banner de encabezado */}
+      <div
+        className="flex flex-col gap-4 rounded-xl px-6 py-5 md:flex-row md:items-center md:justify-between"
+        style={{
+          background:
+            "linear-gradient(90deg, #0f172a 0%, #540d17 50%, #0f172a 100%)",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1)",
+        }}
+      >
+        <div className="flex flex-col gap-1.5">
+          <span className="flex items-center gap-1.5 text-[12px] font-bold text-[#fcd34d]">
+            <IconForm size={14} />
+            Registro de Establecimiento
+          </span>
+          <h2 className="text-[18px] font-bold text-white">
+            Alta de Nuevo Establecimiento
+          </h2>
+          <p className="max-w-[560px] text-[12px] text-[#cbd5e1]">
+            Titular: {usuario?.email}. Registre los datos del establecimiento,
+            su categoría cárnica y los requisitos de papeleo.
+          </p>
         </div>
-      )}
+      </div>
 
-      {error && (
-        <div style={{ padding: "1rem", background: "#fee2e2", border: "1px solid #dc2626", borderRadius: "6px", marginBottom: "1rem" }}>
-          <strong>Error:</strong> {error}
-        </div>
-      )}
+      {/* Secciones 2, 3, 4 (la 1 — Persona — se omite) */}
+      <SeccionEstablecimiento />
+      <SeccionCategoria />
+      <SeccionRequisitos />
 
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-        <div>
-          <label style={{ display: "block", fontWeight: 600, marginBottom: "0.25rem" }}>
-            Razón Social *
-          </label>
-          <input
-            type="text"
-            value={razonSocial}
-            onChange={(e) => setRazonSocial(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-            placeholder="Ej: Carnicería El Gallo"
-          />
-        </div>
-
-        <div>
-          <label style={{ display: "block", fontWeight: 600, marginBottom: "0.25rem" }}>
-            Categoría *
-          </label>
-          <select
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-          >
-            <option value="">Seleccione una categoría…</option>
-            {CATEGORIAS.map((cat) => (
-              <option key={cat.valor} value={cat.valor}>
-                {cat.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: "block", fontWeight: 600, marginBottom: "0.25rem" }}>
-            Teléfono
-          </label>
-          <input
-            type="tel"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-            placeholder="Ej: 351-4567890"
-          />
-        </div>
-
-        <fieldset style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "1rem" }}>
-          <legend style={{ fontWeight: 600, padding: "0 0.5rem" }}>Domicilio</legend>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "0.5rem" }}>
-            <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem" }}>Calle *</label>
-              <input
-                type="text"
-                value={calle}
-                onChange={(e) => setCalle(e.target.value)}
-                style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem" }}>Número</label>
-              <input
-                type="text"
-                value={numero}
-                onChange={(e) => setNumero(e.target.value)}
-                style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-              />
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem", marginTop: "0.5rem" }}>
-            <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem" }}>Localidad *</label>
-              <input
-                type="text"
-                value={localidad}
-                onChange={(e) => setLocalidad(e.target.value)}
-                style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem" }}>Provincia *</label>
-              <input
-                type="text"
-                value={provincia}
-                onChange={(e) => setProvincia(e.target.value)}
-                style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontWeight: 500, marginBottom: "0.25rem" }}>Código Postal</label>
-              <input
-                type="text"
-                value={codigoPostal}
-                onChange={(e) => setCodigoPostal(e.target.value)}
-                style={{ width: "100%", padding: "0.5rem", border: "1px solid #cbd5e1", borderRadius: "4px" }}
-              />
-            </div>
-          </div>
-        </fieldset>
-
+      {/* Acciones */}
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onClick={() => navigate("/operador")}
+          className="rounded-lg px-4 py-2.5 text-[13px] font-medium text-rocca-texto-medio transition-colors hover:bg-white"
+        >
+          Cancelar
+        </button>
         <button
           type="submit"
           disabled={enviando}
-          style={{
-            padding: "0.75rem 1.5rem",
-            background: enviando ? "#94a3b8" : "#2563eb",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            fontWeight: 600,
-            cursor: enviando ? "not-allowed" : "pointer",
-            fontSize: "1rem",
-          }}
+          className="flex items-center gap-2 rounded-lg bg-rocca-rojo px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_2px_8px_rgba(139,20,37,0.3)] transition-opacity hover:opacity-90 disabled:opacity-50"
         >
+          <IconCheck size={14} />
           {enviando ? "Registrando…" : "Registrar Establecimiento"}
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }

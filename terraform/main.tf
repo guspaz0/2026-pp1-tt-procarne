@@ -13,10 +13,6 @@ resource "vercel_project" "api" {
   # Sin esto Vercel no detecta framework y sirve los .py como texto estático.
   framework = "fastapi"
 
-  # El proyecto vive en un equipo de Vercel; declarar `team_id` mantiene la
-  # identidad (project_id + team_id) estable y evita el error
-  # "Unexpected Identity Change" al refrescar/destruir.
-  team_id = var.vercel_team_id
 }
 
 data "vercel_project_directory" "app" {

@@ -15,10 +15,12 @@ from pydantic import BaseModel, Field, computed_field, model_validator
 class DomicilioIn(BaseModel):
     """DTO de entrada para un domicilio estructurado."""
 
+    id: Optional[int] = Field(None, description="ID de un domicilio existente (si se reutiliza)")
     calle: str = Field(..., description="Nombre de la calle")
     numero: Optional[str] = Field(None, description="Número (puede ser rango: 433/59)")
-    localidad: str = Field(..., description="Localidad / partido")
-    provincia: str = Field(..., description="Provincia")
+    localidad: str = Field(..., description="Localidad")
+    departamento: str = Field(..., description="Departamento provincial")
+    provincia: str = Field("Santiago del Estero", description="Provincia")
     codigo_postal: Optional[str] = Field(None, description="Código postal")
 
 
@@ -42,6 +44,7 @@ class OperadorIn(BaseModel):
     codigo_afip: Optional[list[str]] = Field(None, description="Códigos AFIP/DGR enviados por el frontend (alias de codigo_dgr); se resuelven a ids")
     crear_cuenta: bool = Field(False, description="Si es True, se crea una cuenta de login para la persona con contraseña por defecto (CUIT/DNI). Solo para admin.")
     tipo_documento: Optional[str] = Field("CUIT", description="Tipo de documento de la persona: 'CUIT' o 'DNI'")
+    documento_requisitos: Optional[list[str]] = Field(None, description="Lista de códigos de requisitos marcados como cumplidos por el operador.")
 
 
 class DomicilioOut(BaseModel):
@@ -51,6 +54,7 @@ class DomicilioOut(BaseModel):
     calle: str
     numero: Optional[str]
     localidad: str
+    departamento: str
     provincia: str
     codigo_postal: Optional[str]
 

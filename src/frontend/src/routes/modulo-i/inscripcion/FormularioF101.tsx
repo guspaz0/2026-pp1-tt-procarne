@@ -11,18 +11,18 @@
  *  4. SeccionRequisitos
  */
 import { useEffect } from "react";
-import { IconCheck, IconForm, IconUpload } from "../../../components/shared/Icons";
+import {
+  IconCheck,
+  IconForm,
+  IconUpload,
+} from "../../../components/shared/Icons";
 import {
   resetearFormulario as resetearFormularioAction,
   type FormF102,
 } from "../../../store/formF102Slice";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
-import {
-  SeccionPersonaTitular,
-} from "./secciones/SeccionPersonaTitular";
-import {
-  SeccionEstablecimiento,
-} from "./secciones/SeccionEstablecimiento";
+import { SeccionPersonaTitular } from "./secciones/SeccionPersonaTitular";
+import { SeccionEstablecimiento } from "./secciones/SeccionEstablecimiento";
 import { SeccionCategoria } from "./secciones/SeccionCategoria";
 import { SeccionRequisitos } from "./secciones/SeccionRequisitos";
 
@@ -78,13 +78,13 @@ export function FormularioF101({
             su categoría cárnica y sus requisitos de papeleo.
           </p>
         </div>
-        <button
-          type="button"
-          className="flex shrink-0 items-center gap-2 rounded-lg bg-rocca-aviso px-4 py-2.5 text-[12px] font-bold text-[#020617] transition-opacity hover:opacity-90"
-        >
-          <IconUpload size={15} />
-          Cargar Datos de un operador
-        </button>
+        {/* <button */}
+        {/*   type="button" */}
+        {/*   className="flex shrink-0 items-center gap-2 rounded-lg bg-rocca-aviso px-4 py-2.5 text-[12px] font-bold text-[#020617] transition-opacity hover:opacity-90" */}
+        {/* > */}
+        {/*   <IconUpload size={15} /> */}
+        {/*   Cargar Datos de un operador */}
+        {/* </button> */}
       </div>
 
       {/* ---------------------------------------------------------- */}

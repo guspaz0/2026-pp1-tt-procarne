@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "ROCCA — ProCarne Test Suite",
-    "description": "ROCCA — Control de la Cadena Cárnica SDE\n\n## Flujo de autenticación\n1. `POST /api/auth/login` → setea cookies HttpOnly (access_token + refresh_token)\n2. Todas las rutas protegidas requieren la cookie `access_token`\n3. `POST /api/auth/refresh` → rota el access token\n4. `POST /api/auth/logout` → borra cookies + revoca refresh en InsForge\n\n## Roles\n- **admin**: acceso a `/admin/*` (padrón, jerarquía, inscripción, etc.)\n- **operador**: acceso a `/operador/*` (sus establecimientos, registro)\n\nEl rol se determina por la presencia de `persona_id` en `user_metadata`:\n- Si tiene `persona_id` → rol `operador`\n- Si no → rol `admin`\n\n## Módulo I — Registro de Operadores\n- **CRUD operadores**: alta (con `categoria` obligatoria), listado con filtros (tipo, estado_registral, categoria), obtener por id, cambio de estado.\n- **Ciclo de vida**: activar (PENDIENTE→ACTIVO), suspender (ACTIVO→SUSPENDIDO), reactivar (SUSPENDIDO→ACTIVO), bajar (→BAJADO). Requieren rol supervisor.\n- **Certificados F102**: alta, listado, vigente, suspender, reactivar. Regla de relevación automática.\n- **Adjuntos**: persona (dni_frente, dni_dorso, cuit, iibb). JSON con data_base64.\n- **Catálogo de actividades económicas**: grupos, subgrupos, subsubgrupos, actividades (código DGR).\n\n## Módulos II y III (en desarrollo)\n- Remitos Electrónicos Cárnicos\n- Trazabilidad Comercial\n- Fiscalización\n\nLos routers de estos módulos están actualmente deshabilitados en el backend (comentados). Se habilitarán en la próxima iteración.",
+    "description": "ROCCA — Control de la Cadena Cárnica SDE\n\n## Flujo de autenticación\n1. `POST /api/auth/login` → setea cookies HttpOnly (access_token + refresh_token)\n2. Todas las rutas protegidas requieren la cookie `access_token`\n3. `POST /api/auth/refresh` → rota el access token\n4. `POST /api/auth/logout` → borra cookies + revoca refresh en InsForge\n\n## Roles\n- **admin**: acceso a `/admin/*` (padrón, jerarquía, inscripción, etc.)\n- **operador**: acceso a `/operador/*` (sus establecimientos, registro)\n\nEl rol se determina por la presencia de `persona_id` en `user_metadata`:\n- Si tiene `persona_id` → rol `operador`\n- Si no → rol `admin`\n\n## Módulos\n- **Auth**: login, signup, refresh, logout, me, change-password.\n- **Personas**: CRUD + adjuntos (DNI, CUIT, IIBB) como base64 en JSON.\n- **Domicilios**: búsqueda y creación de domicilios (query params).\n- **Registro de Operadores**: CRUD + ciclo de vida + categorías.\n- **Certificados F102**: CRUD + suspender/reactivar.\n- **Requisitos**: subida y listado de archivos por requisito.\n- **Catálogo de Actividades Económicas**: grupos, subgrupos, subsubgrupos, actividades.\n- **F102**: generación de PDF F102 (solo dev; en prod es serverless function).\n- **Health**: `GET /api/health` → {status: ok}.\n\nLos routers de Módulos II y III (Remitos Electrónicos, Trazabilidad, Fiscalización) están actualmente deshabilitados en el backend. Se habilitarán en la próxima iteración.",
     "schema": "https://schema.postman.com/json/collection/v2.1.0/collection.json",
     "version": "2.1.0"
   },
@@ -366,6 +366,147 @@
                   "        pm.expect(p).to.have.property('identificador');",
                   "    }",
                   "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/personas/1/adjuntos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/personas/1/adjuntos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "1",
+                "adjuntos"
+              ]
+            },
+            "description": "POST /api/personas/{persona_id}/adjuntos — Sube un adjunto (documento) a una persona. Body JSON con data_base64.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requisito\": \"dni_frente\",\n  \"filename\": \"dni_frente.jpg\",\n  \"content_type\": \"image/jpeg\",\n  \"data_base64\": \"aVZCT0RlcmVudG9yYW5kYXN0YW50ZQ==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 201\", function () {\n    pm.expect([200, 201]).to.include(pm.response.code);\n});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/personas/1/adjuntos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/personas/1/adjuntos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "1",
+                "adjuntos"
+              ]
+            },
+            "description": "GET /api/personas/{persona_id}/adjuntos — Lista los adjuntos de una persona."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () {\n    pm.expect(pm.response.code).to.eql(200);\n});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/personas/1/adjuntos/1/url",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/personas/1/adjuntos/1/url",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "1",
+                "adjuntos",
+                "1",
+                "url"
+              ]
+            },
+            "description": "GET /api/personas/{persona_id}/adjuntos/{adjunto_id}/url — Devuelve una URL firmada para descargar un adjunto. Respuesta: {url}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () {\n    pm.expect(pm.response.code).to.eql(200);\n});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/personas/1/adjuntos/1",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/personas/1/adjuntos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "personas",
+                "1",
+                "adjuntos",
+                "1"
+              ]
+            },
+            "description": "DELETE /api/personas/{persona_id}/adjuntos/{adjunto_id} — Elimina un adjunto (fila + objeto en storage). Devuelve 204 sin cuerpo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 204\", function () {\n    pm.expect(pm.response.code).to.eql(204);\n});"
                 ]
               }
             }
@@ -1337,6 +1478,69 @@
                   "pm.test(\"es un array\", function () {",
                   "    pm.expect(pm.response.json()).to.be.an('array');",
                   "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Domicilios",
+      "item": [
+        {
+          "name": "GET /api/domicilios?calle=Rivadavia&localidad=Santiago%20del%20Estero&provincia=Santiago%20del%20Estero&max=10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/domicilios?calle=Rivadavia&localidad=Santiago%20del%20Estero&provincia=Santiago%20del%20Estero&max=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "domicilios?calle=Rivadavia&localidad=Santiago%20del%20Estero&provincia=Santiago%20del%20Estero&max=10"
+              ]
+            },
+            "description": "GET /api/domicilios — Búsqueda de domicilios por calle, localidad y/o provincia (LIKE parcial). Todos los filtros son opcionales."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () {\n    pm.expect(pm.response.code).to.eql(200);\n});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/domicilios?calle=Av.%20Rivadavia&numero=500&localidad=Santiago%20del%20Estero&provincia=Santiago%20del%20Estero&codigo_postal=4300",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/domicilios?calle=Av.%20Rivadavia&numero=500&localidad=Santiago%20del%20Estero&provincia=Santiago%20del%20Estero&codigo_postal=4300",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "domicilios?calle=Av.%20Rivadavia&numero=500&localidad=Santiago%20del%20Estero&provincia=Santiago%20del%20Estero&codigo_postal=4300"
+              ]
+            },
+            "description": "POST /api/domicilios — Crea un domicilio nuevo. Parámetros como query strings (no body JSON). Devuelve la entidad persistida."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 o 201\", function () {\n    pm.expect([200, 201]).to.include(pm.response.code);\n});"
                 ]
               }
             }

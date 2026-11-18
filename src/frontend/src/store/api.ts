@@ -127,6 +127,39 @@ export const operadoresApi = createApi({
       query: ({ operadorId, requisitoCategoriaId }) =>
         `/registro-operadores/${operadorId}/requisitos/${requisitoCategoriaId}/archivos`,
     }),
+    /**
+     * Busca domicilios existentes por calle, localidad y departamento.
+     */
+    buscarDomicilios: builder.query<
+      Array<{ id: number; calle: string; numero: string | null; localidad: string; departamento: string; provincia: string; codigo_postal: string | null }>,
+      { calle: string; localidad?: string; departamento?: string }
+    >({
+      query: ({ calle, localidad, departamento }) => {
+        const params = new URLSearchParams();
+        params.set("calle", calle);
+        if (localidad) params.set("localidad", localidad);
+        if (departamento) params.set("departamento", departamento);
+        return { url: `/domicilios?${params.toString()}` };
+      },
+    }),
+    /**
+     * Crea un domicilio nuevo.
+     */
+    crearDomicilio: builder.mutation<
+      { id: number; calle: string; numero: string | null; localidad: string; departamento: string; provincia: string; codigo_postal: string | null },
+      { calle: string; numero?: string; localidad: string; departamento: string; provincia?: string; codigo_postal?: string }
+    >({
+      query: (data) => {
+        const params = new URLSearchParams();
+        params.set("calle", data.calle);
+        if (data.numero) params.set("numero", data.numero);
+        params.set("localidad", data.localidad);
+        params.set("departamento", data.departamento);
+        if (data.provincia) params.set("provincia", data.provincia);
+        if (data.codigo_postal) params.set("codigo_postal", data.codigo_postal);
+        return { url: `/domicilios?${params.toString()}`, method: "POST" };
+      },
+    }),
   }),
 });
 
@@ -173,5 +206,5 @@ export const authApi = operadoresApi.injectEndpoints({
 });
 
 // Re-exportar hooks para compatibilidad con imports existentes
-export const { useListarQuery, useObtenerQuery, useRegistrarMutation, useObtenerCartonF102Query, useListarCategoriasQuery } = operadoresApi;
+export const { useListarQuery, useObtenerQuery, useRegistrarMutation, useObtenerCartonF102Query, useListarCategoriasQuery, useBuscarDomiciliosQuery, useCrearDomicilioMutation } = operadoresApi;
 export const { useLoginMutation, useSignupMutation, useMeQuery, useLogoutMutation, useChangePasswordMutation } = authApi;

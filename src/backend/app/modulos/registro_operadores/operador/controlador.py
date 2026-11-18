@@ -21,14 +21,21 @@ from modulos.registro_operadores.operador.servicio import OperadorError, Operado
 def _require_supervisor(request: Request) -> None:
     """Verifica que el usuario autenticado tenga rol supervisor o admin.
 
-    Lee ``request.state.user.user_metadata.rol`` (inyectado por el middleware
-    de InsForge). Si no tiene rol suficiente → 403.
+    Resuelve el rol consultando la tabla ``personas`` por email (InsForge no
+    soporta ``user_metadata``, así que el JWT no携带 rol). Si existe una
+    persona con ese email → ``operador`` (403); si no → ``admin`` (pasa).
     """
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="No autenticado")
-    metadata = user.get("user_metadata", {}) if isinstance(user, dict) else getattr(user, "user_metadata", {})
-    rol = metadata.get("rol", "") if isinstance(metadata, dict) else ""
+    email = user.get("email") if isinstance(user, dict) else getattr(user, "email", None)
+    # Resolver rol desde la DB (misma lógica que AuthService._resolver_rol).
+    auth_service = getattr(request.app.state, "auth_service", None)
+    if auth_service is not None:
+        rol, _ = auth_service._resolver_rol(email)
+    else:
+        # Fallback: sin auth_service → tratar como admin (dev/tests).
+        rol = "admin"
     if rol not in ("supervisor", "admin"):
         raise HTTPException(status_code=403, detail="Requiere rol supervisor o admin")
 
@@ -39,10 +46,27 @@ def crear_router(servicio: OperadorService, prefix: str = "") -> APIRouter:
 
     @router.get("", response_model=list[OperadorOut])
     def listar_operadores(
+        request: Request,
         estado_registral: str | None = Query(None, description="Filtrar por estado registral"),
         categoria: str | None = Query(None, description="Filtrar por categoría (SALA_DE_DESPOSTE, CARNICERIAS, etc.)"),
     ):
-        """Lista operadores, opcionalmente filtrados por estado y categoría."""
+        """Lista operadores.
+
+        - **Admin/supervisor**: ve todos los operadores (con filtros opcionales).
+        - **Operador**: solo ve los operadores vinculados a su persona.
+        """
+        user = getattr(request.state, "user", None)
+        email = user.get("email") if isinstance(user, dict) else getattr(user, "email", None)
+
+        auth_service = getattr(request.app.state, "auth_service", None)
+        rol, persona_id = (auth_service._resolver_rol(email) if auth_service else ("admin", None))
+
+        if rol == "operador" and persona_id is not None:
+            # Operador: solo sus establecimientos.
+            operadores = servicio._dao.listar_por_persona_id(persona_id)
+            return [servicio._to_out(op) for op in operadores]
+
+        # Admin: todos los operadores (con filtros).
         return servicio.listar(estado_registral=estado_registral, categoria=categoria)
 
     @router.post("", response_model=OperadorOut, status_code=201)

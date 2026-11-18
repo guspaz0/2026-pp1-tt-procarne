@@ -29,6 +29,7 @@ import { ModuloPage } from "./routes/ModuloPage";
 import { PaginaOperadorInicio } from "./routes/operador/PaginaOperadorInicio";
 import { PaginaOperadorDetalle } from "./routes/operador/PaginaOperadorDetalle";
 import { PaginaOperadorRegistro } from "./routes/operador/PaginaOperadorRegistro";
+import { OperadorLayout } from "./routes/operador/OperadorLayout";
 import { CambioContraseñaForzado } from "./routes/CambioContraseñaForzado";
 import type { Rol } from "./types";
 
@@ -284,9 +285,9 @@ export function AppRoutes() {
       />
 
       {/* ==================== RUTAS OPERADOR ==================== */}
-      <Route path="/operador" element={<ProtegidaPorRol rol="operador"><PaginaOperadorInicio /></ProtegidaPorRol>} />
-      <Route path="/operador/registro" element={<ProtegidaPorRol rol="operador"><PaginaOperadorRegistro /></ProtegidaPorRol>} />
-      <Route path="/operador/:operadorId" element={<ProtegidaPorRol rol="operador"><PaginaOperadorDetalle /></ProtegidaPorRol>} />
+      <Route path="/operador" element={<ProtegidaPorRol rol="operador"><OperadorLayout><PaginaOperadorInicio /></OperadorLayout></ProtegidaPorRol>} />
+      <Route path="/operador/registro" element={<ProtegidaPorRol rol="operador"><OperadorLayout><PaginaOperadorRegistro /></OperadorLayout></ProtegidaPorRol>} />
+      <Route path="/operador/:operadorId" element={<ProtegidaPorRol rol="operador"><OperadorLayout><PaginaOperadorDetalle /></OperadorLayout></ProtegidaPorRol>} />
 
       {/* ==================== RUTAS PÚBLICAS ==================== */}
       {/* Portal Público */}

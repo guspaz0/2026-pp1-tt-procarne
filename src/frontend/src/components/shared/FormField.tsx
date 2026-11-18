@@ -171,6 +171,9 @@ function GeorefCombobox<T>({
   const [abierto, setAbierto] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const contenedor = useRef<HTMLDivElement>(null);
+  // Flag: true cuando `texto` cambió por selección del dropdown (no por typing).
+  // En ese caso no se dispara una nueva búsqueda.
+  const esSeleccion = useRef(false);
 
   // Si `value` cambia desde afuera (p. ej. reset del formulario), lo reflejamos.
   useEffect(() => {
@@ -189,11 +192,13 @@ function GeorefCombobox<T>({
     return () => document.removeEventListener("mousedown", handler);
   }, [abierto]);
 
-  // Búsqueda con debounce: solo cuando hay al menos 2 caracteres. Se busca
-  // contra el texto "debounced" (no el del input) para no disparar una query
-  // por keystroke.
-  const textoBusqueda = useDebounce(texto, 400);
-  const hayConsulta = textoBusqueda.trim().length >= 2;
+  // Búsqueda con debounce: solo cuando hay al menos 2 caracteres. Espera
+  // 1.5 s sin keystrokes antes de llamar a la API (se resetea con cada
+  // carácter nuevo). Si el cambio vino de una selección del dropdown, se
+  // saltea la búsqueda.
+  const textoBusqueda = useDebounce(texto, 1500);
+  const hayConsulta =
+    textoBusqueda.trim().length >= 2 && !esSeleccion.current;
   const { data, isFetching, isError } = useQuery(
     { nombre: textoBusqueda.trim(), provincia },
     { skip: !hayConsulta },
@@ -201,9 +206,12 @@ function GeorefCombobox<T>({
   const resultados = data?.items ?? [];
 
   const seleccionar = (nombre: string) => {
+    esSeleccion.current = true;
     onChange?.(nombre);
     setTexto(nombre);
     setAbierto(false);
+    // Resetear el flag en el siguiente tick para que el próximo typing funcione.
+    setTimeout(() => { esSeleccion.current = false; }, 0);
   };
 
   const onKey = (e: React.KeyboardEvent) => {
@@ -314,10 +322,22 @@ type LocalidadFieldProps = {
   value?: string;
   onChange?: (v: string) => void;
   provincia?: string;
+  /** Si se especifica, filtra los resultados por este departamento (cliente-side). */
+  departamento?: string;
 };
 
 /** Campo de localidad (API `GET /localidades`). */
-export function LocalidadField(props: LocalidadFieldProps) {
+export function LocalidadField({ departamento, ...props }: LocalidadFieldProps) {
+  // Hook adaptador que filtra por departamento si se especifica.
+  const useQueryFiltrado = (args: { nombre: string; provincia?: string }, opts: { skip: boolean }) => {
+    const base = useLocalidadesQuery(args, opts);
+    if (!departamento) return base;
+    const items = base.data?.items
+      ?.filter((l) => l.departamento?.nombre === departamento)
+      ?? [];
+    return { ...base, data: items.length > 0 ? { items } : undefined };
+  };
+
   return (
     <GeorefCombobox<Localidad>
       {...props}
@@ -325,7 +345,7 @@ export function LocalidadField(props: LocalidadFieldProps) {
       getSub={(l) =>
         [l.departamento?.nombre, l.provincia?.nombre].filter(Boolean).join(" — ")
       }
-      useQuery={useLocalidadesQuery}
+      useQuery={useQueryFiltrado}
       errorLabel="No se pudo consultar las localidades. Revisá la conexión."
     />
   );

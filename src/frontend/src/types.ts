@@ -8,6 +8,7 @@ export interface Domicilio {
   calle: string;
   numero: string | null;
   localidad: string;
+  departamento: string;
   provincia: string;
   codigo_postal: string | null;
 }
@@ -63,10 +64,12 @@ export interface OperadorIn {
    */
   cuit?: string | null;
   domicilio?: {
+    id?: number | null;
     calle: string;
     numero?: string | null;
     localidad: string;
-    provincia: string;
+    departamento: string;
+    provincia?: string;
     codigo_postal?: string | null;
   } | null;
   telefono?: string | null;
@@ -84,6 +87,10 @@ export interface OperadorIn {
   crear_cuenta?: boolean;
   /** Tipo de documento de la persona: 'CUIT' o 'DNI'. */
   tipo_documento?: string;
+  /** Id de la persona vinculada (si es operador, viene del /me). */
+  persona_id?: number | null;
+  /** Lista de códigos de requisitos marcados como cumplidos. */
+  documento_requisitos?: string[] | null;
 }
 
 /** Payload de alta de usuario (POST /api/auth/signup). */
@@ -116,7 +123,8 @@ export function parsearDomicilio(texto: string): NonNullable<OperadorIn["domicil
     calle: texto,
     numero: null,
     localidad: "",
-    provincia: "",
+    departamento: "",
+    provincia: "Santiago del Estero",
     codigo_postal: null,
   };
   if (!texto) return resultado;

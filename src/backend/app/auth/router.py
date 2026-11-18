@@ -183,17 +183,12 @@ def crear_router(get_auth_service) -> APIRouter:
                     detail="No se pudo crear la Persona. El usuario fue eliminado.",
                 )
 
-        # 5) Vincular persona_id al usuario en InsForge (user_metadata).
-        #    Siempre se hace, ya que persona_id nunca es None después de la creación.
-        user_id = (
-            session["user"].get("id") if isinstance(session.get("user"), dict) else None
-        )
-        if user_id:
-            try:
-                await auth.update_user_metadata(user_id, {"persona_id": persona_id})
-            except AuthError:
-                pass  # No fatal: se re-vincula en el próximo login.
-
+        # 5) Actualizar el payload con el rol correcto.
+        #    auth.signup() ya devolvió el payload (dict); solo hay que
+        #    sobrescribir rol/persona_id con los valores resueltos de la DB.
+        if isinstance(session, dict):
+            session.setdefault("user", {})["rol"] = "operador"
+            session["user"]["persona_id"] = persona_id
         return session
 
     @router.post("/refresh", response_model=schemas.SessionOut)
@@ -224,22 +219,22 @@ def crear_router(get_auth_service) -> APIRouter:
         return await auth.logout(response, refresh_token=token)
 
     @router.get("/me")
-    async def me(user: schemas.UserOut = Depends(require_user)):
+    async def me(
+        user: schemas.UserOut = Depends(require_user),
+        auth: AuthService = Depends(get_auth_service),
+    ):
         """Datos del usuario autenticado (ruta protegida).
 
-        Resuelve el rol del usuario:
-        - Si tiene ``persona_id`` en ``user_metadata`` → rol ``operador``.
-        - Si no → rol ``admin``.
+        El rol se resuelve consultando la tabla ``personas`` por email:
+        si existe una persona con ese email → ``operador``; si no → ``admin``.
         """
-        metadata = user.user_metadata or {}
-        rol = "operador" if metadata.get("persona_id") else "admin"
+        rol, persona_id = auth._resolver_rol(user.email)
         return {
             "id": user.id,
             "email": user.email,
             "rol": rol,
-            "persona_id": metadata.get("persona_id"),
-            "must_change_password": bool(metadata.get("must_change_password")),
-            "user_metadata": metadata,
+            "persona_id": persona_id,
+            "must_change_password": False,
         }
 
     @router.post("/change-password", status_code=200)

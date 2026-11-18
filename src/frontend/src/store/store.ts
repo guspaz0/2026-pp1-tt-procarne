@@ -2,6 +2,7 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
 import operadoresReducer from "./operadoresSlice";
 import formF102Reducer from "./formF102Slice";
+import toastReducer from "./toastSlice";
 import { operadoresApi } from "./api";
 import { georefApi } from "./georefApi";
 
@@ -13,6 +14,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   operadores: operadoresReducer,
   formF102: formF102Reducer,
+  toasts: toastReducer,
   [operadoresApi.reducerPath]: operadoresApi.reducer,
   [georefApi.reducerPath]: georefApi.reducer,
 });

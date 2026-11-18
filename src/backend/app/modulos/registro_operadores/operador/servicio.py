@@ -10,6 +10,7 @@ Casos de uso del operador (agregado raíz del módulo):
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional
 
 from modulos.registro_operadores.errores import OperadorError
@@ -42,74 +43,165 @@ class OperadorService:
         titular (1 persona : N operadores, el identificador es único por
         persona). Si el alta no trae ``persona_id``, se resuelve/crea la
         persona por CUIT y el operador se vincula a ella.
+
+        Toda la operación se ejecuta en una única transacción: si algo
+        falla, se hace rollback y no quedan datos huérfanos.
         """
-        # ``operadores.persona_id`` es NOT NULL: si el alta no trae la persona
-        # titular, la resolvemos/creamos por CUIT (idempotente).
-        persona_id = self._resolver_persona(data.persona_id, data.cuit, data.establecimiento_fantasia)
+        from modulos.registro_operadores.domicilio.dao import Domicilio
+        from modulos.registro_operadores.categoria.dao import Categoria
+        from modulos.registro_operadores.asociaciones import OperadorActividad
+        from modulos.registro_operadores.operador.dao import Operador
+        from sqlalchemy.orm import joinedload
 
-        # Validar y resolver la categoría (nombre → fila en ``categorias``).
-        # ``operadores.categoria_id`` es NOT NULL, por lo que el alta siempre
-        # debe traer una categoría válida.
-        categoria_id = self._resolver_categoria(data.categoria)
+        session_factory = self._dao._session_factory
 
-        # Domicilio comercial estructurado: si el alta trae un domicilio y hay
-        # un DomicilioDAO disponible, lo persiste en ``domicilios`` y vincula el
-        # id al operador (la columna ``operadores.domicilio_comercial`` ya no
-        # existe: el domicilio vive en la tabla estructurada).
-        domicilio_id: Optional[int] = None
-        if data.domicilio is not None and self._domicilio_dao is not None:
-            dom = self._domicilio_dao.crear(
-                calle=data.domicilio.calle,
-                numero=data.domicilio.numero,
-                localidad=data.domicilio.localidad,
-                provincia=data.domicilio.provincia,
-                codigo_postal=data.domicilio.codigo_postal,
-            )
-            domicilio_id = dom.id
+        with session_factory() as session:
+            try:
+                # 1) Resolver persona titular.
+                persona_id = self._resolver_persona_tx(
+                    session, data.persona_id, data.cuit, data.establecimiento_fantasia
+                )
 
-        # El email es un dato de la persona titular (no del operador/sucursal):
-        # se guarda en ``personas.email``. Si el alta trae un email, lo
-        # actualizamos en la persona (idempotente).
-        if data.email is not None and self._persona_service is not None:
-            self._persona_service.actualizar_email(persona_id, data.email)
+                # 2) Validar y resolver la categoría.
+                categoria_id = self._resolver_categoria_tx(session, data.categoria)
 
-        operador = self._dao.crear(
-            establecimiento_fantasia=data.establecimiento_fantasia,
-            persona_id=persona_id,
-            domicilio_id=domicilio_id,
-            tipos_carne=data.tipos_carne,
-            telefono=data.telefono,
-            categoria_id=categoria_id,
-        )
+                # 3) Domicilio: reutilizar existente o crear nuevo.
+                domicilio_id: Optional[int] = None
+                if data.domicilio is not None:
+                    if data.domicilio.id is not None:
+                        domicilio_id = data.domicilio.id
+                    else:
+                        dom = Domicilio(
+                            calle=data.domicilio.calle,
+                            numero=data.domicilio.numero,
+                            localidad=data.domicilio.localidad,
+                            departamento=data.domicilio.departamento,
+                            provincia=data.domicilio.provincia or "Santiago del Estero",
+                            codigo_postal=data.domicilio.codigo_postal,
+                        )
+                        session.add(dom)
+                        session.flush()  # Obtiene el id sin commit.
+                        domicilio_id = dom.id
 
-        # Cargar la relación persona ANTES de que el DAO cierre la sesión.
-        # ``operadores.persona`` es lazy-load; si se accede después del
-        # ``session.close()`` del DAO, lanza ``DetachedInstanceError``.
-        try:
-            _persona = operador.persona  # noqa: F841 — fuerza el lazy load
-        except Exception:
-            pass
+                # 4) Actualizar email de la persona (idempotente).
+                if data.email is not None:
+                    from core.persona.dao import Persona
+                    persona_obj = session.get(Persona, persona_id)
+                    if persona_obj is not None:
+                        persona_obj.email = data.email
 
-        # Guardar las actividades económicas del catálogo (N:M).
-        # ``actividad_ids`` son ids directos; ``codigo_dgr`` / ``codigo_afip``
-        # son códigos del catálogo (DGR) que se resuelven a ids. Se combinan
-        # ambos conjuntos de códigos (el frontend envía ``codigo_afip``).
-        ids: list[int] = list(data.actividad_ids or [])
-        codigos: list[str] = list(data.codigo_dgr or [])
-        for c in (data.codigo_afip or []):
-            if c not in codigos:
-                codigos.append(c)
-        if codigos and self._catalogo_actividades_dao is not None:
-            ids.extend(self._catalogo_actividades_dao.resolver_ids_por_codigos(codigos))
-        if ids:
-            self._dao.asignar_actividades(operador.id, ids)
+                # 5) Crear el operador.
+                op = Operador(
+                    persona_id=persona_id,
+                    categoria_id=categoria_id,
+                    domicilio_id=domicilio_id,
+                    establecimiento_fantasia=data.establecimiento_fantasia,
+                    tipos_carne=data.tipos_carne,
+                    telefono=data.telefono,
+                    estado_registral="PENDIENTE",
+                    alta_fecha=datetime.now(timezone.utc),
+                )
+                session.add(op)
+                session.flush()  # Obtiene el id.
 
-        # Crear cuenta de login para la persona (solo si el admin lo pide).
-        # La contraseña por defecto es el número de documento (CUIT/DNI).
+                # 6) Actividades económicas (N:M).
+                ids: list[int] = list(data.actividad_ids or [])
+                codigos: list[str] = list(data.codigo_dgr or [])
+                for c in (data.codigo_afip or []):
+                    if c not in codigos:
+                        codigos.append(c)
+                if codigos and self._catalogo_actividades_dao is not None:
+                    ids.extend(self._catalogo_actividades_dao.resolver_ids_por_codigos(codigos))
+                if ids:
+                    # Limpia existentes y re-inserta (idempotente).
+                    session.query(OperadorActividad).filter_by(operador_id=op.id).delete()
+                    for aid in ids:
+                        session.add(OperadorActividad(operador_id=op.id, actividad_id=aid))
+
+                # 7) Commit único: si algo falló arriba, el `with` hace rollback.
+                session.commit()
+
+                # Recargar con joinedload para que las relaciones estén en __dict__.
+                op = (
+                    session.query(Operador)
+                    .options(
+                        joinedload(Operador.persona),
+                        joinedload(Operador.categoria),
+                        joinedload(Operador.domicilio),
+                    )
+                    .filter(Operador.id == op.id)
+                    .first()
+                )
+
+            except OperadorError:
+                session.rollback()
+                raise
+            except Exception:
+                session.rollback()
+                raise
+
+        # Crear cuenta de login (fuera de la transacción: es una llamada
+        # externa a InsForge que no debe bloquear el commit local).
         if data.crear_cuenta and data.email and self._auth_service is not None:
             self._crear_cuenta_persona(persona_id, data.email, data.cuit or "")
 
-        return self._to_out(operador)
+        return self._to_out(op)
+
+    def _resolver_persona_tx(self, session, persona_id: int | None,
+                             cuit: str | None, establecimiento_fantasia: str) -> int:
+        """Resuelve la persona titular dentro de la transacción activa."""
+        if persona_id is not None:
+            return persona_id
+        if cuit is None:
+            raise OperadorError(
+                "Se debe informar persona_id o cuit para identificar a la persona titular"
+            )
+        if self._persona_service is not None:
+            from core.persona.schema import PersonaIn
+            from core.persona.dao import Persona
+
+            existente = session.query(Persona).filter(
+                Persona.tipo_documento == "CUIT",
+                Persona.identificador == cuit,
+            ).first()
+            if existente is not None:
+                return existente.id
+            tipo_persona = "PJ" if len(cuit.replace("-", "")) >= 11 else "PF"
+            nueva = Persona(
+                tipo=tipo_persona,
+                tipo_documento="CUIT",
+                identificador=cuit,
+                nombre=establecimiento_fantasia,
+            )
+            session.add(nueva)
+            session.flush()
+            return nueva.id
+        raise OperadorError(
+            "El operador no tiene persona titular (persona_id) y no hay PersonaService configurado"
+        )
+
+    def _resolver_categoria_tx(self, session, categoria: str | None) -> int:
+        """Valida y resuelve la categoría dentro de la transacción activa."""
+        from modulos.registro_operadores.categoria.dao import Categoria
+
+        if categoria is None:
+            raise OperadorError(
+                "Se debe informar la categoría del operador "
+                f"(una de: {', '.join(c.value for c in CategoriaOperador)})"
+            )
+        categorias_validas = [c.value for c in CategoriaOperador]
+        if categoria not in categorias_validas:
+            raise OperadorError(
+                f"Categoría inválida: {categoria}. "
+                f"Categorías válidas: {', '.join(categorias_validas)}"
+            )
+        existente = session.query(Categoria).filter(Categoria.nombre == categoria).first()
+        if existente is not None:
+            return existente.id
+        nueva = Categoria(nombre=categoria)
+        session.add(nueva)
+        session.flush()
+        return nueva.id
 
     def _crear_cuenta_persona(self, persona_id: int, email: str, documento: str) -> None:
         """Crea una cuenta de login en InsForge para la persona.

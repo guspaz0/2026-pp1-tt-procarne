@@ -41,9 +41,38 @@ class AuthError(Exception):
 class AuthService:
     """Orquesta la autenticación contra InsForge."""
 
-    def __init__(self, client: InsforgeClient, cookie_secure: bool = True) -> None:
+    def __init__(
+        self,
+        client: InsforgeClient,
+        cookie_secure: bool = True,
+        persona_dao=None,
+    ) -> None:
         self._client = client
         self._cookie_secure = cookie_secure
+        self._persona_dao = persona_dao
+
+    # ------------------------------------------------------------------ #
+    # Resolución de rol
+    # ------------------------------------------------------------------ #
+
+    def _resolver_rol(self, email: str | None) -> tuple[str, int | None]:
+        """Resuelve el rol del usuario consultando la tabla ``personas``.
+
+        InsForge no soporta ``user_metadata``: el JWT solo contiene
+        ``sub``, ``email`` y ``role: "authenticated"``. Por eso el rol se
+        deriva de la base de datos: si existe una persona con ese email →
+        ``operador``; si no → ``admin`` (usuarios seed/creados manualmente).
+
+        Devuelve ``(rol, persona_id)``.
+        """
+        if email and self._persona_dao is not None:
+            try:
+                persona = self._persona_dao.obtener_por_email(email)
+                if persona is not None:
+                    return "operador", persona.id
+            except Exception:
+                pass  # DB no disponible → fallback a admin.
+        return "admin", None
 
     # ------------------------------------------------------------------ #
     # Helpers de cookies
@@ -243,20 +272,19 @@ class AuthService:
     # Payload
     # ------------------------------------------------------------------ #
 
-    @staticmethod
-    def _session_payload(session: InsforgeSession) -> dict[str, Any]:
+    def _session_payload(self, session: InsforgeSession) -> dict[str, Any]:
         """Construye el payload de respuesta (snake_case para el frontend).
 
-        Agrega el ``rol`` al usuario: si tiene ``persona_id`` en
-        ``user_metadata`` → ``operador``; si no → ``admin``.
+        El ``rol`` se resuelve consultando la tabla ``personas`` por email:
+        si existe una persona con ese email → ``operador``; si no → ``admin``.
+        (InsForge no soporta ``user_metadata``, así que el JWT no携带 rol.)
         """
         user = dict(session.user) if session.user else {}
-        metadata = user.get("user_metadata") or {}
-        persona_id = metadata.get("persona_id")
-        rol = "operador" if persona_id else "admin"
+        email = user.get("email")
+        rol, persona_id = self._resolver_rol(email)
         user["rol"] = rol
         user["persona_id"] = persona_id
-        user["must_change_password"] = bool(metadata.get("must_change_password"))
+        user["must_change_password"] = False
         return {
             "access_token": session.access_token,
             "refresh_token": session.refresh_token,

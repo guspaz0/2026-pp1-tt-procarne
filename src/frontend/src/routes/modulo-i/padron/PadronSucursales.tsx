@@ -209,7 +209,7 @@ export function PadronSucursales() {
                   Estado
                 </th>
                 <th className="w-[150px] px-3 py-3 text-[12px] font-bold text-[#334155]">
-                  Cartón F 102
+                  Acciones
                 </th>
               </tr>
             </thead>

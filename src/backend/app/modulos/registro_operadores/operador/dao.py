@@ -86,12 +86,12 @@ class OperadorDAO:
         if domicilio.numero:
             calle_numero = f"{calle_numero} N°{domicilio.numero}".strip()
         localidad = (domicilio.localidad or "").strip()
-        provincia = (domicilio.provincia or "").strip()
-        # Evita duplicar la provincia cuando es igual a la localidad
+        departamento = (domicilio.departamento or "").strip()
+        # Evita duplicar el departamento cuando es igual a la localidad
         # (p. ej. "BANDA, BANDA").
-        if provincia and localidad and provincia.upper() == localidad.upper():
-            provincia = ""
-        resto = ", ".join(part for part in (localidad, provincia) if part)
+        if departamento and localidad and departamento.upper() == localidad.upper():
+            departamento = ""
+        resto = ", ".join(part for part in (localidad, departamento) if part)
         return f"{calle_numero} - {resto}" if resto else calle_numero
 
     # ------------------------------------------------------------------

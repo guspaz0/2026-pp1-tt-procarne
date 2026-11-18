@@ -16,10 +16,15 @@ export type FormF102 = {
   telefono: string;
   email: string;
   nombreEstablecimiento: string;
+  provincia: string;
   departamento: string;
   /** Localidad seleccionada desde la API de georreferenciación (datos.gob.ar). */
   localidad: string;
   domicilio: string;
+  /** ID del domicilio existente (si se seleccionó del combobox). */
+  domicilio_id: number | null;
+  /** Número de calle (separado del nombre de la calle). */
+  numero_calle: string;
   habilitacionSanitaria: string;
   categorias: string[];
   tiposCarne: string[];
@@ -42,10 +47,13 @@ export const FORM_INICIAL: FormF102 = {
   telefono: "",
   email: "",
   nombreEstablecimiento: "",
+  provincia: "Santiago del Estero",
   // Se rellena en `resetearFormulario` con el primer departamento disponible.
   departamento: "",
   localidad: "",
   domicilio: "",
+  domicilio_id: null,
+  numero_calle: "",
   habilitacionSanitaria: "",
   categorias: [],
   tiposCarne: [],
