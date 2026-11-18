@@ -61,6 +61,31 @@ class DomicilioOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ArchivoOut(BaseModel):
+    """DTO de salida de un archivo (documento subido)."""
+
+    id: int
+    nombre: str
+    url: Optional[str] = Field(None, description="URL pública del archivo en storage")
+    mime_type: str
+    size_bytes: int
+
+    model_config = {"from_attributes": True}
+
+
+class RequisitoOperadorOut(BaseModel):
+    """DTO de salida de un requisito de un operador (con estado y documentos)."""
+
+    id: int
+    requisito_categoria_id: int
+    codigo: Optional[str] = Field(None, description="Código del requisito (ej: 'REQ_01')")
+    nombre: Optional[str] = Field(None, description="Nombre del requisito")
+    estado: str
+    documentos: list[ArchivoOut] = Field(default_factory=list)
+
+    model_config = {"from_attributes": True}
+
+
 class OperadorOut(BaseModel):
     """DTO de salida de un operador (sucursal/establecimiento).
 
@@ -84,6 +109,7 @@ class OperadorOut(BaseModel):
 
     cuit: Optional[str] = Field(None, description="CUIT, inferido de persona.identificador")
     actividad_ids: list[int] = Field(default_factory=list, description="Ids del catálogo de actividades que realiza el operador (N:M)")
+    requisitos: list[RequisitoOperadorOut] = Field(default_factory=list, description="Requisitos del operador con estado y documentos")
 
     model_config = {"from_attributes": True}
 

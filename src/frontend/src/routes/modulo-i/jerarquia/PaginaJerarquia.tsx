@@ -28,7 +28,7 @@ function agruparPorCuit(operadores: Operador[]): [string, Operador[]][] {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([cuit, ops]) => [
       cuit,
-      [...ops].sort((a, b) => a.establecimiento_fantasia.localeCompare(b.establecimiento_fantasia)),
+      [...ops].sort((a, b) => (a.establecimiento_fantasia ?? "").localeCompare(b.establecimiento_fantasia ?? "")),
     ]);
 }
 

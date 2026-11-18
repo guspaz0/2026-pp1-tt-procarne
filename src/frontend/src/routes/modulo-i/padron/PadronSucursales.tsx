@@ -293,7 +293,7 @@ export function PadronSucursales() {
                       <td className="px-3 py-4 align-top">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-[12px] font-semibold text-[#0f172a]">
-                            {o.establecimiento_fantasia.split(" - ")[0]}
+                            {o.establecimiento_fantasia?.split(" - ")[0] || o.titular || "—"}
                           </span>
                           <span className="text-[10px] font-medium text-[#64748b]">
                             CUIT: {o.cuit}

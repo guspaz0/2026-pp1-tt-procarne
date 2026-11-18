@@ -54,7 +54,7 @@ export function baseQueryWithAuth(
     if (result.error) {
       const status = (result.error as { status?: number }).status;
       const url = typeof args === "string" ? args : args.url;
-      const isAuthEndpoint = url?.includes("/auth/login") || url?.includes("/auth/signup");
+      const isAuthEndpoint = url?.includes("/auth/login") || url?.includes("/auth/signup") || url?.includes("/auth/me");
 
       if (status === 401 && !isAuthEndpoint) {
         // Invocar el handler registrado (limpia store + redirige).

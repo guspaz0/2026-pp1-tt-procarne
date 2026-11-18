@@ -14,13 +14,32 @@ export interface Domicilio {
 }
 
 /** Operador (F 102 / F 102A) — padrón de la cadena cárnica. */
+/** Documento (archivo) asociado a un requisito de un operador. */
+export interface DocumentoRequisito {
+  id: number;
+  nombre: string;
+  url: string | null;
+  mime_type: string;
+  size_bytes: number;
+}
+
+/** Requisito de un operador con su estado y documentos. */
+export interface RequisitoOperador {
+  id: number;
+  requisito_categoria_id: number;
+  codigo: string | null;
+  nombre: string | null;
+  estado: string;
+  documentos: DocumentoRequisito[];
+}
+
 export interface Operador {
   id: number;
   /** Id de la persona titular (sucursal de esa persona). */
   persona_id: number | null;
   /** Tipo de establecimiento (FRIGORIFICO, CARNICERIA, …). */
   tipo: string;
-  establecimiento_fantasia: string;
+  establecimiento_fantasia: string | null;
   domicilio: Domicilio | null;
   /** Tipos de carne comercializada (separados por comas). */
   tipos_carne: string | null;
@@ -34,6 +53,8 @@ export interface Operador {
   alta_fecha: string | null;
   baja_fecha: string | null;
   creado_en: string;
+  /** Requisitos del operador con estado y documentos (GET /{id}). */
+  requisitos?: RequisitoOperador[];
 }
 
 /** Persona titular (PF/PJ) con sus datos y domicilio estructurado. */

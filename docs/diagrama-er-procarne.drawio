@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram id="er-procarne-chen" name="ER ProCarne (Chen)">
-    <mxGraphModel dx="3469" dy="1232" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1420" pageHeight="1320" math="0" shadow="0">
+    <mxGraphModel dx="2052" dy="441" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1420" pageHeight="1320" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -32,16 +32,16 @@
           <mxGeometry height="46" width="114" x="1111" y="472" as="geometry" />
         </mxCell>
         <mxCell id="ActividadEconomica" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;fillColor=#1f6feb;strokeColor=#0a3d78;strokeWidth=2;fontColor=#ffffff;arcSize=20;verticalAlign=middle;" value="ActividadEconomica" vertex="1">
-          <mxGeometry height="46" width="198" x="308" y="802" as="geometry" />
+          <mxGeometry height="46" width="198" x="308" y="832" as="geometry" />
         </mxCell>
         <mxCell id="GrupoActividad" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;fillColor=#1f6feb;strokeColor=#0a3d78;strokeWidth=2;fontColor=#ffffff;arcSize=20;verticalAlign=middle;" value="GrupoActividad" vertex="1">
-          <mxGeometry height="40" width="114" x="776" y="814" as="geometry" />
+          <mxGeometry height="40" width="114" x="776" y="844" as="geometry" />
         </mxCell>
         <mxCell id="SubgrupoActividad" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;fillColor=#1f6feb;strokeColor=#0a3d78;strokeWidth=2;fontColor=#ffffff;arcSize=20;verticalAlign=middle;" value="SubgrupoActividad" vertex="1">
-          <mxGeometry height="40" width="128" x="1008" y="830" as="geometry" />
+          <mxGeometry height="40" width="128" x="1008" y="860" as="geometry" />
         </mxCell>
         <mxCell id="SubSubgrupoActividad" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;fillColor=#1f6feb;strokeColor=#0a3d78;strokeWidth=2;fontColor=#ffffff;arcSize=20;verticalAlign=middle;" value="SubSubgrupoActividad" vertex="1">
-          <mxGeometry height="46" width="177" x="983.5" y="928" as="geometry" />
+          <mxGeometry height="46" width="177" x="983.5" y="958" as="geometry" />
         </mxCell>
         <mxCell id="categoriza" parent="1" style="shape=rhombus;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="categoriza" vertex="1">
           <mxGeometry height="46" width="90" x="448" y="221" as="geometry" />
@@ -59,7 +59,7 @@
           <mxGeometry height="46" width="90" x="202" y="609" as="geometry" />
         </mxCell>
         <mxCell id="habilita" parent="1" style="shape=rhombus;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="habilita" vertex="1">
-          <mxGeometry height="46" width="90" x="130" y="790" as="geometry" />
+          <mxGeometry height="46" width="90" x="130" y="820" as="geometry" />
         </mxCell>
         <mxCell id="p_Persona_0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="id  [PK]" vertex="1">
           <mxGeometry height="40" width="128" x="440" y="487" as="geometry" />
@@ -285,7 +285,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_DocumentoRequisito_0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="id  [PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="952" y="688" as="geometry" />
+          <mxGeometry height="40" width="128" x="976" y="685" as="geometry" />
         </mxCell>
         <mxCell id="c_DocumentoRequisito_0" edge="1" parent="1" source="DocumentoRequisito" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_DocumentoRequisito_0">
           <mxGeometry relative="1" as="geometry">
@@ -301,7 +301,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_DocumentoRequisito_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="archivo_id  [FK]" vertex="1">
-          <mxGeometry height="40" width="128" x="715" y="681" as="geometry" />
+          <mxGeometry height="40" width="128" x="758" y="696" as="geometry" />
         </mxCell>
         <mxCell id="c_DocumentoRequisito_2" edge="1" parent="1" source="DocumentoRequisito" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_DocumentoRequisito_2">
           <mxGeometry relative="1" as="geometry">
@@ -309,7 +309,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_DocumentoRequisito_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="persona_carga_id  [FK]" vertex="1">
-          <mxGeometry height="40" width="128" x="696" y="622" as="geometry" />
+          <mxGeometry height="40" width="128" x="715" y="640" as="geometry" />
         </mxCell>
         <mxCell id="c_DocumentoRequisito_3" edge="1" parent="1" source="DocumentoRequisito" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_DocumentoRequisito_3">
           <mxGeometry relative="1" as="geometry">
@@ -404,7 +404,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="p_ActividadEconomica_0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="id  [PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="289" y="928" as="geometry" />
+          <mxGeometry height="40" width="128" x="289" y="958" as="geometry" />
         </mxCell>
         <mxCell id="c_ActividadEconomica_0" edge="1" parent="1" source="ActividadEconomica" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_ActividadEconomica_0">
           <mxGeometry relative="1" as="geometry">
@@ -412,7 +412,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_ActividadEconomica_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="codigo" vertex="1">
-          <mxGeometry height="40" width="128" x="568" y="848" as="geometry" />
+          <mxGeometry height="40" width="128" x="568" y="878" as="geometry" />
         </mxCell>
         <mxCell id="c_ActividadEconomica_1" edge="1" parent="1" source="ActividadEconomica" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_ActividadEconomica_1">
           <mxGeometry relative="1" x="0.008" as="geometry">
@@ -420,7 +420,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_ActividadEconomica_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="descripcion" vertex="1">
-          <mxGeometry height="40" width="128" x="227" y="880" as="geometry" />
+          <mxGeometry height="40" width="128" x="227" y="910" as="geometry" />
         </mxCell>
         <mxCell id="c_ActividadEconomica_2" edge="1" parent="1" source="ActividadEconomica" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_ActividadEconomica_2">
           <mxGeometry relative="1" as="geometry">
@@ -428,7 +428,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_ActividadEconomica_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="grupo_id  [FK]" vertex="1">
-          <mxGeometry height="40" width="128" x="516" y="894" as="geometry" />
+          <mxGeometry height="40" width="128" x="516" y="924" as="geometry" />
         </mxCell>
         <mxCell id="c_ActividadEconomica_3" edge="1" parent="1" source="ActividadEconomica" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_ActividadEconomica_3">
           <mxGeometry relative="1" as="geometry">
@@ -436,7 +436,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_ActividadEconomica_4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="subgrupo_codigo  [FK]" vertex="1">
-          <mxGeometry height="40" width="128" x="364" y="982" as="geometry" />
+          <mxGeometry height="40" width="128" x="364" y="1012" as="geometry" />
         </mxCell>
         <mxCell id="c_ActividadEconomica_4" edge="1" parent="1" source="ActividadEconomica" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_ActividadEconomica_4">
           <mxGeometry relative="1" as="geometry">
@@ -444,7 +444,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_ActividadEconomica_5" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="subsubgrupo_codigo  [FK]" vertex="1">
-          <mxGeometry height="40" width="128" x="448" y="942" as="geometry" />
+          <mxGeometry height="40" width="128" x="448" y="972" as="geometry" />
         </mxCell>
         <mxCell id="c_ActividadEconomica_5" edge="1" parent="1" source="ActividadEconomica" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_ActividadEconomica_5">
           <mxGeometry relative="1" as="geometry">
@@ -452,7 +452,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_GrupoActividad_0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="codigo  [PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="715" y="894" as="geometry" />
+          <mxGeometry height="40" width="128" x="715" y="924" as="geometry" />
         </mxCell>
         <mxCell id="c_GrupoActividad_0" edge="1" parent="1" source="GrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_GrupoActividad_0">
           <mxGeometry relative="1" as="geometry">
@@ -460,7 +460,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_GrupoActividad_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="descripcion" vertex="1">
-          <mxGeometry height="40" width="128" x="813.5" y="934" as="geometry" />
+          <mxGeometry height="40" width="128" x="813.5" y="964" as="geometry" />
         </mxCell>
         <mxCell id="c_GrupoActividad_1" edge="1" parent="1" source="GrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_GrupoActividad_1">
           <mxGeometry relative="1" as="geometry">
@@ -468,7 +468,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_SubgrupoActividad_0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="grupo_id  [FK,PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="1155" y="774" as="geometry" />
+          <mxGeometry height="40" width="128" x="1155" y="804" as="geometry" />
         </mxCell>
         <mxCell id="c_SubgrupoActividad_0" edge="1" parent="1" source="SubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_SubgrupoActividad_0">
           <mxGeometry relative="1" as="geometry">
@@ -476,7 +476,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_SubgrupoActividad_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="codigo  [PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="1006" y="760" as="geometry" />
+          <mxGeometry height="40" width="128" x="1006" y="790" as="geometry" />
         </mxCell>
         <mxCell id="c_SubgrupoActividad_1" edge="1" parent="1" source="SubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_SubgrupoActividad_1">
           <mxGeometry relative="1" as="geometry">
@@ -484,7 +484,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_SubgrupoActividad_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="descripcion" vertex="1">
-          <mxGeometry height="40" width="128" x="1171" y="848" as="geometry" />
+          <mxGeometry height="40" width="128" x="1171" y="878" as="geometry" />
         </mxCell>
         <mxCell id="c_SubgrupoActividad_2" edge="1" parent="1" source="SubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_SubgrupoActividad_2">
           <mxGeometry relative="1" as="geometry">
@@ -492,7 +492,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_SubSubgrupoActividad_0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="grupo_id  [FK,PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="1110" y="1027" as="geometry" />
+          <mxGeometry height="40" width="128" x="1110" y="1057" as="geometry" />
         </mxCell>
         <mxCell id="c_SubSubgrupoActividad_0" edge="1" parent="1" source="SubSubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;curved=0;" target="p_SubSubgrupoActividad_0">
           <mxGeometry relative="1" as="geometry">
@@ -500,7 +500,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_SubSubgrupoActividad_1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="subgrupo_codigo  [FK,PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="1043" y="1087" as="geometry" />
+          <mxGeometry height="40" width="128" x="1043" y="1117" as="geometry" />
         </mxCell>
         <mxCell id="c_SubSubgrupoActividad_1" edge="1" parent="1" source="SubSubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_SubSubgrupoActividad_1">
           <mxGeometry relative="1" as="geometry">
@@ -508,7 +508,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_SubSubgrupoActividad_2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="codigo  [PK]" vertex="1">
-          <mxGeometry height="40" width="128" x="915" y="997" as="geometry" />
+          <mxGeometry height="40" width="128" x="915" y="1027" as="geometry" />
         </mxCell>
         <mxCell id="c_SubSubgrupoActividad_2" edge="1" parent="1" source="SubSubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_SubSubgrupoActividad_2">
           <mxGeometry relative="1" as="geometry">
@@ -516,7 +516,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="p_SubSubgrupoActividad_3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="descripcion" vertex="1">
-          <mxGeometry height="40" width="128" x="973" y="1037" as="geometry" />
+          <mxGeometry height="40" width="128" x="973" y="1067" as="geometry" />
         </mxCell>
         <mxCell id="c_SubSubgrupoActividad_3" edge="1" parent="1" source="SubSubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#9aa5b1;strokeWidth=1;startArrow=none;endArrow=none;" target="p_SubSubgrupoActividad_3">
           <mxGeometry relative="1" x="0.0117" as="geometry">
@@ -627,26 +627,26 @@
         </mxCell>
         <mxCell id="e_habilita_ActividadEconomica" edge="1" parent="1" source="habilita" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=10;fontStyle=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="ActividadEconomica" value="M">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="243" y="808" as="sourcePoint" />
-            <mxPoint x="359" y="862" as="targetPoint" />
+            <mxPoint x="243" y="838" as="sourcePoint" />
+            <mxPoint x="359" y="892" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="e_ActividadEconomica_GrupoActividad" edge="1" parent="1" source="ActividadEconomica" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=10;fontStyle=1;labelBackgroundColor=#ffffff;" target="GrupoActividad" value="N:1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="557" y="891" as="sourcePoint" />
-            <mxPoint x="721" y="864" as="targetPoint" />
+            <mxPoint x="557" y="921" as="sourcePoint" />
+            <mxPoint x="721" y="894" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="e_GrupoActividad_SubgrupoActividad" edge="1" parent="1" source="GrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=10;fontStyle=1;labelBackgroundColor=#ffffff;" target="SubgrupoActividad" value="1:N">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="778" y="925" as="sourcePoint" />
-            <mxPoint x="778" y="930" as="targetPoint" />
+            <mxPoint x="778" y="955" as="sourcePoint" />
+            <mxPoint x="778" y="960" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="e_SubgrupoActividad_SubSubgrupoActividad" edge="1" parent="1" source="SubgrupoActividad" style="edgeStyle=none;rounded=0;html=1;strokeColor=#666666;strokeWidth=1.5;startArrow=none;endArrow=none;fontSize=10;fontStyle=1;labelBackgroundColor=#ffffff;" target="SubSubgrupoActividad" value="1:N">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="778" y="1126" as="sourcePoint" />
-            <mxPoint x="778" y="1131" as="targetPoint" />
+            <mxPoint x="778" y="1156" as="sourcePoint" />
+            <mxPoint x="778" y="1161" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="p_Archivo_0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;fillColor=#ffffff;strokeColor=#9aa5b1;strokeWidth=1;" value="id  [PK]" vertex="1">

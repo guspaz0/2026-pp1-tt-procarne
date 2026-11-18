@@ -67,6 +67,7 @@ class RegistroOperadoresModulo:
             catalogo_actividades_dao=self._catalogo_dao,
             domicilio_dao=self._domicilio_dao,
             auth_service=auth_service,
+            storage=storage,
         )
 
         # DAOs para requisitos de operador

@@ -20,13 +20,12 @@ export function PaginaOperadorDetalle() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const cargarOperador = () => {
     if (!id || isNaN(id)) {
       setError("ID de operador inválido.");
       setCargando(false);
       return;
     }
-
     fetch(`/api/registro-operadores/${id}`, {
       credentials: "include",
     })
@@ -43,6 +42,11 @@ export function PaginaOperadorDetalle() {
         setError(e.message);
         setCargando(false);
       });
+  };
+
+  useEffect(() => {
+    cargarOperador();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (cargando) {
@@ -165,6 +169,8 @@ export function PaginaOperadorDetalle() {
       <RequisitosSection
         operadorId={operador.id}
         categoriaNombre={operador.categoria}
+        requisitosCargados={operador.requisitos ?? []}
+        onRequisitosCambiados={cargarOperador}
       />
 
       <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid #e2e8f0" }}>
@@ -198,59 +204,49 @@ export function PaginaOperadorDetalle() {
 /* Sección de Requisitos con botón de upload                           */
 /* ------------------------------------------------------------------ */
 
-type ArchivoSubido = {
-  documento_id: number;
-  archivo_id: number;
-  nombre: string;
-  url: string;
-  fecha_carga: string | null;
+/** Requisito ya cargado en el operador (viene de GET /{id}). */
+type RequisitoCargado = {
+  id: number;
+  requisito_categoria_id: number;
+  codigo: string | null;
+  nombre: string | null;
+  estado: string;
+  documentos: Array<{
+    id: number;
+    nombre: string;
+    url: string | null;
+    mime_type: string;
+    size_bytes: number;
+  }>;
 };
 
 function RequisitosSection({
   operadorId,
   categoriaNombre,
+  requisitosCargados,
+  onRequisitosCambiados,
 }: {
   operadorId: number;
   categoriaNombre: string | null;
+  /** Requisitos que el operador ya tiene (con estado y documentos). */
+  requisitosCargados: RequisitoCargado[];
+  /** Callback para refrescar el operador tras un upload. */
+  onRequisitosCambiados: () => void;
 }) {
   const { data: categorias, isFetching } = useListarCategoriasQuery();
   const [subiendo, setSubiendo] = useState<number | null>(null);
-  const [archivosPorRequisito, setArchivosPorRequisito] = useState<
-    Record<number, ArchivoSubido[]>
-  >({});
   const [error, setError] = useState<string | null>(null);
 
-  // Encontrar la categoría del operador y sus requisitos
-  const categoria = categorias?.find(
-    (c) => c.nombre === categoriaNombre
-  );
-  const requisitos: CategoriaRequisito[] = categoria?.requisitos ?? [];
+  // Encontrar la categoría del operador en el catálogo (para mostrar
+  // solo los requisitos de ESA categoría, no todos).
+  const categoria = categorias?.find((c) => c.nombre === categoriaNombre);
+  const requisitosCatalogo: CategoriaRequisito[] = categoria?.requisitos ?? [];
 
-  const cargarArchivos = async (requisitoId: number) => {
-    try {
-      const response = await fetch(
-        `/api/registro-operadores/${operadorId}/requisitos/${requisitoId}/archivos`,
-        { credentials: "include" }
-      );
-      if (response.ok) {
-        const data: ArchivoSubido[] = await response.json();
-        setArchivosPorRequisito((prev) => ({
-          ...prev,
-          [requisitoId]: data,
-        }));
-      }
-    } catch {
-      // silencioso
-    }
-  };
-
-  // Cargar archivos existentes al montar
-  useEffect(() => {
-    for (const r of requisitos) {
-      cargarArchivos(r.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [operadorId, categoriaNombre]);
+  // Index de requisitos cargados por requisito_categoria_id
+  const cargadoPorReqCat = new Map<number, RequisitoCargado>();
+  for (const rc of requisitosCargados) {
+    cargadoPorReqCat.set(rc.requisito_categoria_id, rc);
+  }
 
   const handleUpload = async (requisitoId: number, file: File) => {
     setSubiendo(requisitoId);
@@ -273,7 +269,8 @@ function RequisitosSection({
         throw new Error(err.detail || "Error al subir archivo");
       }
 
-      await cargarArchivos(requisitoId);
+      // Refrescar el operador para actualizar los requisitos.
+      onRequisitosCambiados();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -297,7 +294,7 @@ function RequisitosSection({
     );
   }
 
-  if (requisitos.length === 0) {
+  if (requisitosCatalogo.length === 0) {
     return (
       <div style={{ marginTop: "2rem", padding: "1rem", color: "#64748b" }}>
         Esta categoría no tiene requisitos registrados.
@@ -328,9 +325,12 @@ function RequisitosSection({
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {requisitos.map((r) => {
-          const archivos = archivosPorRequisito[r.id] || [];
-          const tieneArchivo = archivos.length > 0;
+        {requisitosCatalogo.map((r) => {
+          // Cruzar: ¿el operador ya tiene este requisito cargado?
+          const cargado = cargadoPorReqCat.get(r.id);
+          const documentos = cargado?.documentos ?? [];
+          const tieneArchivo = documentos.length > 0;
+          const estado = cargado?.estado ?? "PENDIENTE";
 
           return (
             <div
@@ -368,6 +368,20 @@ function RequisitosSection({
                   {tieneArchivo && (
                     <span style={{ color: "#16a34a", fontSize: "1rem" }}>✓</span>
                   )}
+                  {!tieneArchivo && estado === "PENDIENTE" && (
+                    <span
+                      style={{
+                        padding: "0.1rem 0.5rem",
+                        borderRadius: "4px",
+                        fontSize: "0.7rem",
+                        fontWeight: 600,
+                        background: "#fef3c7",
+                        color: "#92400e",
+                      }}
+                    >
+                      PENDIENTE
+                    </span>
+                  )}
                 </div>
                 {r.descripcion && (
                   <p style={{ margin: "0.25rem 0 0", fontSize: "0.75rem", color: "#64748b" }}>
@@ -376,10 +390,10 @@ function RequisitosSection({
                 )}
                 {tieneArchivo && (
                   <div style={{ marginTop: "0.5rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                    {archivos.map((a) => (
+                    {documentos.map((a) => (
                       <a
-                        key={a.documento_id}
-                        href={a.url}
+                        key={a.id}
+                        href={a.url ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{

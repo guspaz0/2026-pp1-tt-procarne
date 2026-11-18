@@ -24,13 +24,14 @@ class OperadorService:
 
     def __init__(self, dao: OperadorDAO, persona_service=None,
                  certificado_service=None, catalogo_actividades_dao=None,
-                 domicilio_dao=None, auth_service=None) -> None:
+                 domicilio_dao=None, auth_service=None, storage=None) -> None:
         self._dao = dao
         self._persona_service = persona_service
         self._domicilio_dao = domicilio_dao
         self._certificado_service = certificado_service
         self._catalogo_actividades_dao = catalogo_actividades_dao
         self._auth_service = auth_service
+        self._storage = storage
 
     # ------------------------------------------------------------------
     # Operadores
@@ -240,21 +241,93 @@ class OperadorService:
             # No es fatal: el operador se crea igual, solo que sin cuenta de login.
             pass
 
+    def _resolver_requisitos(self, operador_id: int) -> list[dict]:
+        """Resuelve los requisitos de un operador con su estado y documentos."""
+        from modulos.registro_operadores.operador_requisito.dao import OperadorRequisitoDAO
+        from modulos.registro_operadores.documento_requisito.dao import DocumentoRequisitoDAO
+        from modulos.registro_operadores.archivo.dao import ArchivoDAO
+
+        or_dao = OperadorRequisitoDAO(self._dao._session_factory)
+        dr_dao = DocumentoRequisitoDAO(self._dao._session_factory)
+        arch_dao = ArchivoDAO(self._dao._session_factory)
+
+        ors = or_dao.listar_por_operador(operador_id)
+        resultado = []
+        for or_ in ors:
+            # Resolver nombre/código del requisito desde categoria_requisitos → requisitos
+            codigo = None
+            nombre = None
+            try:
+                from modulos.registro_operadores.requisito.dao import CategoriaRequisito, Requisito
+                with self._dao._session_factory() as session:
+                    cr = session.query(CategoriaRequisito).filter_by(id=or_.requisito_categoria_id).first()
+                    if cr:
+                        req = session.get(Requisito, cr.requisito_id)
+                        if req:
+                            codigo = req.codigo
+                            nombre = req.nombre
+            except Exception:
+                pass
+
+            # Documentos (archivos) asociados
+            docs = dr_dao.listar_por_operador_requisito(or_.id)
+            archivos = []
+            for doc in docs:
+                arch = arch_dao.obtener_por_id(doc.archivo_id)
+                if arch:
+                    url = None
+                    if self._storage is not None:
+                        try:
+                            url = self._storage.get_public_url("requisitos", arch.storage_path)
+                        except Exception:
+                            url = f"/api/files/{arch.storage_path}"
+                    else:
+                        url = f"/api/files/{arch.storage_path}"
+                    archivos.append({
+                        "id": arch.id,
+                        "nombre": arch.nombre,
+                        "url": url,
+                        "mime_type": arch.mime_type,
+                        "size_bytes": arch.size_bytes,
+                    })
+
+            resultado.append({
+                "id": or_.id,
+                "requisito_categoria_id": or_.requisito_categoria_id,
+                "codigo": codigo,
+                "nombre": nombre,
+                "estado": or_.estado,
+                "documentos": archivos,
+            })
+        return resultado
+
     def _to_out(self, operador) -> OperadorOut:
         """Convierte un ORM a DTO resolviendo las actividades (N:M)."""
         # ``from_attributes`` solo extrae campos en ``model_fields``; la relación
         # ``persona`` no es un campo del DTO, así que se pasa explícitamente para
         # que ``_inferir_cuit`` pueda leer ``persona.identificador``.
-        attrs = {k: getattr(operador, k, None) for k in OperadorOut.model_fields}
+        # Excluir relaciones ORM que no son columnas (requisitos, persona, categoria, domicilio)
+        _skip = {"requisitos", "persona", "categoria", "domicilio"}
+        attrs = {k: getattr(operador, k, None) for k in OperadorOut.model_fields if k not in _skip}
         # ``categoria`` es una relación ORM (Categoria); el DTO espera el nombre.
-        categoria_obj = attrs.get("categoria")
+        try:
+            categoria_obj = operador.categoria
+        except Exception:
+            categoria_obj = None
         attrs["categoria"] = categoria_obj.nombre if categoria_obj is not None else None
+        # Domicilio (relación ORM → DTO).
+        try:
+            attrs["domicilio"] = operador.domicilio
+        except Exception:
+            attrs["domicilio"] = None
         attrs["actividad_ids"] = self._dao.listar_actividad_ids(operador.id)
         # Domicilio comercial legible: se construye a partir del domicilio
         # estructurado (``operadores.domicilio_comercial`` ya no es columna).
         attrs["domicilio_comercial"] = self._dao.construir_domicilio_comercial(
-            getattr(operador, "domicilio", None)
+            getattr(operador, "domicilio", None) if hasattr(operador, "domicilio") else None
         )
+        # Requisitos con estado y documentos.
+        attrs["requisitos"] = self._resolver_requisitos(operador.id)
         try:
             attrs["persona"] = operador.persona
         except Exception:
