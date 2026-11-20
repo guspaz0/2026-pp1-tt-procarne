@@ -85,3 +85,5 @@ pnpm build
 ## Scope actual (Sprint 1)
 
 Solo el **Módulo I (Registro de Operadores)** está /Users/gusta/Downloads/cuase.pdf/Users/gusta/Downloads/cuase.pdfactivo. Los demás módulos (II–VII) están comentados en `app/app.py` y sus rutas muestran un placeholder "No implementado".
+
+Prueba de colaboracion GitHub - Hugo - 17/11/2026.
